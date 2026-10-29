@@ -3,6 +3,7 @@
 哈囉
 
 ## 專案資訊
+- 姓名：佳忻。
 - 專案：期中專題。
 - GitHub：https://github.com/Shao077777714/midexam
 - 溝通與文件使用繁體中文。
