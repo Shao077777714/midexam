@@ -1,3 +1,4 @@
+import {shadowPlacementFree} from './spatial.mjs';
 export const SAVE_KEY='dream-gap-save-v1';
 export const MEMORIES=['記起','聽見','看見','承認','改變'];
 export const ITEMS={key:'舊家鑰匙',drawing:'孩子的畫',letter:'未寄出的信',p0:'照片左上碎片',p1:'照片右上碎片',p2:'照片左下碎片',p3:'照片右下碎片'};
@@ -78,7 +79,7 @@ export function applyAction(current,a){
         l.slots[a.slot]=a.id;message='道具與凹槽吻合。';break;
       case 'SHADOW':
         if(s.level!==0||!Number.isInteger(a.index)||a.index<0||a.index>2||![a.x,a.z,a.angle].every(Number.isFinite))return fail('無效的物件位置。');
-        l.shadow[a.index]={x:clamp(a.x,-4.4,4.4),z:clamp(a.z,-3,2.5),angle:((a.angle%360)+360)%360};
+        {const candidate={x:clamp(a.x,-4.4,4.4),z:clamp(a.z,-3,2.5),angle:((a.angle%360)+360)%360};if(!shadowPlacementFree(a.index,candidate,l.shadow))return fail('這裡被家具或另一個底座擋住了，請換一個位置。');l.shadow[a.index]=candidate;}
         message=shadowAligned(l.shadow[a.index],SHADOW_TARGETS[a.index])?'影子與記憶重合了。':'觀察牆面輪廓，再調整位置與角度。';break;
       case 'PHOTO':
         if(s.level!==2||!Number.isInteger(a.slot)||a.slot<0||a.slot>3||!Number.isFinite(a.angle)||!s.inventory.includes(a.id))return fail('先找到並選取照片碎片。');
