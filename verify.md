@@ -18,7 +18,7 @@
 ## Git 上傳檢查
 - 使用 `git status --short --branch` 確認本次變更範圍。
 - 明確加入本次要提交的檔案，避免混入無關修改。
-- 提交並推送後，以 `git rev-parse HEAD` 與 `git ls-remote origin refs/heads/main` 比對版本。
+- 提交並推送後，以 `git rev-parse HEAD` 與 `git ls-remote origin refs/heads/<本次分支名稱>` 比對版本；目前開發分支為 `顯智的branch`。
 - 再次檢查工作目錄狀態。
 
 ## 驗證紀錄
@@ -27,5 +27,6 @@
 | 2026-10-29 | 初始化前狀態 | 檢查遠端 main 與 README | 儲存庫僅有 README，尚無可執行程式 |
 | 2026-10-29 | 五份初始文件 | 嚴格 UTF-8 解碼、檢查檔名與非空內容、`git diff --cached --check`、審閱暫存差異 | 通過，提交範圍僅含指定的五份文件 |
 | 2026-10-29 | Three.js 必用要求 | `git diff --check` 與審閱五份文件差異 | 通過；已同步技術要求、開發計畫與驗收項目，功能測試尚未執行 |
+| 2026-10-29 | 夢核環境素材 v1 | 檢視四張生成圖、PNG 解碼與尺寸讀取、複製前後 SHA-256 比對、文件 UTF-8 檢查與 `git diff --check` | 通過；素材、完整提示詞與 manifest 已存於 `public/assets/dreamcore/`；貼圖接縫、球面投影及遊戲切換尚未驗證 |
 
 後續驗證須記錄實際執行的命令、結果及必要的錯誤資訊。程式尚未建立，因此目前不宣稱任何功能測試通過。
