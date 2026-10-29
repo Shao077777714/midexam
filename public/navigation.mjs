@@ -1,4 +1,5 @@
-export function walkable(x,z,bounds,blocks,radius=.24){return x>bounds.minX+radius&&x<bounds.maxX-radius&&z>bounds.minZ+radius&&z<bounds.maxZ-radius&&!blocks.some(b=>x>b.x-b.w/2-radius&&x<b.x+b.w/2+radius&&z>b.z-b.d/2-radius&&z<b.z+b.d/2+radius);}
+import {circleHits} from './spatial.mjs';
+export function walkable(x,z,bounds,blocks,radius=.3){return x>bounds.minX+radius+.1&&x<bounds.maxX-radius-.1&&z>bounds.minZ+radius+.1&&z<bounds.maxZ-radius-.1&&!blocks.some(b=>circleHits(x,z,b,radius));}
 export function findPath(start,target,bounds,blocks,canArrive=()=>true){
   const step=.4, nx=Math.ceil((bounds.maxX-bounds.minX)/step),nz=Math.ceil((bounds.maxZ-bounds.minZ)/step);
   const grid=p=>[Math.round((p[0]-bounds.minX)/step),Math.round((p[1]-bounds.minZ)/step)];

@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-30",
+  "generator": "built-in Image Gen",
+  "jobs": [
+    {
+      "key": "agedPhoto",
+      "args": {
+        "referenced_image_paths": [
+          "C:/Users/admin/Documents/ChatGPT/恐怖期中專題/public/assets/dreamcore/family-memory-v1.png"
+        ],
+        "transparent_background": false,
+        "prompt": "Use case: precise-object-edit. Asset type: square photograph texture for a Three.js dreamcore game, before the weirdcore transition. Edit target: the attached AI-generated fictional family snapshot. Preserve EXACT camera composition, all three fictional people, poses, clothes, dining room and crop. Change only the physical photograph's condition: a genuinely old, yellowed analogue print, fine hairline cracks in the emulsion, water stains around edges, foxing, gently faded colors, subtle scratches, slightly frayed edge detail within the image. Keep every face and major object readable for a 3 by 3 picture puzzle. Full-bleed square image, no surrounding frame, no perspective warp, no writing, captions, watermark or added people. Output a production texture, approximately 1024 square."
+      },
+      "status": "generated",
+      "file": "family-aged-v2.png"
+    },
+    {
+      "key": "horrorPhoto",
+      "args": {
+        "referenced_image_paths": [
+          "C:/Users/admin/Documents/ChatGPT/恐怖期中專題/public/assets/dreamcore/family-memory-v1.png"
+        ],
+        "transparent_background": false,
+        "prompt": "Edit this fictional family snapshot into a surreal analogue weirdcore memory texture. Preserve all people completely unharmed, with unchanged natural faces, bodies, clothes, positions and the exact original square composition. Add ONLY photographic optical anomalies: dark green cyan tint, film scratches, double exposure of large ordinary eyes in empty background walls, a softly overlapping eye reflection in the glass over the print, rainbow chromatic ghosts and strong vignette. Strange unnerving atmosphere through lighting, reflections and damaged photographic emulsion, absolutely no body alteration, injuries, decay of people, threatening action, violence or gore. Keep the original picture readable as a nine-piece visual puzzle. Full bleed square image with no text, numbers, captions, frame or watermark. Production texture approximately 1024 square."
+      },
+      "status": "generated",
+      "file": "family-distorted-v2.png"
+    },
+    {
+      "key": "organicEye",
+      "args": {
+        "transparent_background": true,
+        "prompt": "Use case: stylized-concept. Asset type: single transparent cutout of a grotesque realistic eye for a Three.js wall decal and horror dialogue background. A huge horizontally almond-shaped bloodshot eyeball embedded in a wrinkled fleshy eyelid rim, glossy black dilated pupil, murky olive iris, dense thin crimson branching veins, wet translucent tear-film highlights, pale grey-pink waxy skin folds and a few dark mold flecks. Disgusting surreal weirdcore, oppressive close-up, detailed practical horror prop photography, not a cartoon. Straight-on orthographic view, centered, the ENTIRE eye and eyelid visible with generous transparent margin; closed opaque shape in the eye itself, genuinely transparent background outside the lid. Soft neutral lighting with clear texture. No other eyes, no human face, no words, letters, symbols, border or watermark. No wounds, explicit gore or organs. Landscape eye centered in a square production texture around 1024x1024."
+      },
+      "status": "generated",
+      "file": "organic-eye-v2.png"
+    }
+  ],
+  "note": "The final distorted photograph uses optical double exposure without altering the people. Earlier body-distortion attempts returned no asset and are not used."
+}
