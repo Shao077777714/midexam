@@ -463,6 +463,8 @@
 
 - 專案 GitHub：https://github.com/Shao077777714/midexam 。
 - 必須使用 Three.js，實際建立並渲染 3D 場景；版本、建置工具及其他套件待確認。
+- 必須使用 Image Gen 製作遊戲所需圖片素材，生成工作規則見 `agent.md`。
+- 使用者提供的九張夢核與怪核風格原圖集中於 `references/visual-style/`；索引、原始檔名、尺寸與 SHA-256 分別見該資料夾的 `README.md` 與 `manifest.json`。
 - 本分支已完成四張初版 PNG 色彩貼圖：草地、紫灰道路、可換色屋牆及黑底眼睛天空，存放於 `public/assets/dreamcore/`。
 - 素材用途與實際尺寸見 `public/assets/dreamcore/README.md`，完整生成提示詞見 `PROMPTS.md`，尺寸及 SHA-256 見 `manifest.json`。
 - 粉彩住宅區與眼睛天空為先前提供的美術方向參考；正式開場、五關流程與物件觸發切換方式，依本文件上述最新企劃執行，素材套用位置仍需依各關場景確認。

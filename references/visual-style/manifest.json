@@ -1,0 +1,106 @@
+{
+  "name": "dreamcore-weirdcore-style-references",
+  "addedOn": "2026-10-29",
+  "count": 9,
+  "references": [
+    {
+      "file": "01-flower-corridor.jpg",
+      "originalFilename": "LINE_ALBUM_2026.10.29_261029_5.jpg",
+      "label": "花草教室走廊",
+      "width": 702,
+      "height": 1248,
+      "bytes": 249725,
+      "sha256": "f7066f5a6306f1d4cbf790208f8af6973c908e81b541bc55c67555753fa3e85c",
+      "source": "user-supplied style reference",
+      "generated": false
+    },
+    {
+      "file": "02-pastel-hospital-room.jpg",
+      "originalFilename": "LINE_ALBUM_2026.10.29_261029_4.jpg",
+      "label": "粉色空病房",
+      "width": 550,
+      "height": 413,
+      "bytes": 28540,
+      "sha256": "fa4142d16940a2db82d9bc906c0556de5c3ad07d1bbe455d6ecb5d7060bb45cb",
+      "source": "user-supplied style reference",
+      "generated": false
+    },
+    {
+      "file": "03-empty-birthday-room.jpg",
+      "originalFilename": "LINE_ALBUM_2026.10.29_261029_3.jpg",
+      "label": "無人的生日客廳",
+      "width": 563,
+      "height": 420,
+      "bytes": 67312,
+      "sha256": "a953ada7ce7a503ed4923aa83afaae33501d157e09571ad0b4a6142dd94861ef",
+      "source": "user-supplied style reference",
+      "generated": false
+    },
+    {
+      "file": "04-night-hill-tea-table.jpg",
+      "originalFilename": "LINE_ALBUM_2026.10.29_261029_2.jpg",
+      "label": "夜丘茶桌",
+      "width": 736,
+      "height": 1077,
+      "bytes": 51605,
+      "sha256": "9c906956d0863fd6f77134afcb8a923ce60f05c140cb372398120c0ef9a27769",
+      "source": "user-supplied style reference",
+      "generated": false
+    },
+    {
+      "file": "05-pastel-curtain-pillows.jpg",
+      "originalFilename": "LINE_ALBUM_2026.10.29_261029_1.jpg",
+      "label": "粉彩窗紗與靠枕",
+      "width": 1152,
+      "height": 2048,
+      "bytes": 843283,
+      "sha256": "3fb074c904c4c85a4ed560132f1b7ff62875198c9471e631436a3655661faab7",
+      "source": "user-supplied style reference",
+      "generated": false
+    },
+    {
+      "file": "06-winged-eyes-weirdcore.jpg",
+      "originalFilename": "Weirdcore aesthetic.jpg",
+      "label": "翼眼與類比雜訊",
+      "width": 720,
+      "height": 1440,
+      "bytes": 130425,
+      "sha256": "1510684eacfe629e335b78b3e1ed08cfbdcce3c355e916b4e5573515174fedec",
+      "source": "user-supplied style reference",
+      "generated": false
+    },
+    {
+      "file": "07-flooded-duck-corridor.jpg",
+      "originalFilename": "dreamcore.jpg",
+      "label": "淹水磁磚走廊",
+      "width": 736,
+      "height": 1308,
+      "bytes": 157439,
+      "sha256": "288a89cec3e74cf5f9861107916243255011477154206595c55cb26cc8ca9675",
+      "source": "user-supplied style reference",
+      "generated": false
+    },
+    {
+      "file": "08-flooded-crt-room.jpg",
+      "originalFilename": "Pin this_ AI affiliate marketing strategies 🏆.jpg",
+      "label": "淹水 CRT 螢幕室",
+      "width": 736,
+      "height": 1313,
+      "bytes": 156828,
+      "sha256": "1f250f6f68dea8f0659ab1b3ebd9b836a6ee3facf0bb294dd5328037e665f725",
+      "source": "user-supplied style reference",
+      "generated": false
+    },
+    {
+      "file": "09-balloon-hallway.jpg",
+      "originalFilename": "(･´з`･)ゞ.jpg",
+      "label": "黃色氣球走廊",
+      "width": 640,
+      "height": 1138,
+      "bytes": 62104,
+      "sha256": "6e94e89b90d8572b4bc95987b9256cba4b8eff768c4aed82f598163cdf9ffdfe",
+      "source": "user-supplied style reference",
+      "generated": false
+    }
+  ]
+}
