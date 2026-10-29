@@ -1,0 +1,12 @@
+import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+for (const file of ['engine.mjs','navigation.mjs','content.mjs','scene.mjs','game.mjs']) execFileSync(process.execPath,['--check',`public/${file}`]);
+await mkdir('public/vendor', {recursive:true});
+for (const file of ['three.module.js','three.core.js']) await cp(`node_modules/three/build/${file}`, `public/vendor/${file}`);
+await cp('node_modules/three/LICENSE', 'public/vendor/THREE-LICENSE.txt');
+await mkdir('dist', {recursive:true});
+await cp('public', 'dist', {recursive:true});
+const html=await readFile('dist/index.html','utf8');
+if (!html.includes('game.mjs')) throw new Error('Missing game entry');
+await writeFile('dist/.build-info.json', JSON.stringify({name:'dream-gap',three:'0.186.1',static:true})+'\n');
+console.log('Static game built: dist/ (no backend or CDN required)');

@@ -43,6 +43,16 @@
       "sha256": "1f1a575b114dfe74a54a70c5871b11b235112f1ef6d7c34dcbbcfca2774a250b",
       "type": "color-texture",
       "inGameVerified": false
+    },
+    {
+      "file": "family-memory-v1.png",
+      "url": "/assets/dreamcore/family-memory-v1.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2124841,
+      "sha256": "daa1515b66c67eb8f1ee668fd1f2e6bab00d4ab3e90999166f90f8340da0b896",
+      "type": "color-texture",
+      "inGameVerified": false
     }
   ]
 }

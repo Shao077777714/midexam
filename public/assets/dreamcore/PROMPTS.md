@@ -1,5 +1,13 @@
 # Dreamcore asset generation prompts
 
+## family-memory-v1.png
+
+Mode: built-in image_gen. Date: 2026-10-29. Used on in-game family frames, inspection model and four-piece photo puzzle. Fictional generated people; no user reference portrait supplied.
+
+```text
+Use case: stylized-concept. Asset type: in-game family photo color texture for a Three.js dreamcore escape game, square image. Primary request: a fictional father, mother and school-age child standing close together in a modest family dining room, a quiet tender ordinary family snapshot, photographed by a cheap 1990s compact camera. Empty plates and pale yellow walls softly out of focus. Style: softly grainy analog photograph, gentle washed pastel peach mint cream and pale blue, nostalgic and slightly uncanny but completely nonviolent. All three people present, upper bodies clearly separated left to right, each occupying a different part of the frame so a four-piece jigsaw is recognizable. Father on right, mother on left, child centered. Subtle softness, no horror creatures. Composition: full bleed square photograph, no physical frame, no borders, no visible text, no date stamp, no logos, no watermark. Flat photo asset only, not a photograph of a photo; no torn edges. Mood: an ordinary lost family memory. This photo will be mapped onto a 3D frame, split into four puzzle pieces in code, and have the father's face obscured temporarily by an in-game overlay.
+```
+
 Mode: built-in image_gen. Date: 2026-10-29.
 
 Reference 1: user-provided pastel repeating suburban street, used as visual direction described in prompts.
