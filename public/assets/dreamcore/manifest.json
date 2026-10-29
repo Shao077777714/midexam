@@ -53,6 +53,49 @@
       "sha256": "daa1515b66c67eb8f1ee668fd1f2e6bab00d4ab3e90999166f90f8340da0b896",
       "type": "color-texture",
       "inGameVerified": false
+    },
+    {
+      "file": "family-aged-v2.png",
+      "url": "/assets/dreamcore/family-aged-v2.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2508953,
+      "sha256": "dd11738cbd99fdcaec02ef047b0157e2e3a43be6b022fae2f8f4d75b65030dbd",
+      "type": "aged-photograph",
+      "prompts": "PROMPTS-v2.json",
+      "generatedOn": "2026-10-30",
+      "inGameVerified": true,
+      "verificationScope": "Codex IAB sample display; complete Chrome/Edge matrix pending."
+    },
+    {
+      "file": "family-distorted-v2.png",
+      "url": "/assets/dreamcore/family-distorted-v2.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2822862,
+      "sha256": "ce4aa0db09080941aeac2a8f4e4430f1bac6ae2f69d940968d2b2cd851f18264",
+      "type": "weirdcore-photograph",
+      "prompts": "PROMPTS-v2.json",
+      "generatedOn": "2026-10-30",
+      "inGameVerified": true,
+      "verificationScope": "Codex IAB sample display; complete Chrome/Edge matrix pending."
+    },
+    {
+      "file": "organic-eye-v2.png",
+      "url": "/assets/dreamcore/organic-eye-v2.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1457022,
+      "sha256": "7de0f9a9be436d223aee4483e44468a44d9acc9b19090c798537cb935b1ab06e",
+      "type": "transparent-cutout",
+      "prompts": "PROMPTS-v2.json",
+      "generatedOn": "2026-10-30",
+      "inGameVerified": true,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "verificationScope": "Codex IAB sample display; complete Chrome/Edge matrix pending."
     }
   ]
 }

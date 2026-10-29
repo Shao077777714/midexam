@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import * as T from '../public/vendor/three.module.js';
 import {createModel} from '../public/models.mjs';
 import {restOn,footprint,shadowPlacementFree} from '../public/spatial.mjs';
-import {newGame,SHADOW_TARGETS,applyAction} from '../public/engine.mjs';
+import {newGame,SHADOW_TARGETS,applyAction,SEARCHES} from '../public/engine.mjs';
 import {createWorld} from '../public/scene.mjs';
 import {findPath,walkable} from '../public/navigation.mjs';
 import {EXTERIOR} from '../public/atmosphere.mjs';
 
 function fixture(level=0,triggered=true){
   const state=newGame();state.level=level;
-  Object.assign(state.levels[level],{triggered,drawer:true,chair:true,frame:true});
+  Object.assign(state.levels[level],{triggered,drawer:true,chair:true,frame:true,searched:[...SEARCHES[level]]});
   const signals=[],world=createWorld(null,()=>state,a=>signals.push(a),{headless:true});
   return {state,world,signals};
 }
@@ -88,7 +88,7 @@ test('every revealed interactive entity remains reachable along an unobstructed 
   }
 });
 
-test('small drawer items have a visible physical focus point and cannot be selected through a wall',()=>{
+test('small clock items have a visible physical focus point and cannot be selected through a wall',()=>{
   const {world}=fixture(1),e=world.entities.find(e=>e.id==='key'),p=new T.Box3().setFromObject(e.group).getCenter(new T.Vector3());
   const path=findPath([0,5],[p.x,p.z],world.bounds,world.blocks,a=>world.near(e,new T.Vector3(a[0],1.65,a[1])));
   assert.ok(path.length);const end=path.at(-1),focus=world.focusPoint(e,new T.Vector3(end[0],1.65,end[1]));assert.ok(focus);assert.ok(new T.Box3().setFromObject(e.group).expandByScalar(.002).containsPoint(focus));

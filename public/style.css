@@ -180,3 +180,99 @@ body.flash #world { animation: dream-shift .9s ease-in-out; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+/* Second pass: tactile photo study and an oppressive crimson memory interface. */
+:root { --serif: "DFKai-SB", "BiauKai", "KaiTi", "PMingLiU", serif; }
+.modal, .panel { border-radius: 3px; border: 1px solid #a68f78; background: linear-gradient(135deg,#fff8e9,#e9dfd3); box-shadow: 0 30px 110px #08171780, inset 0 0 0 7px #fff8e94d; }
+.modal { padding: 40px 52px; }
+.modal::before { width: 64px; height: 1px; border: 3px double #947a5a; border-width: 0 0 3px; background: none; border-radius: 0; margin-bottom: 20px; }
+.modal h2 { font-size: 42px; font-weight: 600; letter-spacing: .15em; }
+.panel h2 { font-size: 32px; font-weight: 600; }
+.modal p, .panel p { font-size: 18px; font-weight: 500; line-height: 1.85; letter-spacing: .035em; }
+.modal .eyebrow, .panel .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .2em; }
+.primary, .secondary { border-radius: 3px; min-height: 50px; font-size: 17px; }
+.primary { letter-spacing: .12em; }
+.read-text { font: 500 20px/1.9 "Microsoft JhengHei",sans-serif !important; border-radius: 2px; border-left: 3px solid #9d8c70; }
+#eye-overlay { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity 2.4s ease; overflow: hidden; }
+#eye-overlay span { position: absolute; left: var(--eye-x); top: var(--eye-y); width: 19vw; height: 19vw; background: url('assets/dreamcore/organic-eye-v2.png') center/contain no-repeat; transform: rotate(var(--eye-r)) scale(var(--eye-s)); opacity: .78; }
+body.weird #eye-overlay { opacity: .11; }
+body.weird.eyes-surge #eye-overlay { opacity: .84; }
+body.low-effects #eye-overlay { opacity: 0; }
+body.weird { --ink: #f2a29f; --cream: #0b0809; --muted: #d8a39c; }
+body.weird .modal-wrap { background: #080405d9; }
+body.weird .modal, body.weird .panel {
+  color: #f2a29f; border-color: #8e454b;
+  background-color: #0b0809;
+  background-image: linear-gradient(90deg,#09060799,#0b0809f5 24%,#0b0809f5 76%,#09060799),url('assets/dreamcore/organic-eye-v2.png');
+  background-size: auto,230px 230px;
+  box-shadow: 0 30px 110px #000c,inset 0 0 0 6px #471c2433;
+  scrollbar-color: #963d46 #160c10;
+}
+body.weird .modal::before { border-color: #d87574; }
+body.weird .modal h2, body.weird .panel h2 { color: #ffb9b0; text-shadow: 0 0 24px #9d29343b; }
+body.weird #modal-body { background: #0b0809eb; padding: 8px 18px; border: 1px solid #6b34394d; }
+body.weird .modal .eyebrow, body.weird .panel .eyebrow { color: #d69b96; }
+body.weird .panel > header { border-color: #744148; }
+body.weird .modal .muted, body.weird .panel-note, body.weird .muted { color: #d6a6a0; }
+body.weird .primary { background: #8b2935; border-color: #d77578; color: #fff0e7; box-shadow: 0 7px 28px #8b29354d,inset 0 1px #f4a49455; }
+body.weird .primary:hover { background: #a43b44; box-shadow: 0 0 0 4px #b4495133,0 9px 30px #6c182155; }
+body.weird .secondary, body.weird .panel .round { background: #221317; color: #ffc0b6; border-color: #9a6060; }
+body.weird .secondary:hover, body.weird .panel .round:hover { background: #412129; border-color: #efaaa0; }
+body.weird :is(button,input,select):focus-visible { outline-color: #ffd0b9; }
+body.weird .read-text, body.weird .alignment, body.weird .hint-copy, body.weird .projection, body.weird .tutorial-grid { background: #140d10; border-color: #8e5155; color: #f6b5a8; }
+body.weird .object-preview { background: radial-gradient(ellipse,#423037,#140d13 80%); border-color: #70464d; }
+body.weird .nav-item, body.weird .item-tile { background: #1d1216; border-color: #78444b; color: #efaba2; }
+body.weird .nav-item:hover, body.weird .item-tile:hover, body.weird .item-tile.selected { background: #3a1d26; border-color: #d7938b; }
+body.weird .nav-item span, body.weird .item-tile small { color: #d2a6a0; }
+body.weird #toast { color: #ffc2b5; background: #160d11; border-color: #a56666; }
+body.weird #interact { color: #ffe5d8; background: #471c29; border-color: #efb1a1; box-shadow: 0 0 0 4px #a3585633,0 10px 36px #0008; }
+body.weird .chapter, body.weird #memory-hud, body.weird #control-bar, body.weird .quiet, body.weird .round { background: #180e16f2; color: #ffc7b8; border-color: #a26b6b77; }
+body.weird input[type=range] { accent-color: #d47a77; }
+body.weird .modal .quote { color: #ffc7b8; border-color: #a26b6b; }
+body.weird .ending { background-color: #0b0809; }
+body.weird .memory.found { color: #ffd0aa; }
+.panel select { width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #9a8d78; background: #f9f1e4; color: #293c36; font-size: 16px; }
+body.weird .panel select { background: #23151c; color: #f9c1b6; border-color: #a76b6f; }
+.puzzle-panel { left: 50%; right: auto; transform: translateX(-50%); width: min(1000px,calc(100vw - 48px)); padding: 22px 30px; animation: none; }
+.puzzle-panel > header { padding-bottom: 12px; margin-bottom: 12px; }
+.puzzle-panel .puzzle-intro { margin: 8px 0 12px; font-size: 17px; }
+.photo-toolbar { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; border: 1px solid #ab9d87; padding: 10px; margin-bottom: 16px; background: #e3d7c9; }
+.photo-toolbar p { width: 100%; text-align: center; margin: 0; font-size: 16px; }
+.photo-toolbar .secondary { padding: 8px 16px; }
+.photo-workspace { display: grid; grid-template-columns: minmax(250px,410px) minmax(230px,1fr); align-items: start; justify-content: center; gap: 24px; }
+.photo-grid { grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); gap: 3px; width: 100%; aspect-ratio: 1; margin: 0; border: 9px solid #70584a; background: #3c302e; box-shadow: 0 8px 30px #0004,inset 0 0 0 2px #c5a683; }
+.photo-slot { border: 1px dashed #bb9d7e; background: #5d4b40; min-height: 0; aspect-ratio: 1; border-radius: 0; }
+.photo-slot.empty { color: #ceb4a2; font-size: 24px; }
+.piece-tray { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; padding: 10px; border: 1px solid #aa9782; background: #d4c6b2; min-height: 240px; align-content: start; }
+.piece-tray .tray-label { grid-column: 1/-1; font-size: 15px; margin: 0; text-align: center; }
+.piece-tile { display: block; border: 2px solid #907965; background: #473b34; position: relative; aspect-ratio: 1; overflow: hidden; padding: 0; min-height: 56px; }
+.piece-image, .photo-slot .piece-image { position: absolute; inset: 0; display: block; background-size: 300% 300%; background-repeat: no-repeat; pointer-events: none; }
+.piece-code { position: absolute; bottom: 2px; right: 2px; background: #100b0be8; color: #ffddc1; font: 700 12px/1.6 Georgia,serif; border: 1px solid #dcae8a; padding: 0 5px; pointer-events: none; }
+.piece-selected { outline: 3px solid #ffdec0 !important; outline-offset: 2px; box-shadow: 0 0 0 6px #e4a28766,0 0 22px #e7a28e !important; z-index: 1; }
+.photo-slot.drop-target { outline: 3px solid #ffdec0; outline-offset: -3px; }
+.puzzle-panel .puzzle-progress { text-align: center; font-size: 16px; margin: 16px 0 4px; }
+.puzzle-panel .primary { width: auto; display: flex; min-width: 300px; margin-top: 12px; }
+body.weird .photo-toolbar { background: #1b1015; border-color: #8b525b; }
+body.weird .piece-tray { background: #150d11; border-color: #8b525b; }
+body.weird .photo-slot { background: #28171d; border-color: #a56561; }
+@media (min-height:900px) { .puzzle-panel { top: 5vh; bottom: 8vh; } .photo-workspace { grid-template-columns: minmax(300px,480px) minmax(230px,1fr); } }
+@media (max-width:800px) { .puzzle-panel { width: calc(100vw - 32px); left: 50%; padding: 22px; } .photo-workspace { grid-template-columns: minmax(240px,1fr) 200px; gap: 16px; } }
+@media (max-width:600px) { .photo-workspace { grid-template-columns: 1fr; } .piece-tray { min-height: 100px; } .modal { padding: 28px; } }
+@media (prefers-reduced-motion:reduce) { body.weird.eyes-surge #eye-overlay { opacity: .12; } }
+body.low-effects #world { animation: none; }
+/* Keep the complete nine-piece workbench visible on desktop heights. */
+.puzzle-panel { top: 16px; bottom: 16px; padding: 16px 26px; }
+.puzzle-panel > header { padding-bottom: 8px; margin-bottom: 8px; }
+.puzzle-panel h2 { font-size: 28px; line-height: 1.35; }
+.puzzle-panel .eyebrow { font-size: 10px; line-height: 1.6; margin-bottom: 2px; }
+.puzzle-panel .puzzle-intro { font-size: 18px; line-height: 1.7; margin: 4px 0 10px; }
+.photo-toolbar { padding: 6px 10px; gap: 8px; margin-bottom: 12px; }
+.photo-toolbar p { width: auto; flex: 1; font-size: 18px; text-align: left; }
+.photo-toolbar .secondary { min-height: 44px; padding: 8px 12px; }
+.photo-workspace { grid-template-columns: min(36vh,360px) minmax(260px,330px); }
+.piece-tray { grid-template-columns: repeat(3,min(9vh,92px)); justify-content: center; min-height: 0; gap: 9px; padding: 9px; }
+.piece-tile { min-height: 0; }
+.piece-tray .tray-label { font-size: 16px; line-height: 1.7; }
+.puzzle-panel .puzzle-progress { font-size: 18px; line-height: 1.7; margin: 10px 0 0; }
+.puzzle-panel .primary { margin-top: 8px; min-height: 48px; }
+.panel .panel-note { font-size: 18px; line-height: 1.7; }
+@media (max-width:700px) { .photo-toolbar p { flex-basis:100%; text-align:center; } .photo-workspace { grid-template-columns:1fr; } .piece-tray { grid-template-columns:repeat(3,minmax(0,1fr)); } }
