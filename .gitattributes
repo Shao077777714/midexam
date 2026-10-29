@@ -1,0 +1,2 @@
+# Keep upstream Three.js bundles intact; lint application sources separately.
+public/vendor/*.js -whitespace linguist-vendored=true
