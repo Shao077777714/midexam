@@ -1,0 +1,48 @@
+{
+  "name": "dreamcore-environment-v1",
+  "generatedOn": "2026-10-29",
+  "generator": "built-in image_gen",
+  "prompts": "PROMPTS.md",
+  "assets": [
+    {
+      "file": "asphalt-dreamcore-v1.png",
+      "url": "/assets/dreamcore/asphalt-dreamcore-v1.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 4338426,
+      "sha256": "7cba6778866b99837bc936de2a0ad77e56698c1cdc72d8cacdbfff3b8fc535e0",
+      "type": "color-texture",
+      "inGameVerified": false
+    },
+    {
+      "file": "grass-dreamcore-v1.png",
+      "url": "/assets/dreamcore/grass-dreamcore-v1.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 4686930,
+      "sha256": "eba2ff1deb4dbd23fc38d644782a1c68ce56a14ba2dd26986afa645c9425c0b1",
+      "type": "color-texture",
+      "inGameVerified": false
+    },
+    {
+      "file": "siding-tintable-v1.png",
+      "url": "/assets/dreamcore/siding-tintable-v1.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1992863,
+      "sha256": "f2e176ed25d82bc6ddcf022dc9e19892f0809bc3ec7b93f3c2083ecf6a6735d8",
+      "type": "color-texture",
+      "inGameVerified": false
+    },
+    {
+      "file": "sky-eyes-nightmare-v1.png",
+      "url": "/assets/dreamcore/sky-eyes-nightmare-v1.png",
+      "width": 1774,
+      "height": 887,
+      "bytes": 1680532,
+      "sha256": "1f1a575b114dfe74a54a70c5871b11b235112f1ef6d7c34dcbbcfca2774a250b",
+      "type": "color-texture",
+      "inGameVerified": false
+    }
+  ]
+}
