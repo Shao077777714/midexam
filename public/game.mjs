@@ -3,6 +3,7 @@ import {newGame,applyAction,saveGame,loadGame,MEMORIES,ITEMS,SHADOW_TARGETS,shad
 import {createWorld,createInspector,FAMILY_URL,HORROR_FAMILY_URL} from './scene.mjs';
 import {walkable,findPath} from './navigation.mjs';
 import {createMouseLook,movementSpeed,EYE_SURGE_MS} from './controls.mjs';
+import {watchContext} from './rendering.mjs';
 import {chooseVoice,voiceDescription} from './voice.mjs';
 import {LEVELS,RECORDS,PROJECTION} from './content.mjs';
 const $=id=>document.getElementById(id), symbols=['☾','≋','▧','◇','✧'];
@@ -10,6 +11,13 @@ const storage={getItem:k=>localStorage.getItem(k),setItem:(k,v)=>localStorage.se
 let saved=loadGame(storage),state=newGame(),world,mode='title',selected=null,held=null,inspector=null,panelRefresh=null,nearby=null,focusEntity=null,navigation=[],navTarget=null,toastTimer,projectionTime=0,projectionPage=-1,elapsedLast=performance.now(),hintDepth=0,muted=false,lastRender=0,photoController=null,effectsEnabled=true,eyeTimer,mouseLook,lockHelpShown=false,voiceURI='';
 try{voiceURI=localStorage.getItem('dream-gap-voice')||'';}catch{}
 const keys=new Set();
+let renderContext=null,renderFailed=false,renderResumeMode='title';
+function renderProblem(error){console.error(error);renderFailed=true;setMode('render-error');document.body.classList.add('render-lost');$('fatal').hidden=false;$('fatal').querySelector('h2').textContent='遊戲畫面暫時中斷';$('fatal-message').textContent='請重新載入畫面，再選擇「繼續上一次的記憶」。已儲存的進度會保留。';}
+function monitorRendering(){renderContext=watchContext($('world'),world.renderer,{
+  onLost(){renderResumeMode=mode;setMode('recovering');navigation=[];document.body.classList.add('render-lost');$('fatal').hidden=false;$('fatal').querySelector('h2').textContent='正在恢復遊戲畫面';$('fatal-message').textContent='繪圖暫時中斷，正在嘗試恢復。若沒有恢復，可重新載入後繼續原進度。';},
+  onWaiting(){$('fatal-message').textContent='瀏覽器尚未恢復繪圖。請重新載入畫面，再選擇「繼續上一次的記憶」。不需要開始新遊戲。';},
+  onRestored(){try{world.sync();world.renderer.shadowMap.needsUpdate=true;world.render();renderFailed=false;document.body.classList.remove('render-lost');$('fatal').hidden=true;setMode(renderResumeMode==='explore'?'modal':renderResumeMode);if(renderResumeMode==='explore')pause();}catch(error){renderProblem(error);}}
+});}
 for(let i=0;i<22;i++){const eye=document.createElement('span');eye.style.setProperty('--eye-x',`${i%2?82+(i%3)*4:1+(i%3)*4}%`);eye.style.setProperty('--eye-y',`${(i*17)%90}%`);eye.style.setProperty('--eye-r',`${(i%5-2)*12}deg`);eye.style.setProperty('--eye-s',`${.7+(i%4)*.23}`);$('eye-overlay').append(eye);}
 
 const text=(tag,value,cls)=>{const e=document.createElement(tag);e.textContent=value;if(cls)e.className=cls;return e;};
@@ -50,7 +58,12 @@ function begin(continuing){state=continuing&&saved.state?structuredClone(saved.s
   const body=document.createElement('div');body.innerHTML=`<p>你在陌生的房間睜開眼睛。窗外停留在黃昏，時鐘不再走動。紙條上寫著：</p><p class="quote">找到五個記憶碎片，<br>就能回到現實。</p><div class="tutorial-grid"><span><kbd>WASD</kbd> 移動，滑鼠環視</span><span><kbd>E</kbd> 互動與拿取</span><span><kbd>R</kbd> 檢視 · 拖曳旋轉</span><span><kbd>G</kbd> 放下手持物件</span><span><kbd>Tab</kbd> 物品欄</span><span><kbd>H</kbd> 任務提示</span><span><kbd>Esc</kbd> 退出介面／暫停</span><span><kbd>N</kbd> 探索導覽</span></div><p class="muted">進入探索會隱藏游標，直接移動滑鼠環視；Esc 可恢復游標。靠近物件才可以互動；每一關都藏著讓世界改變的物件。</p>`;
   modal(continuing?'記憶還在這裡':'你醒來了',continuing?`<p>${esc(LEVELS[state.level].objective)}</p>`:body,[[continuing?'繼續探索':'走進房間',resume]],continuing?LEVELS[state.level].tag:'PROLOGUE / 序章');
 }
-function preview(body,kind,onRotate){const canvas=document.createElement('canvas');canvas.className='object-preview';canvas.setAttribute('aria-label','可拖曳旋轉的 3D 物件');body.append(canvas);inspector=createInspector(canvas,kind);let last=null;canvas.addEventListener('pointerdown',e=>{last=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);});canvas.addEventListener('pointermove',e=>{if(!last||!inspector)return;inspector.group.rotation.y+=(e.clientX-last[0])*.014;inspector.group.rotation.x=Math.max(-.7,Math.min(.7,inspector.group.rotation.x+(e.clientY-last[1])*.008));last=[e.clientX,e.clientY];onRotate?.(inspector.group.rotation.y);});canvas.addEventListener('pointerup',()=>last=null);return inspector;}
+function preview(body,kind,onRotate){
+  const p=createInspector(body,kind),canvas=p.canvas;inspector=p;let last=null;
+  canvas.onpointerdown=e=>{last=[e.clientX,e.clientY];canvas.setPointerCapture(e.pointerId);};
+  canvas.onpointermove=e=>{if(!last||inspector!==p)return;p.group.rotation.y+=(e.clientX-last[0])*.014;p.group.rotation.x=Math.max(-.7,Math.min(.7,p.group.rotation.x+(e.clientY-last[1])*.008));last=[e.clientX,e.clientY];onRotate?.(p.group.rotation.y);};
+  canvas.onpointerup=canvas.onpointercancel=()=>last=null;return p;
+}
 function showInventory(){const body=openPanel('物品與記憶','INVENTORY / Tab');add(body,text('p','選取道具後，靠近對應的凹槽或信箱使用。第二關的信會一直保留到最後。'));const grid=document.createElement('div');grid.className='item-grid';
   for(const id of state.inventory){const b=btn(ITEMS[id],()=>{selected=id;held=id;closePanel();toast(`已選取：${ITEMS[id]}。靠近機關後按 E 使用。`);},`item-tile ${selected===id?'selected':''}`);b.append(text('small',id==='letter'?'跨關道具 · 請保留':'已收集'));grid.append(b);}if(!state.inventory.length)grid.append(text('p','物品欄還是空的。'));body.append(grid);
   add(body,text('p','記憶碎片'));const memories=document.createElement('div');memories.className='item-grid';state.memories.forEach((m,i)=>memories.append(btn(`${symbols[i]} ${m}`,()=>showInspection('memory',m),'item-tile')));body.append(memories);
@@ -135,7 +148,7 @@ function voiceSettings(){
 function pause(){modal('把時間停在這裡','<p>記憶不會催促你。準備好了，就繼續走。</p>',[['繼續探索',resume],['主角聲線',voiceSettings,'secondary'],[effectsEnabled?'降低眼睛與水面動態':'恢復完整特效',()=>{effectsEnabled=!effectsEnabled;world.setEffects(effectsEnabled);document.body.classList.toggle('low-effects',!effectsEnabled);pause();},'secondary'],['操作說明',()=>{const b=openPanel('操作說明','CONTROLS');b.innerHTML='<p>WASD 移動 · 直接移動滑鼠環視，不需按住<br>E 互動 · G 放下 · R 檢視與旋轉<br>Tab 物品欄 · H 任務提示 · N 探索導覽 · Esc 離開介面或暫停<br>在物件操作介面中以滑鼠拖曳、旋轉與放置。<br>探索導覽可沿安全路線走近目前可見的物件。</p>';},'secondary'],[muted?'開啟聲音':'關閉聲音',()=>{muted=!muted;if(muted&&'speechSynthesis'in window)speechSynthesis.cancel();audio.update();pause();},'secondary'],['回到主畫面',showTitle,'secondary']],'PAUSE');}
 function requestLock(){mouseLook?.lock();}
 function move(dx,dz){const p=world.camera.position,n=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.1));for(let i=0;i<n;i++){if(walkable(p.x+dx/n,p.z,world.bounds,world.blocks))p.x+=dx/n;if(walkable(p.x,p.z+dz/n,world.bounds,world.blocks))p.z+=dz/n;}}
-function frame(now){const dt=Math.min((now-elapsedLast)/1000,1);elapsedLast=now;
+function frame(now){requestAnimationFrame(frame);if(document.hidden||renderFailed||renderContext?.lost){elapsedLast=now;return;}try{const dt=Math.min((now-elapsedLast)/1000,1);elapsedLast=now;
   if(mode==='explore'||mode==='panel'||mode==='projection')state.elapsed+=dt;
   if(mode==='explore'){
     const speed=movementSpeed(world.wadingAt(world.camera.position.x,world.camera.position.z));$('movement-state').textContent=world.wadingAt(world.camera.position.x,world.camera.position.z)?'水淹區 · 行動變慢':'';
@@ -144,14 +157,14 @@ function frame(now){const dt=Math.min((now-elapsedLast)/1000,1);elapsedLast=now;
     const target=world.target();if(focusEntity&&(!focusEntity.group.visible||!world.near(focusEntity)))focusEntity=null;nearby=focusEntity||target;$('interact').hidden=!nearby;$('interact-name').textContent=nearby?nearby.name:'';
   }else $('interact').hidden=true;
   if(mode==='projection'){projectionTime+=dt;const page=Math.min(3,Math.floor(projectionTime/5));if(page!==projectionPage){projectionPage=page;const el=$('projection-copy');if(el)el.textContent=PROJECTION[page];audio.speak(PROJECTION[page]);}if(projectionTime>=20){$('modal').hidden=true;dispatch({type:'PROJECTION_END'});modal('你記起來了','<p>投影緩緩熄滅。那些破碎的記憶，終於重新連結。<br><br>第二關的未寄出信，還在你的物品欄裡。</p>',[['走向信箱',resume]],'THE UNSENT LETTER');}}
-  world.tick(now*.001);if(mode==='title'){world.camera.position.set(1.5+Math.sin(now*.00008)*.15,2.1,5.5);world.camera.lookAt(-1,1,-1.4);}if(now-lastRender>33){world.render();inspector?.render();lastRender=now;}requestAnimationFrame(frame);
+  world.tick(now*.001);if(mode==='title'){world.camera.position.set(1.5+Math.sin(now*.00008)*.15,2.1,5.5);world.camera.lookAt(-1,1,-1.4);}if(now-lastRender>33){world.render();inspector?.render();lastRender=now;}}catch(error){renderProblem(error);}
 }
 try{
   world=createWorld($('world'),()=>state,handle);mouseLook=createMouseLook({canvas:$('world'),documentRef:document,onLook(dx,dy){navigation=[];navTarget=null;focusEntity=null;world.camera.rotation.y-=dx*.0025;world.camera.rotation.x=Math.max(-1.3,Math.min(1.3,world.camera.rotation.x-dy*.0025));},onUnlock(){if(mode==='explore')pause();},onDenied(){if(!lockHelpShown){toast('已啟用直接滑鼠環視。Esc 暫停並恢復游標。');lockHelpShown=true;}}});$('new-game').disabled=false;$('new-game').textContent='睜開眼睛　→';$('continue-game').hidden=!saved.state;if(saved.error)$('load-message').textContent=saved.error;
-  $('new-game').onclick=()=>start(false);$('continue-game').onclick=()=>start(true);$('panel-close').onclick=closePanel;$('hint-button').onclick=showHints;$('navigate-button').onclick=showNavigation;$('inventory-button').onclick=showInventory;$('pause-button').onclick=pause;$('interact').onclick=()=>activate(nearby);$('lock-button').onclick=requestLock;
+  monitorRendering();$('new-game').onclick=()=>start(false);$('continue-game').onclick=()=>start(true);$('panel-close').onclick=closePanel;$('hint-button').onclick=showHints;$('navigate-button').onclick=showNavigation;$('inventory-button').onclick=showInventory;$('pause-button').onclick=pause;$('interact').onclick=()=>activate(nearby);$('lock-button').onclick=requestLock;
   addEventListener('keydown',e=>{if(['Tab','Space','KeyW','KeyA','KeyS','KeyD','KeyE','KeyG','KeyR','KeyH','KeyN','Escape'].includes(e.code)&&mode!=='title')e.preventDefault();if(e.repeat)return;if(mode==='panel'&&photoController){if(['KeyQ','KeyE'].includes(e.code)){e.preventDefault();photoController.rotate(e.code==='KeyQ'?-90:90);return;}if(e.code==='Tab')return;}
     if(e.code==='Escape'){if(mode==='panel')closePanel();else if(mode==='explore')pause();return;}
-    if(mode==='title'||mode==='modal'||mode==='projection')return;
+    if(['title','modal','projection','recovering','render-error'].includes(mode))return;
     if(e.code==='Tab'){mode==='panel'?closePanel():showInventory();return;}
     if(e.code==='KeyR'){if(mode==='panel')closePanel();else if(held)showInspection(held,ITEMS[held]||'手持物件');else toast('先拿起一件可以檢視的物品。');return;}
     if(mode!=='explore')return;keys.add(e.code);if(e.code==='KeyE')activate(nearby);if(e.code==='KeyH')showHints();if(e.code==='KeyN')showNavigation();if(e.code==='KeyG'){held=null;toast('你放下了手持物件。已收集的任務物品仍保存在物品欄。');}
