@@ -276,3 +276,28 @@ body.low-effects #world { animation: none; }
 .puzzle-panel .primary { margin-top: 8px; min-height: 48px; }
 .panel .panel-note { font-size: 18px; line-height: 1.7; }
 @media (max-width:700px) { .photo-toolbar p { flex-basis:100%; text-align:center; } .photo-workspace { grid-template-columns:1fr; } .piece-tray { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+/* Immediate first-person input, short transition eyes and readable optical controls. */
+body.exploring, body.exploring * { cursor: none !important; }
+#eye-overlay { transition: opacity .14s ease-out; }
+body.weird #eye-overlay { opacity: .07; }
+body.weird.eyes-surge #eye-overlay { opacity: .78; }
+body.low-effects #eye-overlay { opacity: 0; }
+#movement-state { display: none; position: fixed; top: 30px; left: 50%; transform: translateX(-50%); color: #e5d4bd; padding: 8px 15px; background: #13171ce8; border: 1px solid #899e9b77; z-index: 4; font-size: 14px; pointer-events: none; }
+body.exploring #movement-state:not(:empty) { display: block; }
+.spectrum-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.spectrum-options button { border-left: 5px solid var(--spectrum); min-height: 48px; }
+.spectrum-options button[aria-pressed=true] { outline: 2px solid var(--spectrum); outline-offset: 2px; box-shadow: 0 0 16px color-mix(in srgb,var(--spectrum) 25%,transparent); }
+@media (prefers-reduced-motion:reduce) { body.weird.eyes-surge #eye-overlay { opacity: .07; } }
+body.low-effects.weird #eye-overlay, body.low-effects.weird.eyes-surge #eye-overlay { opacity: 0; }
+.optics-panel { left: 50%; right: auto; top: 16px; bottom: 16px; transform: translateX(-50%); width: min(1050px,calc(100vw - 48px)); padding: 22px 28px; animation: none; }
+.optics-panel > header { padding-bottom: 12px; margin-bottom: 12px; }
+.optics-panel h2 { font-size: 30px; }
+.optics-panel #panel-body > p { margin: 8px 0 14px; }
+.optics-workspace { display: grid; grid-template-columns: 1.1fr 1fr; gap: 26px; align-items: start; }
+.optics-workspace .beam-diagram { height: 250px; }
+.optics-workspace .alignment { font-size: 18px; }
+.optics-controls .button-row { margin: 4px 0 14px; }
+.optics-controls > p { margin: 12px 0 8px; }
+.optics-controls > .secondary { width: 100%; margin-top: 12px; }
+.optics-controls > .primary { margin-top: 14px; }
+@media (max-width:800px) { .optics-workspace { grid-template-columns: 1fr; } .optics-panel { width: calc(100vw - 32px); } }

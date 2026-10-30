@@ -1,6 +1,6 @@
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
-for (const file of ['engine.mjs','navigation.mjs','content.mjs','spatial.mjs','models.mjs','atmosphere.mjs','scene.mjs','game.mjs','voice.mjs']) execFileSync(process.execPath,['--check',`public/${file}`]);
+for (const file of ['engine.mjs','navigation.mjs','content.mjs','spatial.mjs','models.mjs','atmosphere.mjs','scene.mjs','game.mjs','voice.mjs','controls.mjs','phenomena.mjs']) execFileSync(process.execPath,['--check',`public/${file}`]);
 await mkdir('public/vendor', {recursive:true});
 for (const file of ['three.module.js','three.core.js']) await cp(`node_modules/three/build/${file}`, `public/vendor/${file}`);
 await cp('node_modules/three/LICENSE', 'public/vendor/THREE-LICENSE.txt');

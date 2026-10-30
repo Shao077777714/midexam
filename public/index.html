@@ -11,12 +11,13 @@
   <div id="grain" aria-hidden="true"></div><div id="vignette" aria-hidden="true"></div><div id="transition" aria-hidden="true"></div>
   <header id="hud" hidden>
     <div class="chapter"><span id="chapter-no">記憶 01 / 05</span><h1 id="chapter-name">失焦的房間</h1><span id="world-state" class="world-state">DREAMCORE · 夢核</span></div>
-    <nav class="hud-actions" aria-label="遊戲選單"><button id="hint-button" class="quiet">提示 <kbd>H</kbd></button><button id="navigate-button" class="quiet">探索導覽</button><button id="inventory-button" class="quiet">物品欄 <kbd>Tab</kbd></button><button id="pause-button" class="round" aria-label="暫停遊戲">Ⅱ</button></nav>
+    <nav class="hud-actions" aria-label="遊戲選單"><button id="hint-button" class="quiet">提示 <kbd>H</kbd></button><button id="navigate-button" class="quiet">探索導覽 <kbd>N</kbd></button><button id="inventory-button" class="quiet">物品欄 <kbd>Tab</kbd></button><button id="pause-button" class="round" aria-label="暫停遊戲">Ⅱ</button></nav>
   </header>
   <aside id="memory-hud" hidden><p class="eyebrow">MEMORY FRAGMENTS</p><div id="memory-icons"></div><small id="save-status">每關完成後自動儲存</small></aside>
+  <div id="movement-state" role="status"></div>
   <div id="crosshair" aria-hidden="true" hidden>+</div>
   <button id="interact" class="interact" hidden><kbd>E</kbd><span id="interact-name"></span></button>
-  <footer id="control-bar" hidden><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移動</span><span>滑鼠環視 · 按住拖曳亦可</span><span><kbd>E</kbd> 互動 <kbd>R</kbd> 檢視 <kbd>G</kbd> 放下</span><button id="lock-button">點擊鎖定滑鼠</button></footer>
+  <footer id="control-bar" hidden><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移動</span><span>移動滑鼠環視 · Esc 顯示游標</span><span><kbd>E</kbd> 互動 <kbd>R</kbd> 檢視 <kbd>G</kbd> 放下</span><button id="lock-button">重新鎖定滑鼠</button></footer>
   <div id="toast" role="status" aria-live="polite"></div>
   <section id="title-screen" class="title-screen">
     <div class="title-top"><span>DREAM GAP</span><span>一段關於遺忘與清醒的記憶</span></div>

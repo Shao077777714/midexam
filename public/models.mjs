@@ -47,7 +47,7 @@ function letterTexture() {
 }
 
 export function setPhotoMood(root,corrupted=false){
-  root.traverse(o=>{if(o.userData.photoMaps)o.material.map=o.userData.photoMaps[corrupted?'horror':'aged'];});
+  root.traverse(o=>{if(o.userData.photoMaps){const next=o.userData.photoMaps[corrupted?'horror':'aged'];if(Boolean(o.material.map)!==Boolean(next))o.material.needsUpdate=true;o.material.map=next;}});
 }
 function photoMaps(mesh,textures,n=null){
   const maps={};for(const [key,source] of [['aged',textures.family],['horror',textures.corrupt||textures.family]]){
@@ -59,7 +59,7 @@ export function createModel(kind, textures={}) {
   if(kind==='moon'){
     cyl(g,.24,.28,.1,[0,.05,0],'#bba275',{metalness:.7});const moon=emblem('moon','#efd490');moon.scale.setScalar(1.65);moon.position.set(-.06,.65,0);g.add(moon);
     cyl(g,.025,.025,.32,[0,.25,0],'#a28f6d');
-  }else if(kind==='rabbit'){
+  }else if(kind==='rabbit'||kind==='wornDoll'){
     sphere(g,.29,[0,.39,0],'#ead4d6',[.92,1.15,.8]);sphere(g,.25,[0,.82,.015],'#f0deda');
     for(const x of [-.12,.12]){sphere(g,.11,[x,1.1,0],'#efdcda',[.7,2.15,.8]);sphere(g,.07,[x,1.1,.076],'#cf9fba',[.5,2.3,.35]);sphere(g,.13,[x,.11,.1],'#ead4d6',[.9,.85,1.45]);}
     for(const x of [-.09,.09]){sphere(g,.025,[x,.86,.245],'#3e3541',[1,1,.4]);sphere(g,.008,[x-.006,.87,.258],'#fff');}
@@ -132,6 +132,12 @@ export function createModel(kind, textures={}) {
     for(const x of [-.3,.3])sphere(lid,.015,[x,.15,.34],'#a78da3');
   }else if(kind==='cup'){
     cyl(g,.11,.085,.2,[0,.1,0],'#d1b2ba');const handle=ring(g,.075,.018,[.11,.11,0],'#c29ca7');handle.scale.x=.8;cyl(g,.18,.18,.025,[0,.012,0],'#dec9c5');
+  }
+  if(kind==='wornDoll'){
+    g.traverse(o=>{if(o.isMesh){o.material.color.lerp(new T.Color('#6b6458'),.58);o.material.roughness=.98;}});
+    for(let i=0;i<5;i++){const stitch=cube(g,[.035,.012,.024],[-.1+i*.05,.49,.232],'#443c39');stitch.rotation.z=i%2?.6:-.6;}
+    sphere(g,.042,[-.09,.86,.255],'#5d5549',[1,1,.3]);
+    const patch=cube(g,[.16,.13,.035],[.08,.36,.22],'#806b69');patch.rotation.z=-.2;g.userData.wornDoll=true;
   }
   return g;
 }
