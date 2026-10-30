@@ -4,6 +4,7 @@ import {createModel,emblem,setPhotoMood} from './models.mjs';
 import {restOn,mountOn,footprint,circleHits} from './spatial.mjs';
 import {buildPhenomena} from './phenomena.mjs';
 import {buildExterior,buildEyes,buildFlood} from './atmosphere.mjs';
+import {disposeObjects,watchContext} from './rendering.mjs';
 const loader=new T.TextureLoader(),textures={};
 if(typeof document!=='undefined')for(const [k,f] of Object.entries({grass:'grass-dreamcore-v1.png',siding:'siding-tintable-v1.png',road:'asphalt-dreamcore-v1.png',eyes:'sky-eyes-nightmare-v1.png',family:'family-aged-v2.png',corrupt:'family-distorted-v2.png',organic:'organic-eye-v2.png'})){
   const tex=loader.load(`assets/dreamcore/${f}`);tex.colorSpace=T.SRGBColorSpace;
@@ -145,7 +146,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   }
   function photo(pos,scale=1){const g=model('photo');if(getState().level===0){const veil=mesh(new T.PlaneGeometry(.42,.42),new T.MeshBasicMaterial({color:'#d9d4cf',transparent:true,opacity:.91}),g,[.43,1.05,.086]);veil.castShadow=false;}g.scale.setScalar(scale);g.position.set(...pos);root.add(g);return g;}
   function build(){
-    scene.remove(root);root.traverse(o=>{o.geometry?.dispose();if(o.userData.photoMaps)for(const map of Object.values(o.userData.photoMaps))if(map&&!Object.values(textures).includes(map))map.dispose();if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material]){if(m.map&&!Object.values(textures).includes(m.map))m.map.dispose();m.dispose();}});root=new T.Group();scene.add(root);entities=[];blocks=[];shadowModels=[];ghosts=[];mirrorModels=[];curtain=[];plates=[];mirrorVeil=null;clockHand=null;shadowSupports=[];colliderSources=[];decor=[];sensors=[];searchObjects=[];
+    scene.remove(root);disposeObjects(root,Object.values(textures));root=new T.Group();scene.add(root);entities=[];blocks=[];shadowModels=[];ghosts=[];mirrorModels=[];curtain=[];plates=[];mirrorVeil=null;clockHand=null;shadowSupports=[];colliderSources=[];decor=[];sensors=[];searchObjects=[];
     const s=getState(),i=s.level;photoCorrupted=s.levels[i].triggered;room(i);beamRoot=new T.Group();beamRoot.userData.nonOccluding=true;root.add(beamRoot);
     camera.position.set(i===1?0:0,1.65,i===1?5:5.9);camera.rotation.set(-.03,0,0);
     if(i===0){
@@ -270,4 +271,29 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   if(!headless)addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
   return {renderer,scene,camera,build,sync,tick,target,near,focusPoint,canApply,approachable,visibleEntities,get bounds(){return bounds},get blocks(){return blocks},get entities(){return entities},get decorations(){return decor},get colliderSources(){return colliderSources},get eyes(){return wallEyes},get flood(){return flood},get phenomena(){return phenomena},wadingAt(x,z){return flood.group.visible&&x>bounds.minX+.11&&x<bounds.maxX-.11&&z>bounds.minZ+.11&&z<bounds.maxZ-.11;},setEffects(enabled){effectsEnabled=enabled;},render(){renderer.render(scene,camera);}};
 }
-export function createInspector(canvas,kind){const r=new T.WebGLRenderer({canvas,antialias:true,alpha:true});r.setPixelRatio(Math.min(devicePixelRatio,1.5));r.setSize(canvas.clientWidth||350,220,false);r.outputColorSpace=T.SRGBColorSpace;const scene=new T.Scene();scene.add(new T.HemisphereLight('#fff1e4','#9baf9c',2.2));const light=new T.DirectionalLight('#fff',2);light.position.set(3,5,4);scene.add(light);const g=model(kind);scene.add(g);if(['letter','notice','consult','help','drawing','key',...PHOTO_IDS,'phone'].includes(kind))g.rotation.x=.7;const bounds=new T.Box3().setFromObject(g),center=bounds.getCenter(new T.Vector3());g.position.sub(center);const camera=new T.PerspectiveCamera(40,(canvas.clientWidth||350)/220,.05,30);const size=bounds.getSize(new T.Vector3());camera.position.set(0,.3,Math.max(size.x*2,size.y*2,2));camera.lookAt(0,0,0);return {group:g,render(){r.render(scene,camera)},dispose(){scene.traverse(o=>{o.geometry?.dispose();if(o.userData.photoMaps)for(const map of Object.values(o.userData.photoMaps))if(map&&!Object.values(textures).includes(map))map.dispose();if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material]){if(m.map&&!Object.values(textures).includes(m.map))m.map.dispose();m.dispose();}});r.dispose();}};}
+// Reuse one preview canvas/context across all items instead of allocating one per interaction.
+export function createInspectorPool({makeCanvas=()=>document.createElement('canvas'),makeRenderer=canvas=>new T.WebGLRenderer({canvas,antialias:true,alpha:true}),makeModel=model,sharedTextures=()=>Object.values(textures)}={}){
+  let renderer=null,active=null,monitor=null;
+  const releaseRenderer=()=>{if(renderer){monitor?.dispose();monitor=null;const lost=renderer.getContext().isContextLost();renderer.dispose();if(!lost)renderer.forceContextLoss?.();renderer=null;}};
+  return {
+    open(host,kind){
+      active?.dispose();
+      if(renderer?.getContext().isContextLost())releaseRenderer();
+      if(!renderer){const canvas=makeCanvas();renderer=makeRenderer(canvas);renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio||1,1.5));renderer.outputColorSpace=T.SRGBColorSpace;monitor=watchContext(canvas,renderer,{onLost(){canvas.style.visibility='hidden';},onRestored(){canvas.style.visibility='';}});}
+      const r=renderer,canvas=r.domElement;canvas.className='object-preview';canvas.setAttribute('aria-label','可拖曳旋轉的 3D 物件');host.append(canvas);
+      const width=canvas.clientWidth||350;r.setSize(width,220,false);
+      const scene=new T.Scene();scene.add(new T.HemisphereLight('#fff1e4','#9baf9c',2.2));const light=new T.DirectionalLight('#fff',2);light.position.set(3,5,4);scene.add(light);
+      const g=makeModel(kind);scene.add(g);if(['letter','notice','consult','help','drawing','key',...PHOTO_IDS,'phone'].includes(kind))g.rotation.x=.7;
+      const bounds=new T.Box3().setFromObject(g),center=bounds.getCenter(new T.Vector3());g.position.sub(center);
+      const camera=new T.PerspectiveCamera(40,width/220,.05,30),size=bounds.getSize(new T.Vector3());camera.position.set(0,.3,Math.max(size.x*2,size.y*2,2));camera.lookAt(0,0,0);
+      let disposed=false;
+      const inspector={canvas,group:g,render(){if(!disposed&&!r.getContext().isContextLost())r.render(scene,camera);},dispose(){
+        if(disposed)return;disposed=true;canvas.onpointerdown=canvas.onpointermove=canvas.onpointerup=canvas.onpointercancel=null;
+        disposeObjects(scene,sharedTextures());scene.clear();r.renderLists?.dispose();if(!r.getContext().isContextLost())r.clear();canvas.remove();if(active===inspector)active=null;
+      }};active=inspector;return inspector;
+    },
+    dispose(){active?.dispose();releaseRenderer();}
+  };
+}
+const inspectorPool=createInspectorPool();
+export function createInspector(host,kind){return inspectorPool.open(host,kind);}

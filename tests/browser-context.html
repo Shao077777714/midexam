@@ -1,0 +1,13 @@
+<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><title>繪圖中斷回歸測試</title>
+<style>body{margin:0;background:#14221e;color:#fff;font:16px sans-serif}header{height:62px;display:flex;align-items:center;gap:12px;padding:0 12px}button{padding:10px}iframe{border:0;width:100%;height:calc(100vh - 62px)}#log{font-size:13px}</style>
+<header><button id="interrupt">模擬主場景繪圖中斷</button><button id="preview-interrupt">模擬預覽繪圖中斷</button><output id="log">等待遊戲載入</output></header>
+<iframe id="qa-game" title="遊戲測試" src="/"></iframe>
+<script>
+const frame=document.querySelector('iframe'),log=document.querySelector('#log'),lines=[],hooked=new WeakSet();
+function report(s){lines.push(s);log.textContent=lines.slice(-5).join(' · ');}
+function hook(c,name){if(hooked.has(c))return;hooked.add(c);c.addEventListener('webglcontextlost',()=>report(name+' lost'));c.addEventListener('webglcontextrestored',()=>report(name+' restored'));}
+frame.onload=()=>{hook(frame.contentDocument.querySelector('#world'),'world');report('遊戲已載入');};
+function interrupt(selector,name){const c=frame.contentDocument.querySelector(selector);if(!c)return report('請先開啟物品預覽');hook(c,name);const gl=c.getContext('webgl2'),extension=gl.getExtension('WEBGL_lose_context');if(extension)extension.loseContext();else report('無測試擴充');}
+document.querySelector('#interrupt').onclick=()=>interrupt('#world','world');
+document.querySelector('#preview-interrupt').onclick=()=>interrupt('.object-preview','preview');
+</script></html>
