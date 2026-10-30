@@ -40,11 +40,13 @@ export function buildEyes(root,bounds,textures={}) {
   const locations=[];
   for(let i=0;i<5;i++)locations.push({axis:'x',surface:bounds.maxX-.1,normal:-1,pos:[bounds.maxX-.1,3.65+(i%2)*.22,bounds.minZ+1.3+i*(bounds.maxZ-bounds.minZ-2.6)/4]});
   for(const x of [-4.4,-2.4,0,2.4,4.4].filter(x=>Math.abs(x)<bounds.maxX-.3))locations.push({axis:'z',surface:bounds.minZ+.1,normal:1,pos:[x,4.05,bounds.minZ+.1]});
-  locations.forEach(({axis,surface,normal,pos},i)=>{
-    const eye=new T.Group();group.add(eye);eye.position.set(...pos);if(axis==='x')eye.rotation.y=-Math.PI/2;
+  for(let i=0;i<12;i++)locations.push({axis:'x',surface:bounds.maxX-.1,normal:-1,pos:[bounds.maxX-.1,1.55+(i%2)*1.05,bounds.minZ+1.2+i*(bounds.maxZ-bounds.minZ-2.4)/11],small:true});
+  for(let i=0;i<5;i++)locations.push({axis:'z',surface:bounds.maxZ-.1,normal:-1,pos:[(i-2)*(bounds.maxX>4?2.15:1.15),3.05,bounds.maxZ-.1],small:true});
+  locations.forEach(({axis,surface,normal,pos,small},i)=>{
+    const eye=new T.Group();group.add(eye);eye.position.set(...pos);if(axis==='x')eye.rotation.y=-Math.PI/2;else if(normal<0)eye.rotation.y=Math.PI;
     const tissue=part(eye,new T.SphereGeometry(.46,24,16),'#96766e',[0,0,.015],{roughness:.28});tissue.scale.set(1.5,.62,.23);
     part(eye,new T.BoxGeometry(.85,.24,.025),'#6a514b',[0,0,-.09]);
-    const membrane=part(eye,new T.PlaneGeometry(1.9,1.9),'#fff',[0,0,.14],{map:textures.organic||null,transparent:true,alphaTest:.12,roughness:.18,depthWrite:true});
+    const membrane=part(eye,new T.PlaneGeometry(1.9,1.9),'#fff',[0,0,.14],{map:textures.organic||null,emissiveMap:textures.organic||null,emissive:'#ffffff',emissiveIntensity:.2,transparent:true,alphaTest:.12,roughness:.18,depthWrite:true});
     membrane.userData.organicEye=true;membrane.castShadow=false;
     for(let k=0;k<7;k++){
       const points=Array.from({length:9},(_,n)=>new T.Vector3(-.58+n*.145,Math.sin(n*.8+k)*.018+(k-3)*.055,.113));
@@ -54,7 +56,7 @@ export function buildEyes(root,bounds,textures={}) {
     const disk=part(iris,new T.CylinderGeometry(.14,.14,.008,32),'#403e26',[0,0,0],{roughness:.35});disk.rotation.x=Math.PI/2;
     const pupil=part(iris,new T.SphereGeometry(.105,20,12),'#111b1b',[0,0,.024],{roughness:.15});pupil.scale.z=.35;
     const glint=part(iris,new T.SphereGeometry(.023,10,6),'#dce5d3',[-.04,.05,.063]);glint.castShadow=false;
-    eye.scale.setScalar(.9+(i%3)*.23);mountOn(eye,axis,surface,normal);pupils.push({eye,iris});
+    eye.scale.setScalar(small?.43+(i%3)*.08:.9+(i%3)*.23);mountOn(eye,axis,surface,normal);pupils.push({eye,iris});
   });
   return {group,pupils,tick(camera,time,reducedMotion=false){
     if(!group.visible)return;

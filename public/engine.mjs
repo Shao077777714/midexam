@@ -16,10 +16,12 @@ const add=(a,b,t=1)=>[a[0]+b[0]*t,a[1]+b[1]*t];
 const unit=a=>{const n=Math.hypot(...a);return a.map(v=>v/n);};
 export const MIRROR_POINTS=[[-3,-2],[0,-2],[0,1]];
 export const LIGHT_MARKERS=[[-1.5,-2],[0,-0.5],[2,1]];
+export const SPECTRA=[{name:'透明',color:'#f1e6bb'},{name:'琥珀',color:'#eab25d'},{name:'青綠',color:'#72d4ba'},{name:'紫羅蘭',color:'#bc95ea'}];
+export const RECEIVER_FILTERS=[1,2,3];
 function segmentDistance(p,a,b){const v=add(b,a,-1); const t=clamp(dot(add(p,a,-1),v)/dot(v,v),0,1); const q=add(a,v,t); return Math.hypot(p[0]-q[0],p[1]-q[1]);}
 export function traceMirrors(angles,torchAngle=0) {
   let origin=[-3,3], direction=[Math.sin(torchAngle*Math.PI/180),-Math.cos(torchAngle*Math.PI/180)], last=-1;
-  const segments=[], marks=[];
+  const segments=[], marks=[],bounces=[],markSegments=[];
   for(let bounce=0;bounce<5;bounce++) {
     let closest=null;
     MIRROR_POINTS.forEach((p,i)=>{
@@ -34,16 +36,22 @@ export function traceMirrors(angles,torchAngle=0) {
     });
     const end=closest?.hit||add(origin,direction,12);
     segments.push([origin,end]);
-    LIGHT_MARKERS.forEach((p,i)=>{if(!marks.includes(i)&&segmentDistance(p,origin,end)<0.16)marks.push(i);});
+    LIGHT_MARKERS.forEach((p,i)=>{if(!marks.includes(i)&&segmentDistance(p,origin,end)<0.16){marks.push(i);markSegments[i]=segments.length-1;}});
     if(!closest)break;
-    direction=unit(add(direction,closest.n,-2*dot(direction,closest.n)));
+    bounces.push(closest.i);direction=unit(add(direction,closest.n,-2*dot(direction,closest.n)));
     origin=add(closest.hit,direction,0.002); last=closest.i;
   }
-  return {segments,marks,solved:marks.join(',')==='0,1,2'};
+  return {segments,marks,bounces,markSegments,solved:marks.join(',')==='0,1,2'};
+}
+export function opticsStatus(level){
+  const trace=traceMirrors(level.mirrors,level.torchAngle);
+  const segmentFilters=trace.segments.map((_,i)=>i===0?0:level.mirrorFilters[trace.bounces[i-1]]);
+  const received=RECEIVER_FILTERS.map((_,i)=>Number.isInteger(trace.markSegments[i])?segmentFilters[trace.markSegments[i]]:null);
+  return {trace,segmentFilters,received,matched:received.map((v,i)=>v===RECEIVER_FILTERS[i]),ready:trace.solved&&received.every((v,i)=>v===RECEIVER_FILTERS[i])};
 }
 export function shadowAligned(value,target){return Math.hypot(value.x-target.x,value.z-target.z)<0.32&&angleDistance(value.angle,target.angle)<12;}
-function levelState(){return {triggered:false,drawer:false,chair:false,frame:false,collected:[],slots:{},shadow:[{x:-3.7,z:1,angle:90},{x:0.6,z:1.4,angle:0},{x:3.4,z:0.8,angle:45}],searched:[],pieceAngles:[90,180,270,90,270,180,90,180,270],photos:Array(9).fill(null),photoRead:false,mirrors:[0,45,0],torchAngle:0,flashlight:false,opticsUnlocked:false,records:[],sequence:[],projecting:false,projectionDone:false,mailed:false};}
-export function newGame(){return {version:2,level:0,unlocked:0,completed:[false,false,false,false,false],memories:[],inventory:[],letter:false,elapsed:0,levels:Array.from({length:5},levelState),persisted:false};}
+function levelState(){return {triggered:false,drawer:false,chair:false,frame:false,collected:[],slots:{},shadow:[{x:-3.7,z:1,angle:90},{x:0.6,z:1.4,angle:0},{x:3.4,z:0.8,angle:45}],searched:[],pieceAngles:[90,180,270,90,270,180,90,180,270],photos:Array(9).fill(null),photoRead:false,mirrors:[0,45,0],mirrorFilters:[0,0,0],torchAngle:0,flashlight:false,opticsUnlocked:false,records:[],sequence:[],projecting:false,projectionDone:false,mailed:false};}
+export function newGame(){return {version:3,level:0,unlocked:0,completed:[false,false,false,false,false],memories:[],inventory:[],letter:false,elapsed:0,levels:Array.from({length:5},levelState),persisted:false};}
 export function canComplete(s){const l=s.levels[s.level];if(!l.triggered)return false; switch(s.level){
 case 0:return l.shadow.every((v,i)=>shadowAligned(v,SHADOW_TARGETS[i]));
 case 1:return ['key','drawing','letter'].every(id=>l.slots[id]===id);
@@ -74,7 +82,7 @@ export function applyAction(current,a){
         if(!SEARCHES[s.level].includes(a.id))return fail('這裡沒有可以打開的夾層。');
         if(s.level===3&&!l.opticsUnlocked)return fail('先讓光依序找到三個標記。');
         if(l.searched.includes(a.id))return fail('這個夾層已經打開了。');
-        l.searched.push(a.id);message='夾層打開了。裡面似乎留下了什麼。';break;
+        l.searched.push(a.id);message=a.id==='television'?'電視照片托架已展開，螢幕映出了碎片。':'夾層打開了。裡面似乎留下了什麼。';break;
       case 'COLLECT': {
         const allowed=s.level===1?['key','drawing','letter']:s.level===2?PHOTO_IDS:[];
         if(!allowed.includes(a.id)||l.collected.includes(a.id))return fail('這個物件無法重複拿取。');
@@ -113,6 +121,14 @@ export function applyAction(current,a){
       case 'MIRROR':
         if(s.level!==3||!l.flashlight||!Number.isInteger(a.index)||a.index<0||a.index>2||!Number.isFinite(a.angle))return fail('先拿起手電筒。');
         l.mirrors[a.index]=((a.angle%180)+180)%180;message='鏡面將光折向另一個方向。';break;
+      case 'MIRROR_FILTER':
+        if(s.level!==3||!l.flashlight||!Number.isInteger(a.index)||a.index<0||a.index>2||!Number.isInteger(a.filter)||a.filter<0||a.filter>3)return fail('先拿起手電筒，再調整鏡片。');
+        if(l.opticsUnlocked)return fail('光路已經記錄，不需要再更換鏡片。');
+        l.mirrorFilters[a.index]=a.filter;message=`鏡片切換為${SPECTRA[a.filter].name}。`;break;
+      case 'CALIBRATE':
+        if(s.level!==3||!l.flashlight||!opticsStatus(l).ready)return fail('方向與光色都要吻合，才能記錄光路。');
+        if(l.opticsUnlocked)return fail('這條光路已經記錄。');
+        l.opticsUnlocked=true;message='三種光色穩定下來，記憶夾層解鎖了。';break;
       case 'TORCH':if(s.level!==3||!l.flashlight||!Number.isFinite(a.angle))return fail('先拿起手電筒。');l.torchAngle=clamp(a.angle,-40,40);break;
       case 'RECORD':if(s.level!==3||!l.opticsUnlocked||!RECORD_HIDES[a.id]||!l.searched.includes(RECORD_HIDES[a.id]))return fail('這份記憶仍被鎖住。');if(!l.records.includes(a.id))l.records.push(a.id);message='你讀見了過去的自己。';break;
       case 'MEMORY':
@@ -126,7 +142,6 @@ export function applyAction(current,a){
       default:return fail('未知操作。');
     }
   }
-  if(s.level===3&&l.flashlight&&traceMirrors(l.mirrors,l.torchAngle).solved)l.opticsUnlocked=true;
   const completedNow=canComplete(s);
   if(completedNow){s.completed[s.level]=true;s.unlocked=Math.min(4,s.level+1);s.memories=MEMORIES.filter((_,i)=>s.completed[i]);s.persisted=false;message=`找回記憶：${MEMORIES[s.level]}`;}
   return {state:s,ok:true,message,completedNow};
@@ -134,7 +149,7 @@ export function applyAction(current,a){
 export function saveGame(storage,state){try{storage.setItem(SAVE_KEY,JSON.stringify(state));return {ok:true};}catch{return {ok:false,message:'無法儲存進度，請允許此網站儲存資料後重試。'};}}
 export function loadGame(storage){try{
   const raw=storage.getItem(SAVE_KEY);if(!raw)return {state:null,error:null};const s=JSON.parse(raw);
-  if(![1,2].includes(s.version)||!Number.isInteger(s.level)||s.level<0||s.level>4||!Number.isInteger(s.unlocked)||s.level>s.unlocked||s.unlocked>4||!Array.isArray(s.completed)||s.completed.length!==5||s.completed.some(v=>typeof v!=='boolean')||!Array.isArray(s.levels)||s.levels.length!==5||!Array.isArray(s.inventory)||s.inventory.some(id=>!(id in ITEMS))||typeof s.letter!=='boolean'||!Number.isFinite(s.elapsed)||s.elapsed<0)throw Error();
+  if(![1,2,3].includes(s.version)||!Number.isInteger(s.level)||s.level<0||s.level>4||!Number.isInteger(s.unlocked)||s.level>s.unlocked||s.unlocked>4||!Array.isArray(s.completed)||s.completed.length!==5||s.completed.some(v=>typeof v!=='boolean')||!Array.isArray(s.levels)||s.levels.length!==5||!Array.isArray(s.inventory)||s.inventory.some(id=>!(id in ITEMS))||typeof s.letter!=='boolean'||!Number.isFinite(s.elapsed)||s.elapsed<0)throw Error();
   let gap=false;for(const v of s.completed){if(!v)gap=true;else if(gap)throw Error();}
   const count=s.completed.filter(Boolean).length;if(s.unlocked!==Math.min(4,count)||s.memories?.join(',')!==MEMORIES.slice(0,count).join(',')||(s.completed[1]&&!s.letter))throw Error();
   const legacy=s.version===1;
@@ -147,7 +162,8 @@ export function loadGame(storage){try{
       if(i===3)for(const id of l.records||[])if(RECORD_HIDES[id])l.searched.push(RECORD_HIDES[id]);
     });s.version=2;
   }
-  s.levels.forEach(l=>{if(typeof l.triggered!=='boolean'||!Array.isArray(l.shadow)||l.shadow.length!==3||l.shadow.some(v=>![v.x,v.z,v.angle].every(Number.isFinite))||!Array.isArray(l.photos)||l.photos.length!==9||l.photos.some(v=>v!==null&&(!v||!PHOTO_IDS.includes(v.id)||!Number.isFinite(v.angle)))||new Set(l.photos.filter(Boolean).map(v=>v.id)).size!==l.photos.filter(Boolean).length||!Array.isArray(l.searched)||l.searched.some(id=>!SEARCHES.flat().includes(id))||!Array.isArray(l.pieceAngles)||l.pieceAngles.length!==9||l.pieceAngles.some(v=>!Number.isFinite(v))||!Array.isArray(l.mirrors)||l.mirrors.length!==3||l.mirrors.some(v=>!Number.isFinite(v))||!Array.isArray(l.records)||!Array.isArray(l.sequence)||!Array.isArray(l.collected)||!l.slots||typeof l.slots!=='object'||!Number.isFinite(l.torchAngle))throw Error();});
+  if(s.version===2){for(const l of s.levels)l.mirrorFilters=l.opticsUnlocked?[1,2,3]:[0,0,0];s.version=3;}
+  s.levels.forEach(l=>{if(typeof l.triggered!=='boolean'||!Array.isArray(l.shadow)||l.shadow.length!==3||l.shadow.some(v=>![v.x,v.z,v.angle].every(Number.isFinite))||!Array.isArray(l.photos)||l.photos.length!==9||l.photos.some(v=>v!==null&&(!v||!PHOTO_IDS.includes(v.id)||!Number.isFinite(v.angle)))||new Set(l.photos.filter(Boolean).map(v=>v.id)).size!==l.photos.filter(Boolean).length||!Array.isArray(l.searched)||l.searched.some(id=>!SEARCHES.flat().includes(id))||!Array.isArray(l.pieceAngles)||l.pieceAngles.length!==9||l.pieceAngles.some(v=>!Number.isFinite(v))||!Array.isArray(l.mirrors)||l.mirrors.length!==3||l.mirrors.some(v=>!Number.isFinite(v))||!Array.isArray(l.mirrorFilters)||l.mirrorFilters.length!==3||l.mirrorFilters.some(v=>!Number.isInteger(v)||v<0||v>3)||!Array.isArray(l.records)||!Array.isArray(l.sequence)||!Array.isArray(l.collected)||!l.slots||typeof l.slots!=='object'||!Number.isFinite(l.torchAngle))throw Error();});
   // Projection playback is transient: a reload must allow replay, never strand the player.
   s.levels.forEach(l=>l.projecting=false);
   s.persisted=true;return {state:s,error:null};
