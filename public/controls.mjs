@@ -14,11 +14,11 @@ export function doubleClickAction(target){
   return target?.action||null;
 }
 // Only the fresh visible ray hit can be used; UI events and stale navigation focus never interact.
-export function doubleClickPickup(event,{mode,canvas,locked,world}){
+export function doubleClickPickup(event,{mode,canvas,world}){
   if(mode!=='explore'||event.button!==0||event.target!==canvas)return false;
   const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return false;
-  const x=locked?0:(event.clientX-r.left)/r.width*2-1,y=locked?0:1-(event.clientY-r.top)/r.height*2;
-  const action=doubleClickAction(world.target(x,y));if(!action)return false;
+  // Exploration hides the cursor: the visible reticle, not its invisible position, is the aim.
+  const action=doubleClickAction(world.target(0,0));if(!action)return false;
   action();return true;
 }
 export function movementSpeed(inWater,navigation=false){return (navigation?3.2:2.7)*(inWater?WATER_SPEED_FACTOR:1);}

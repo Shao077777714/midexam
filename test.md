@@ -38,6 +38,15 @@
 - 五關正確解法以 `brief.md` 為準；舊數字密碼不是現行謎底。
 - 功能尚未建立時不捏造啟動、建置或測試命令；建立後將實際命令補入 README 與執行紀錄。
 
+## 抽屜雙擊無反應重測與修正（2026-11-01）
+
+- 基準：加薪的branch 6e7e60f；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），localhost:4181 第二關隔離存檔。未清除或覆寫玩家原來源的進度。
+- 已重現 FAIL：舊版未鎖定滑鼠時按隱藏游標座標射線，畫面準星卻在中央；新回歸案例讓中央有抽屜、點擊座標在 (150,600)，舊版回傳 false。前次人工測試只雙擊畫布中央，未覆蓋此條件，不能用當時 PASS 推斷游標偏離時也正常。
+- 修正：探索雙擊一律使用即時中央射線，與可見準星一致；仍由場景檢查距離、遮擋與可操作狀態，不使用過期導覽目標。互動提示按鈕忽略同一雙擊的第二次 click，避免抽屜開關抵銷。
+- PASS（重測）：新增失敗案例修正後通過，node --test tests/*.test.mjs **85／85**，node scripts/build.mjs（13 模組）、git diff --check 通過。內建正常左鍵雙擊畫布可打開抽屜，雙擊提示按鈕僅切換一次；日誌無 error／warn。
+- PASS（瀏覽器合成事件回歸）：正常由 N 走近抽屜並瞄準後，tests/browser-reticle.mjs 只向畫布送出左下方（12%寬、75%高）的 dblclick，不改攝影機、遊戲狀態或存檔旗標；可正常關閉及再次打開抽屜。證據 docs/screenshots/reticle-drawer-retest.png。這是明確測試夾具合成事件，與一般滑鼠雙擊的預覽結果分開記錄。
+- 重跑方法：將 public/index.html 複製成 public/.qa-reticle.html，在 body 尾加入載入 .qa-reticle.mjs 的 module script，將 tests/browser-reticle.mjs 複製至 public/.qa-reticle.mjs；僅於 localhost 使用。完成後移除 public 與 dist 的兩份測試複本，本次已移除。正式 Chrome／Edge 矩陣及完整五關人工回歸本次 NOT TESTED。
+
 ## 場景雙擊開啟與背包雙擊（2026-11-01）
 
 - 基準：加薪的branch c53673b；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），localhost:4181 的第二關隔離存檔，未修改玩家 127.0.0.1:4181 進度。

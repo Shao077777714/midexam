@@ -42,11 +42,11 @@ test('flashlight and completed-stage inventory hide after their purpose is finis
   const state=newGame();state.level=3;state.levels[3].flashlight=true;assert.equal(inventoryEntries(state).length,1);
   state.levels[3].opticsUnlocked=true;assert.equal(inventoryEntries(state).length,0);state.level=1;state.inventory=['key'];state.completed[1]=true;assert.deepEqual(inventoryEntries(state),[]);
 });
-test('double-click picks only a fresh ray hit in exploration, using cursor coordinates or the locked reticle',()=>{
+test('double-click picks only a fresh ray hit in exploration, using the same reticle with or without Pointer Lock',()=>{
   const canvas={getBoundingClientRect:()=>({left:20,top:30,width:200,height:100})};let calls=0,ray;
   const world={target(x,y){ray=[x,y];return {pickupAction(){calls++;}};}};
   const event={target:canvas,button:0,clientX:170,clientY:55};
-  assert.equal(doubleClickPickup(event,{mode:'explore',canvas,world,locked:false}),true);assert.deepEqual(ray,[.5,.5]);
+  assert.equal(doubleClickPickup(event,{mode:'explore',canvas,world,locked:false}),true);assert.deepEqual(ray,[0,0]);
   doubleClickPickup(event,{mode:'explore',canvas,world,locked:true});assert.deepEqual(ray,[0,0]);
   for(const mode of ['panel','modal','title','projection','recovering'])assert.equal(doubleClickPickup(event,{mode,canvas,world}),false);
   assert.equal(doubleClickPickup({...event,target:{}},{mode:'explore',canvas,world}),false);
@@ -54,6 +54,13 @@ test('double-click picks only a fresh ray hit in exploration, using cursor coord
   world.target=()=>null;assert.equal(doubleClickPickup(event,{mode:'explore',canvas,world}),false);
   world.target=()=>({action(){calls++;}});assert.equal(doubleClickPickup(event,{mode:'explore',canvas,world}),true);assert.equal(calls,3);
 });
+test('hidden mouse clicks use the visible center reticle even when the cursor is off-center',()=>{
+  const canvas={getBoundingClientRect:()=>({left:0,top:0,width:1366,height:768})};let opened=0;
+  const world={target:(x,y)=>x===0&&y===0?{action(){opened++;}}:null};
+  assert.equal(doubleClickPickup({target:canvas,button:0,clientX:150,clientY:600},{mode:'explore',canvas,world,locked:false}),true);
+  assert.equal(opened,1);
+});
+
 test('double-click hints distinguish triggers, reading, and eligible pickups',()=>{
   const action=()=>{};
   for(const [key,guard,ready,done] of [['triggerAction','canTrigger','雙擊觸發','已觸發'],['readAction','canRead','雙擊閱讀','已閱讀'],['pickupAction','canPickup','雙擊拿取','']]){
