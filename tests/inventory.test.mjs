@@ -52,7 +52,7 @@ test('double-click picks only a fresh ray hit in exploration, using cursor coord
   assert.equal(doubleClickPickup({...event,target:{}},{mode:'explore',canvas,world}),false);
   assert.equal(doubleClickPickup({...event,button:2},{mode:'explore',canvas,world}),false);assert.equal(calls,2);
   world.target=()=>null;assert.equal(doubleClickPickup(event,{mode:'explore',canvas,world}),false);
-  world.target=()=>({action(){calls++;}});assert.equal(doubleClickPickup(event,{mode:'explore',canvas,world}),false);assert.equal(calls,2);
+  world.target=()=>({action(){calls++;}});assert.equal(doubleClickPickup(event,{mode:'explore',canvas,world}),true);assert.equal(calls,3);
 });
 test('double-click hints distinguish triggers, reading, and eligible pickups',()=>{
   const action=()=>{};
@@ -61,7 +61,9 @@ test('double-click hints distinguish triggers, reading, and eligible pickups',()
     assert.equal(interactionHint(target),ready);assert.equal(doubleClickAction(target),action);
     eligible=false;assert.equal(interactionHint(target),done);assert.equal(doubleClickAction(target),null);
   }
-  assert.equal(interactionHint({action}), '');assert.equal(doubleClickAction({action}),null);
+  assert.equal(interactionHint({action}), '雙擊互動');assert.equal(doubleClickAction({action}),action);
+  assert.equal(doubleClickAction({action,pickupAction:action,canPickup:()=>false}),null);
+  assert.equal(doubleClickAction({action,triggerAction:action,canTrigger:()=>false}),null);
   assert.equal(interactionHint(null),'');assert.equal(doubleClickAction(null),null);
 });
 

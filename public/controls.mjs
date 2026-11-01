@@ -3,13 +3,15 @@ export const EYE_SURGE_MS=160;
 export function interactionHint(target){
   if(target?.triggerAction)return target.canTrigger?.()===false?'已觸發':'雙擊觸發';
   if(target?.readAction)return target.canRead?.()===false?'已閱讀':'雙擊閱讀';
-  return target?.pickupAction&&target.canPickup?.()!==false?'雙擊拿取':'';
+  if(target?.pickupAction)return target.canPickup?.()!==false?'雙擊拿取':'';
+  return target?.action?'雙擊互動':'';
 }
 // Use the same eligibility as the prompt; triggering and reading never promise a pickup.
 export function doubleClickAction(target){
   if(target?.triggerAction)return target.canTrigger?.()===false?null:target.triggerAction;
   if(target?.readAction)return target.canRead?.()===false?null:target.readAction;
-  return target?.pickupAction&&target.canPickup?.()!==false?target.pickupAction:null;
+  if(target?.pickupAction)return target.canPickup?.()!==false?target.pickupAction:null;
+  return target?.action||null;
 }
 // Only the fresh visible ray hit can be used; UI events and stale navigation focus never interact.
 export function doubleClickPickup(event,{mode,canvas,locked,world}){
