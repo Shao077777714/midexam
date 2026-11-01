@@ -4,7 +4,7 @@ import {createWorld,createInspector,createInspectorPool,FAMILY_URL,HORROR_FAMILY
 import {walkable,findPath} from './navigation.mjs';
 import {createMouseLook,movementSpeed,EYE_SURGE_MS,doubleClickPickup,interactionHint} from './controls.mjs';
 import {watchContext,createThumbnailCache} from './rendering.mjs';
-import {inventoryEntries,compactInventory} from './inventory.mjs';
+import {inventoryEntries} from './inventory.mjs';
 import {chooseVoice} from './voice.mjs';
 import {LEVELS,RECORDS,PROJECTION} from './content.mjs';
 const $=id=>document.getElementById(id), symbols=['☾','≋','▧','◇','✧'];
@@ -28,10 +28,10 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const audio={ctx:null,gain:null,output:null,drone:null,init(){try{if(!this.ctx){this.ctx=new AudioContext();this.output=this.ctx.createGain();this.output.gain.value=muted?0:1;this.output.connect(this.ctx.destination);this.gain=this.ctx.createGain();this.gain.gain.value=.018;this.gain.connect(this.output);this.drone=this.ctx.createOscillator();this.drone.type='sine';this.drone.frequency.value=110;this.drone.connect(this.gain);this.drone.start();}this.ctx.resume().catch(()=>{});}catch{}},update(){if(this.output)this.output.gain.setValueAtTime(muted?0:1,this.ctx.currentTime);if(this.gain)this.gain.gain.setTargetAtTime(muted||['title','modal'].includes(mode)?0:state.levels[state.level].triggered?.025:.012,this.ctx.currentTime,.3);if(this.drone)this.drone.frequency.setTargetAtTime(state.levels[state.level].triggered?65.4:110,this.ctx.currentTime,1);},tone(f=440,delay=0){if(muted||!this.ctx)return;const o=this.ctx.createOscillator(),g=this.ctx.createGain(),start=this.ctx.currentTime+delay;o.frequency.value=f;g.gain.setValueAtTime(.07,start);g.gain.exponentialRampToValueAtTime(.001,start+.6);o.connect(g);g.connect(this.output);o.start(start);o.stop(start+.6);},speak(copy){if(muted||!('speechSynthesis'in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(copy);const voice=chooseVoice(speechSynthesis.getVoices());if(!voice)return;u.voice=voice;u.lang=voice.lang;u.rate=.82;u.pitch=.74;u.volume=.65;speechSynthesis.speak(u);}};
 function toast(copy){if(!copy)return;$('toast').textContent=copy;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),4200);}
 function syncControlHover(active){controlHover=mode==='explore'&&active;document.body.classList.toggle('controls-hover',controlHover);keys.clear();if(controlHover){navigation=[];navTarget=null;mouseLook?.leave();}else if(mode==='explore')mouseLook?.enter({lock:false});}
-function setMode(next){mode=next;keys.clear();document.body.classList.toggle('exploring',next==='explore');$('inventory-hud').hidden=next!=='explore';$('quick-controls').inert=next!=='explore';if(next==='explore')syncControlHover($('quick-controls').matches(':hover'));else{controlHover=false;document.body.classList.remove('controls-hover');mouseLook?.leave();}$('crosshair').hidden=next!=='explore';$('interact').hidden=next!=='explore';audio.update();}
-function closePanel(){inspector?.dispose();inspector=null;panelRefresh=null;photoController=null;$('panel').classList.remove('puzzle-panel','optics-panel','inventory-panel');$('panel').hidden=true;setMode('explore');}
+function setMode(next){mode=next;keys.clear();document.body.classList.toggle('exploring',next==='explore');$('inventory-button').setAttribute('aria-expanded','false');$('quick-controls').inert=next!=='explore';if(next==='explore')syncControlHover($('quick-controls').matches(':hover'));else{controlHover=false;document.body.classList.remove('controls-hover');mouseLook?.leave();}$('crosshair').hidden=next!=='explore';$('interact').hidden=next!=='explore';audio.update();}
+function closePanel(){const wasInventory=$('panel').classList.contains('inventory-panel');inspector?.dispose();inspector=null;panelRefresh=null;photoController=null;$('panel').classList.remove('puzzle-panel','optics-panel','inventory-panel');$('panel').hidden=true;setMode('explore');if(wasInventory)$('inventory-button').focus();}
 function openPanel(title,kicker='MEMORY / 物件操作'){
-  inspector?.dispose();inspector=null;panelRefresh=null;photoController=null;$('panel').classList.remove('puzzle-panel','optics-panel','inventory-panel');setMode('panel');navigation=[];$('modal').hidden=true;$('panel').hidden=false;$('panel-title').textContent=title;$('panel-kicker').textContent=kicker;$('panel-body').replaceChildren();$('panel-close').focus();return $('panel-body');
+  inspector?.dispose();inspector=null;panelRefresh=null;photoController=null;$('panel').classList.remove('puzzle-panel','optics-panel','inventory-panel');setMode('panel');$('panel').setAttribute('aria-modal','true');navigation=[];$('modal').hidden=true;$('panel').hidden=false;$('panel-title').textContent=title;$('panel-kicker').textContent=kicker;$('panel-body').replaceChildren();$('panel-close').focus();return $('panel-body');
 }
 function modal(title,body,actions,kicker='DREAM GAP',className=''){
   inspector?.dispose();inspector=null;panelRefresh=null;photoController=null;$('panel').classList.remove('puzzle-panel','optics-panel','inventory-panel');setMode('modal');navigation=[];$('panel').hidden=true;$('modal').hidden=false;$('modal-title').textContent=title;$('modal-kicker').textContent=kicker;const target=$('modal-body');target.replaceChildren();if(typeof body==='string')target.innerHTML=body;else target.append(body);$('modal').querySelector('article').className=`modal ${className}`;$('modal-actions').replaceChildren(...actions.map(([label,fn,cls])=>btn(label,fn,cls||'primary')));$('modal-actions').querySelector('button')?.focus();
@@ -68,25 +68,19 @@ function preview(body,kind,onRotate){
 }
 function itemPicture(entry){const wrap=text('span','','inventory-picture');try{const image=document.createElement('img');image.src=thumbnails.get(entry.kind);image.alt=entry.name;image.draggable=false;wrap.append(image);}catch(error){console.warn('物品縮圖暫時無法顯示',entry.id,error);wrap.append(text('span','◇'));}return wrap;}
 function updateInventoryHUD(){
-  const entries=inventoryEntries(state,held),quick=$('inventory-quick');quick.replaceChildren();$('inventory-count').textContent=String(entries.length).padStart(2,'0');
+  const entries=inventoryEntries(state,held);
   if(held&&(ITEMS[held]||/^memory[0-4]$/.test(held)||['moon','rabbit','vase','flashlight'].includes(held))&&!entries.some(e=>e.id===held)){held=null;selected=null;}
-  for(const entry of compactInventory(entries,held)){const tile=text('div','',`inventory-mini ${held===entry.id?'selected':''}`);tile.title=entry.name;add(tile,itemPicture(entry),text('span',entry.name));quick.append(tile);}
-  if(!entries.length)quick.append(text('p','本關暫無待使用道具。\n靠近物品，雙擊即可拿取。','inventory-empty'));
-  if(entries.length>6)quick.append(text('p',`還有 ${entries.length-6} 件 · Tab 查看全部`,'inventory-more'));
-  const active=entries.find(e=>e.id===held);$('inventory-equipped').textContent=active?`已選取：${active.name} · R 檢視`:'尚未選取物品 · Tab 開啟物品欄';
 }
+function toggleInventory(){if(mode==='panel'&&$('panel').classList.contains('inventory-panel'))closePanel();else showInventory();}
 function showInventory(){
   if(['title','projection','recovering','render-error'].includes(mode))return;
-  const body=openPanel('隨身物品','INVENTORY / 帶著記憶繼續走');$('panel').classList.add('inventory-panel');
-  const entries=inventoryEntries(state,held),intro=text('div','','inventory-intro');
-  add(intro,text('p','只留下這一段記憶，還需要的東西。'),text('p','只顯示本關尚未使用的物品。點選後返回探索，按 R 檢視或操作。','panel-note'));body.append(intro);
-  const summary=text('p',`${entries.filter(e=>e.category==='道具').length} 件待用道具 / ${entries.filter(e=>e.category==='記憶').length} 片待用記憶`,'inventory-summary');body.append(summary);
-  for(const category of ['道具','記憶']){const section=document.createElement('section');section.className='inventory-section';section.append(text('h3',category==='道具'?'收集的物品':'找回的記憶'));const grid=text('div','','inventory-grid');
-    if(category==='記憶'&&state.level!==4)continue;
-    for(const entry of entries.filter(e=>e.category===category)){const tile=btn('',()=>{selected=entry.id;held=entry.id;updateInventoryHUD();closePanel();toast(`已選取：${entry.name}。按 R 檢視；靠近機關後按 E 使用。`);},`inventory-card ${held===entry.id?'selected':''}`);tile.dataset.itemId=entry.id;tile.setAttribute('aria-label',`選取${entry.name}`);tile.setAttribute('aria-pressed',String(held===entry.id));add(tile,itemPicture(entry),text('strong',entry.name),text('small',held===entry.id?'已選取 · 再次點選返回探索':entry.note));grid.append(tile);}
-    if(!grid.childElementCount)grid.append(text('p',category==='道具'?'本關沒有尚待使用的道具。可繼續探索，靠近物品後雙擊拿取。':'沒有尚待放入裝置的記憶碎片。','inventory-empty'));section.append(grid);body.append(section);
-  }
-  const footer=text('div','','inventory-footer');add(footer,text('span','Tab / Esc 收起 · 返回探索後按 R 檢視所選物品'),btn('返回探索',closePanel,'primary'));body.append(footer);
+  const body=openPanel('隨身物品','BACKPACK / 本關待用');$('panel').classList.add('inventory-panel');$('panel').setAttribute('aria-modal','false');$('inventory-button').setAttribute('aria-expanded','true');$('quick-controls').inert=false;
+  const entries=inventoryEntries(state,held),grid=text('div','','inventory-grid');body.append(grid);
+  const status=text('p','','inventory-selection');status.setAttribute('aria-live','polite');
+  function refreshSelection(){for(const tile of grid.querySelectorAll('button')){const active=tile.dataset.itemId===held;tile.classList.toggle('selected',active);tile.setAttribute('aria-pressed',String(active));}const active=entries.find(e=>e.id===held);status.textContent=active?`已選取：${active.name}`:'點選物品即可裝備';}
+  for(const entry of entries){const tile=btn('',()=>{selected=entry.id;held=entry.id;updateInventoryHUD();refreshSelection();},'inventory-card');tile.dataset.itemId=entry.id;tile.setAttribute('aria-label',`選取${entry.name}`);add(tile,itemPicture(entry),text('strong',entry.name));grid.append(tile);}
+  if(!entries.length)grid.append(text('p','本關暫無待使用道具。','inventory-empty'));
+  body.append(status,text('p','Tab / Esc 收起 · 關閉後按 R 檢視','inventory-help'));refreshSelection();
 }
 function showHints(){const body=openPanel('留給自己的提示','HINT / H');const meta=LEVELS[state.level];add(body,text('p',state.levels[state.level].triggered?meta.hint:meta.objective));add(body,btn('多想起一點',()=>{hintDepth++;const p=text('p',meta.deepHint,'hint-copy');body.append(p);},'secondary'));add(body,text('p','先觀察，再嘗試。錯放的物件可以取回，沒有強制倒數。','panel-note'));}
 function showNavigation(){const body=openPanel('環顧這個地方','EXPLORE / 輔助探索');add(body,text('p','選擇目前可見的物件，沿可通行路線走近。抵達後雙擊拿取物品，或按 E 操作機關。也可隨時用 WASD 取消導覽。','panel-note'));
@@ -178,7 +172,7 @@ function frame(now){requestAnimationFrame(frame);if(document.hidden||renderFaile
 }
 try{
   world=createWorld($('world'),()=>state,handle);mouseLook=createMouseLook({edgeTurn:true,canvas:$('world'),documentRef:document,onLook(dx,dy){navigation=[];navTarget=null;focusEntity=null;world.camera.rotation.y-=dx*.0025;world.camera.rotation.x=Math.max(-1.3,Math.min(1.3,world.camera.rotation.x-dy*.0025));},onUnlock(){if(mode==='explore')pause();},onDenied(){}});$('new-game').disabled=false;$('new-game').textContent='睜開眼睛　→';$('continue-game').hidden=!saved.state;if(saved.error)$('load-message').textContent=saved.error;
-  monitorRendering();$('new-game').onclick=()=>start(false);$('continue-game').onclick=()=>start(true);$('panel-close').onclick=closePanel;$('hint-button').onclick=showHints;$('inventory-button').onclick=showInventory;$('pause-button').onclick=pause;$('interact').onclick=()=>activate(nearby);$('sound-button').onclick=toggleSound;$('effects-button').onclick=toggleEffects;updateSettings();
+  monitorRendering();$('new-game').onclick=()=>start(false);$('continue-game').onclick=()=>start(true);$('panel-close').onclick=closePanel;$('hint-button').onclick=showHints;$('inventory-button').onclick=toggleInventory;$('pause-button').onclick=pause;$('interact').onclick=()=>activate(nearby);$('sound-button').onclick=toggleSound;$('effects-button').onclick=toggleEffects;updateSettings();
   $('quick-controls').addEventListener('pointerenter',()=>syncControlHover(true));$('quick-controls').addEventListener('pointerleave',()=>syncControlHover(false));
   addEventListener('keydown',e=>{if(['Tab','Space','KeyW','KeyA','KeyS','KeyD','KeyE','KeyG','KeyR','KeyH','KeyN','Escape'].includes(e.code)&&mode!=='title'&&!(e.code==='Space'&&e.target.closest?.('#quick-controls')))e.preventDefault();if(e.repeat)return;if(controlHover&&['KeyW','KeyA','KeyS','KeyD','KeyE','KeyG','KeyR'].includes(e.code))return;if(mode==='panel'&&photoController){if(['KeyQ','KeyE'].includes(e.code)){e.preventDefault();photoController.rotate(e.code==='KeyQ'?-90:90);return;}if(e.code==='Tab')return;}
     if(e.code==='Escape'){if(mode==='panel')closePanel();else if(mode==='explore')pause();return;}
@@ -187,7 +181,6 @@ try{
     if(e.code==='KeyR'){if(mode==='panel')closePanel();else if(state.level===0&&['moon','rabbit','vase'].includes(held))showShadow(['moon','rabbit','vase'].indexOf(held));else if(held)showInspection(held,inventoryEntries(state,held).find(e=>e.id===held)?.name||ITEMS[held]||'手持物件');else toast('先拿起一件可以檢視的物品。');return;}
     if(mode!=='explore')return;keys.add(e.code);if(e.code==='KeyE')activate(nearby);if(e.code==='KeyH')showHints();if(e.code==='KeyN')showNavigation();if(e.code==='KeyG'){held=null;selected=null;updateInventoryHUD();toast('你放下了手持物件。已收集的任務物品仍保存在物品欄。');}
   });
-  $('inventory-expand').onclick=showInventory;
   $('world').addEventListener('dblclick',event=>{if(doubleClickPickup(event,{mode,canvas:$('world'),locked:mouseLook.locked,world})){event.preventDefault();navigation=[];navTarget=null;focusEntity=null;}});
   addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();navigation=[];if(mode==='explore')pause();});
   addEventListener('pointermove',event=>mouseLook.move(event));

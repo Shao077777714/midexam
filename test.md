@@ -38,6 +38,17 @@
 - 五關正確解法以 `brief.md` 為準；舊數字密碼不是現行謎底。
 - 功能尚未建立時不捏造啟動、建置或測試命令；建立後將實際命令補入 README 與執行紀錄。
 
+## 右側方形背包驗收（2026-11-01）
+
+本節為目前物品欄規格，優先於下方全螢幕物品欄的歷史紀錄。
+
+- 基準：加薪的branch 遠端 4b5f1ef、本機同樹；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），隔離 localhost:4181。使用 tests/browser-inventory.html 的第二關空背包及第五關五件待用道具檢查點；未更動 127.0.0.1:4181 玩家存檔。
+- BAG-01 PASS（內建預覽）：收起時只顯示雙肩背包圖示，無常駐縮圖／清單。點圖示或 Tab 開啟右側 360×360px 面板，右上叉叉固定可用；1366×768 與 1920×1080 均是右側方形、無水平溢出，五件道具縮圖皆載入。
+- BAG-02 PASS（內建預覽）：點記憶「承認」與信件後 aria-pressed=true 且面板仍開啟，底部顯示選取名稱。叉叉收起後 R 能開啟對應記憶模型檢視；保持既有本關待用道具篩選，沒有刪除存檔或跨關道具。
+- BAG-03 PASS（內建預覽）：叉叉、背包、Tab／Esc 關閉正常；10 組背包開／關（20 次圖示點擊）後仍可操作。開啟時 exploring=false、cursor=pointer，不移動或環視；關閉後恢復探索。空背包顯示本關暫無待用道具，無無效卡片。
+- 最終命令：node --test tests/*.test.mjs **84／84 PASS**；node scripts/build.mjs PASS（13 模組）、git diff --check PASS；內建預覽 error／warn 日誌為空。臨時 QA 頁已移除。截圖 docs/screenshots/backpack-closed-1366.png、backpack-open-1366.png、backpack-open-1920.png。
+- 正式 Chrome／Edge 四組完整流程、九片照片面板捲動的逐件實機選取與長時間負載本次 NOT TESTED；五件物品實測及既有邏輯回歸不代替全部人工驗收。
+
 ## 右上角圖示調整與自由游標（2026-11-01）
 
 - 基準：加薪的branch 遠端 3aadf52、本機相同檔案樹；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），隔離來源 http://localhost:4181/，沿用第二關信件檢查點。未清除 127.0.0.1:4181 玩家存檔。
