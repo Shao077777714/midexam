@@ -39,7 +39,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   const ray=new T.Raycaster();
   const entity=(id,name,group,action,visible=()=>true)=>{group.userData.entity=id;group.traverse(m=>{m.userData.entity=id;});const e={id,name,group,action,visible};
     if(id==='trigger'){e.triggerAction=action;e.canTrigger=()=>{const s=getState();return !s.completed[s.level]&&!s.levels[s.level].triggered;};}
-    if(/^shadow[0-2]$/.test(id)){const index=Number(id.slice(-1));e.pickupAction=()=>onActivate({type:'TAKE_SHADOW',index});e.canPickup=()=>{const s=getState(),l=s.levels[s.level];return !s.completed[0]&&l.triggered&&!l.collected.includes(['moon','rabbit','vase'][index])&&!shadowAligned(l.shadow[index],SHADOW_TARGETS[index]);};}
+    if(/^shadow[0-2]$/.test(id)){const index=Number(id.slice(-1));e.pickupAction=()=>onActivate({type:'TAKE_SHADOW',index});e.interactAction=action;e.canInteract=()=>{const s=getState();return !s.completed[0]&&s.levels[0].triggered;};e.canPickup=()=>{const s=getState(),l=s.levels[s.level];return !s.completed[0]&&l.triggered&&!l.collected.includes(['moon','rabbit','vase'][index])&&!shadowAligned(l.shadow[index],SHADOW_TARGETS[index]);};}
     entities.push(e);return e;};
   const collision=(x,z,w,d)=>blocks.push({x,z,w,d});
   function track(object){const block=footprint(object);blocks.push(block);colliderSources.push({object,block});return block;}

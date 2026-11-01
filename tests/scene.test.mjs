@@ -29,7 +29,8 @@ test('all five world triggers can activate once without claiming to be inventory
 test('only available shadow props and flashlight promise pickup, while records promise reading',()=>{
   const shadows=fixture(0,false),shadow=shadows.world.entities.find(e=>e.id==='shadow0');
   assert.equal(interactionHint(shadow),'');shadows.state.levels[0].triggered=true;assert.equal(interactionHint(shadow),'雙擊拿取');
-  shadows.state.levels[0].collected.push('moon');assert.equal(interactionHint(shadow),'');assert.equal(doubleClickAction(shadow),null);
+  shadows.state.levels[0].collected.push('moon');assert.equal(interactionHint(shadow),'');assert.equal(doubleClickAction(shadow),shadow.action);doubleClickAction(shadow)();assert.deepEqual(shadows.signals.at(-1),{type:'MANIPULATE',index:0});
+  shadows.state.completed[0]=true;assert.equal(doubleClickAction(shadow),null);
   const mirrors=fixture(3),flashlight=mirrors.world.entities.find(e=>e.id==='flashlight'),record=mirrors.world.entities.find(e=>e.id.startsWith('record-'));
   assert.equal(interactionHint(flashlight),'雙擊拿取');mirrors.state.levels[3].flashlight=true;assert.equal(interactionHint(flashlight),'');assert.equal(doubleClickAction(flashlight),null);
   assert.equal(record.pickupAction,undefined);assert.equal(interactionHint(record),'雙擊閱讀');

@@ -10,7 +10,7 @@ export function interactionHint(target){
 export function doubleClickAction(target){
   if(target?.triggerAction)return target.canTrigger?.()===false?null:target.triggerAction;
   if(target?.readAction)return target.canRead?.()===false?null:target.readAction;
-  if(target?.pickupAction)return target.canPickup?.()!==false?target.pickupAction:null;
+  if(target?.pickupAction){if(target.canPickup?.()!==false)return target.pickupAction;return target.interactAction&&target.canInteract?.()!==false?target.interactAction:null;}
   return target?.action||null;
 }
 // Only the fresh visible ray hit can be used; UI events and stale navigation focus never interact.
