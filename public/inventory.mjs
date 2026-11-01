@@ -1,12 +1,15 @@
-import {ITEMS,MEMORIES} from './engine.mjs';
+import {ITEMS,MEMORIES,SHADOW_TARGETS,shadowAligned,PHOTO_IDS} from './engine.mjs';
 
 const HANDHELD={moon:'月亮燈',rabbit:'兔子玩偶',vase:'花瓶'};
 // Derive the display from the saved game; never grant or consume quest items here.
 export function inventoryEntries(state,held=null){
-  const entries=[...new Set(state.inventory)].map(id=>({id,kind:id,name:ITEMS[id],category:'道具',note:id==='letter'?'跨關道具 · 保留至最後':'靠近對應機關後按 E 使用'}));
-  if(state.level===3&&state.levels[3].flashlight)entries.push({id:'flashlight',kind:'flashlight',name:'手電筒',category:'道具',note:'用來調整鏡房光線'});
-  if(HANDHELD[held])entries.push({id:held,kind:held,name:HANDHELD[held],category:'道具',note:'目前操作中的場景物件'});
-  for(const name of state.memories){const i=MEMORIES.indexOf(name);if(i>=0)entries.push({id:`memory${i}`,kind:`memory${i}`,name:`記憶 · ${name}`,category:'記憶',note:i===4?'你已踏出改變的第一步':'第五關的記憶投影碎片'});}
+  const level=state.level,l=state.levels[level],entries=[];
+  if(state.completed[level])return entries;
+  const remaining=id=>level===1?['key','drawing','letter'].includes(id)&&l.slots[id]!==id:level===2?PHOTO_IDS.includes(id)&&!l.photos.some(p=>p?.id===id):level===4?id==='letter'&&!l.mailed:false;
+  for(const id of new Set(state.inventory.filter(remaining)))entries.push({id,kind:id,name:ITEMS[id],category:'道具',note:id==='letter'?'本關仍需使用的信件':'本關待使用道具'});
+  if(level===3&&l.flashlight&&!l.opticsUnlocked)entries.push({id:'flashlight',kind:'flashlight',name:'手電筒',category:'道具',note:'用來調整鏡房光線'});
+  if(level===0)for(const [i,id] of Object.keys(HANDHELD).entries())if((l.collected.includes(id)||held===id)&&!shadowAligned(l.shadow[i],SHADOW_TARGETS[i]))entries.push({id,kind:id,name:HANDHELD[id],category:'道具',note:'按 R 調整位置與影子'});
+  if(level===4&&!l.projectionDone)for(const name of state.memories){const i=MEMORIES.indexOf(name);if(i>=0&&i<4&&!l.sequence.includes(i))entries.push({id:`memory${i}`,kind:`memory${i}`,name:`記憶 · ${name}`,category:'記憶',note:'本關尚未放入裝置的碎片'});}
   return entries;
 }
 

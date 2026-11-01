@@ -1,5 +1,13 @@
 export const WATER_SPEED_FACTOR=.55;
 export const EYE_SURGE_MS=160;
+// Only the fresh visible ray hit can be picked; UI events and stale navigation focus never collect.
+export function doubleClickPickup(event,{mode,canvas,locked,world}){
+  if(mode!=='explore'||event.button!==0||event.target!==canvas)return false;
+  const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return false;
+  const x=locked?0:(event.clientX-r.left)/r.width*2-1,y=locked?0:1-(event.clientY-r.top)/r.height*2;
+  const target=world.target(x,y);if(!target?.pickupAction)return false;
+  target.pickupAction();return true;
+}
 export function movementSpeed(inWater,navigation=false){return (navigation?3.2:2.7)*(inWater?WATER_SPEED_FACTOR:1);}
 
 // Keep free mouse look usable when a browser refuses Pointer Lock.

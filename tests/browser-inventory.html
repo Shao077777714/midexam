@@ -1,16 +1,21 @@
 <!doctype html><html lang="zh-Hant"><meta charset="utf-8"><title>物品欄隔離測試資料</title>
 <h1>物品欄顯示測試</h1><p>只可在隔離的本機測試來源使用。這是物品欄檢查點，不代表正常流程五關通關驗收。</p>
 <button id="seed">建立第五關物品欄檢查點</button>
+<button id="corridor">建立第二關雙擊拿取檢查點</button>
 <script type="module">
 import {newGame,applyAction,SHADOW_TARGETS,SEARCHES,RECORD_HIDES,saveGame} from './engine.mjs';
-document.querySelector('#seed').onclick=()=>{
-  if(!['localhost','127.0.0.1'].includes(location.hostname)||location.port!=='4181')throw Error('Use isolated port 4181');
+function seed(target){
+  if(location.hostname!=='localhost'||location.port!=='4181')throw Error('Use isolated localhost:4181, never the player origin');
   let state=newGame();const act=a=>{const r=applyAction(state,a);if(!r.ok)throw Error(r.message);state=r.state;};
+  const launch=()=>{if(!saveGame(localStorage,state).ok)throw Error('Save failed');location.href='./';};
   const next=()=>{act({type:'ACK_SAVE'});act({type:'NEXT'});};
   act({type:'TRIGGER'});for(let i=0;i<3;i++)act({type:'SHADOW',index:i,...SHADOW_TARGETS[i]});next();
+  if(target===1){launch();return;}
   act({type:'TRIGGER'});act({type:'SEARCH',id:'clock'});act({type:'CHAIR'});for(const id of ['key','drawing','letter']){act({type:'COLLECT',id});act({type:'SLOT',slot:id,id});}next();
   act({type:'TRIGGER'});for(const type of ['DRAWER','CHAIR','FRAME'])act({type});for(const id of SEARCHES[2])act({type:'SEARCH',id});for(let i=0;i<9;i++){act({type:'COLLECT',id:`p${i}`});act({type:'PHOTO',id:`p${i}`,slot:i,angle:0});}act({type:'PHOTO_READ'});next();
   act({type:'TRIGGER'});act({type:'FLASHLIGHT'});for(const [index,angle] of [45,135,135].entries())act({type:'MIRROR',index,angle});for(let index=0;index<3;index++)act({type:'MIRROR_FILTER',index,filter:index+1});act({type:'CALIBRATE'});for(const id of ['work','family','self']){act({type:'SEARCH',id:RECORD_HIDES[id]});act({type:'RECORD',id});}next();
-  if(!saveGame(localStorage,state).ok)throw Error('Save failed');location.href='./';
-};
+  launch();
+}
+document.querySelector('#seed').onclick=()=>seed(4);
+document.querySelector('#corridor').onclick=()=>seed(1);
 </script></html>

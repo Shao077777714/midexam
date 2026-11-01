@@ -37,7 +37,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   let root=new T.Group(),entities=[],blocks=[],bounds,door,shadowModels=[],ghosts=[],mirrorModels=[],beamRoot,clockHand,ghostEye,curtain=[],plates=[],mirrorVeil,shadowSupports=[],colliderSources=[],wallEyes,decor=[],sensors=[],opticalHeight=1.65,flood,effectsEnabled=true,searchObjects=[],phenomena;scene.add(root);
   const nearbyLight=new T.PointLight('#c2d8d4',0,3.1,2);scene.add(nearbyLight);
   const ray=new T.Raycaster();
-  const entity=(id,name,group,action,visible=()=>true)=>{group.userData.entity=id;group.traverse(m=>{m.userData.entity=id;});const e={id,name,group,action,visible};entities.push(e);return e;};
+  const entity=(id,name,group,action,visible=()=>true)=>{group.userData.entity=id;group.traverse(m=>{m.userData.entity=id;});const e={id,name,group,action,visible};if(id==='trigger')e.pickupAction=action;if(/^shadow[0-2]$/.test(id))e.pickupAction=()=>onActivate({type:'TAKE_SHADOW',index:Number(id.slice(-1))});entities.push(e);return e;};
   const collision=(x,z,w,d)=>blocks.push({x,z,w,d});
   function track(object){const block=footprint(object);blocks.push(block);colliderSources.push({object,block});return block;}
   function refreshColliders(){for(const {object,block} of colliderSources){Object.assign(block,footprint(object));block.active=shown(object);}}
@@ -59,7 +59,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
     g.userData.closedCavity=true;front.userData.closedTray=true;track(g);
     entity(id,name,g,()=>onActivate({type:'DRAWER'}));g.userData.front=front;return g;
   }
-  function item(id,name,kind,pos,action,visible=()=>true,scale=1){const g=supported(kind,pos,scale);return entity(id,name,g,action||(()=>onActivate({type:'COLLECT',id})),visible);}
+  function item(id,name,kind,pos,action,visible=()=>true,scale=1){const g=supported(kind,pos,scale),e=entity(id,name,g,action||(()=>onActivate({type:'COLLECT',id})),visible);e.pickupAction=e.action;return e;}
   function addDecorations(level){
     const placements=[[3.8,5.7,2.7],[-2.2,-7.3,1.55],[3.9,5.4,3],[-4.3,5.4,2.7],[-3.8,3.5,2.7]];
     const [x,z,w]=placements[level];table(x,z,w,.82);
@@ -235,7 +235,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   function shown(o){for(let p=o;p;p=p.parent)if(!p.visible)return false;return true;}
   function solid(o){if(!o.isMesh)return false;for(let p=o;p;p=p.parent)if(p.userData.nonOccluding)return false;return true;}
   function rayObjects(){return root.children.filter(o=>!o.userData.exterior&&!o.userData.nonOccluding&&!o.isInstancedMesh&&o!==ghostEye);}
-  function target(){ray.setFromCamera(new T.Vector2(0,0),camera);const hits=ray.intersectObjects(rayObjects(),true);for(const hit of hits){if(!shown(hit.object)||!solid(hit.object))continue;if(hit.distance>3.2)break;const e=entities.find(e=>e.id===hit.object.userData.entity&&e.group.visible);if(e)return e;if(hit.object.material?.transparent&&hit.object.material.opacity<.4)continue;if(!hit.object.userData.entity)return null;}return null;}
+  function target(x=0,y=0){if(!Number.isFinite(x)||!Number.isFinite(y)||Math.abs(x)>1||Math.abs(y)>1)return null;ray.setFromCamera(new T.Vector2(x,y),camera);const hits=ray.intersectObjects(rayObjects(),true);for(const hit of hits){if(!shown(hit.object)||!solid(hit.object))continue;if(hit.distance>3.2)break;const e=entities.find(e=>e.id===hit.object.userData.entity&&e.group.visible);if(e)return e;if(hit.object.material?.transparent&&hit.object.material.opacity<.4)continue;if(!hit.object.userData.entity)return null;}return null;}
   function visibleEntities(){return entities.filter(e=>e.group.visible&&e.id!=='exit'||e.id==='exit'&&getState().completed[getState().level]);}
   function focusPoint(e,from=camera.position){
     if(!e.group.visible)return null;

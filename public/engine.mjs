@@ -78,6 +78,12 @@ export function applyAction(current,a){
   else {
     if(!l.triggered)return fail('這裡似乎還缺少一個讓世界改變的契機。');
     switch(a.type){
+      case 'TAKE_SHADOW': {
+        if(s.level!==0||!Number.isInteger(a.index)||a.index<0||a.index>2)return fail('這裡沒有這件影子物品。');
+        const id=['moon','rabbit','vase'][a.index];
+        if(l.collected.includes(id)||shadowAligned(l.shadow[a.index],SHADOW_TARGETS[a.index]))return fail('這件物品已拿取或已經對齊。');
+        l.collected.push(id);message=`已拿起${['月亮燈','兔子玩偶','花瓶'][a.index]}，按 Tab 選取或 R 調整影子。`;break;
+      }
       case 'SEARCH':
         if(!SEARCHES[s.level].includes(a.id))return fail('這裡沒有可以打開的夾層。');
         if(s.level===3&&!l.opticsUnlocked)return fail('先讓光依序找到三個標記。');

@@ -14,6 +14,16 @@ function fixture(level=0,triggered=true){
   const signals=[],world=createWorld(null,()=>state,a=>signals.push(a),{headless:true});
   return {state,world,signals};
 }
+test('pickup rays require the visible object surface within reach and stop at opaque obstacles',()=>{
+  const {world}=fixture(1),letter=world.entities.find(e=>e.id==='letter');
+  const aim=()=>{world.camera.lookAt(new T.Box3().setFromObject(letter.group).getCenter(new T.Vector3()));world.camera.updateMatrixWorld(true);world.scene.updateMatrixWorld(true);};
+  world.camera.position.set(1.7,1.65,-9.2);aim();assert.equal(world.target()?.id,'letter');assert.equal(typeof world.target().pickupAction,'function');
+  const wall=new T.Mesh(new T.BoxGeometry(1,2,.1),new T.MeshBasicMaterial());wall.position.set(1.7,1.3,-9.8);letter.group.parent.add(wall);aim();assert.equal(world.target(),null);
+  wall.visible=false;aim();assert.equal(world.target()?.id,'letter');
+  world.camera.position.set(1.7,1.65,-5);aim();assert.notEqual(world.target()?.id,'letter');
+  world.camera.position.set(1.7,1.65,-9.2);letter.group.visible=false;aim();assert.notEqual(world.target()?.id,'letter');
+  assert.equal(world.target(3,0),null);
+});
 const near=(a,b)=>assert.ok(Math.abs(a-b)<.004,`${a} != ${b}`);
 
 test('every portable model rests on its actual geometry at different rotations and scales',()=>{
