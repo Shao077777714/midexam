@@ -4,7 +4,7 @@ export function interactionHint(target){
   if(target?.triggerAction)return target.canTrigger?.()===false?'已觸發':'雙擊觸發';
   if(target?.readAction)return target.canRead?.()===false?'已閱讀':'雙擊閱讀';
   if(target?.pickupAction)return target.canPickup?.()!==false?'雙擊拿取':'';
-  return target?.action?'雙擊互動':'';
+  return '';
 }
 // Use the same eligibility as the prompt; triggering and reading never promise a pickup.
 export function doubleClickAction(target){

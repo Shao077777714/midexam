@@ -68,7 +68,7 @@ test('double-click hints distinguish triggers, reading, and eligible pickups',()
     assert.equal(interactionHint(target),ready);assert.equal(doubleClickAction(target),action);
     eligible=false;assert.equal(interactionHint(target),done);assert.equal(doubleClickAction(target),null);
   }
-  assert.equal(interactionHint({action}), '雙擊互動');assert.equal(doubleClickAction({action}),action);
+  assert.equal(interactionHint({action}), '');assert.equal(doubleClickAction({action}),action);
   assert.equal(doubleClickAction({action,pickupAction:action,canPickup:()=>false}),null);
   assert.equal(doubleClickAction({action,triggerAction:action,canTrigger:()=>false}),null);
   assert.equal(interactionHint(null),'');assert.equal(doubleClickAction(null),null);

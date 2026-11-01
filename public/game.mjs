@@ -57,7 +57,7 @@ function start(continuing=false){
   begin(continuing);
 }
 function begin(continuing){state=continuing&&saved.state?structuredClone(saved.state):newGame();audio.init();held=null;selected=null;nearby=null;focusEntity=null;world.build();updateHUD();$('title-screen').hidden=true;['hud','memory-hud','control-bar'].forEach(id=>$(id).hidden=false);if(state.completed[state.level]){complete();return;}if(!continuing)persist();
-  const body=document.createElement('div');body.innerHTML=`<p>你在陌生的房間睜開眼睛。窗外停留在黃昏，時鐘不再走動。紙條上寫著：</p><p class="quote">找到五個記憶碎片，<br>就能回到現實。</p><div class="tutorial-grid"><span><kbd>WASD</kbd> 移動，滑鼠環視</span><span><kbd>滑鼠雙擊</kbd> 拿取 · E 互動</span><span><kbd>R</kbd> 檢視 · 拖曳旋轉</span><span><kbd>G</kbd> 放下手持物件</span><span><kbd>Tab</kbd> 物品欄</span><span><kbd>H</kbd> 任務提示</span><span><kbd>Esc</kbd> 退出介面／暫停</span><span><kbd>N</kbd> 探索導覽</span></div><p class="muted">進入探索會隱藏游標，直接移動滑鼠環視；Esc 可恢復游標。靠近物件才可以互動；每一關都藏著讓世界改變的物件。</p>`;
+  const body=document.createElement('div');body.innerHTML=`<p>你在陌生的房間睜開眼睛。窗外停留在黃昏，時鐘不再走動。紙條上寫著：</p><p class="quote">找到五個記憶碎片，<br>就能回到現實。</p><div class="tutorial-grid"><span><kbd>WASD</kbd> 移動，滑鼠環視</span><span><kbd>左鍵雙擊</kbd> 準星瞄準後互動</span><span><kbd>R</kbd> 檢視 · 拖曳旋轉</span><span><kbd>G</kbd> 放下手持物件</span><span><kbd>Tab</kbd> 開關右側背包</span><span><kbd>H</kbd> 任務提示</span><span><kbd>Esc</kbd> 退出介面／暫停</span><span><kbd>N</kbd> 探索導覽</span></div><p class="muted">靠近物件，用中央「＋」瞄準後左鍵連點兩下即可操作，E 也可互動。滑鼠移到右上角會顯示游標，讓你點選提示、聲音、特效與背包；完整操作說明可從暫停選單查看。</p>`;
   modal(continuing?'記憶還在這裡':'你醒來了',continuing?`<p>${esc(LEVELS[state.level].objective)}</p>`:body,[[continuing?'繼續探索':'走進房間',resume]],continuing?LEVELS[state.level].tag:'PROLOGUE / 序章');
 }
 function preview(body,kind,onRotate){
@@ -157,7 +157,11 @@ function updateSettings(){
 }
 function toggleSound(){muted=!muted;if(muted&&'speechSynthesis'in window)speechSynthesis.cancel();audio.update();updateSettings();toast(muted?'聲音已關閉':'聲音已開啟');}
 function toggleEffects(){effectsEnabled=!effectsEnabled;updateSettings();toast(effectsEnabled?'眼睛與水面動態已開啟':'眼睛與水面動態已關閉');}
-function pause(){modal('把時間停在這裡','<p>記憶不會催促你。準備好了，就繼續走。</p>',[['繼續探索',resume],['操作說明',()=>{const b=openPanel('操作說明','CONTROLS');b.innerHTML='<p>WASD 移動 · 直接移動滑鼠環視，不需按住<br>滑鼠停在場景邊緣可持續轉向。<br>滑鼠移到右上角調整區會顯示游標，離開後恢復環視。<br>燈泡：任務提示 · 喇叭：聲音開關 · 星芒：眼睛與水面動態開關<br>雙擊拿取與互動 · E 也可互動 · G 放下 · R 檢視與旋轉<br>Tab 物品欄 · H 任務提示 · N 探索導覽 · Esc 離開介面或暫停<br>在物件操作介面中以滑鼠拖曳、旋轉與放置。</p>';},'secondary'],['回到主畫面',showTitle,'secondary']],'PAUSE');}
+function showControls(){
+  const body=openPanel('操作說明','HOW TO PLAY');
+  body.innerHTML=`<section class="controls-help"><h3>探索與互動</h3><p><kbd>W</kbd> 前進、<kbd>A</kbd> 向左、<kbd>S</kbd> 後退、<kbd>D</kbd> 向右。移動滑鼠轉動視角，停在場景邊緣可持續轉向。</p><p>靠近物件，將畫面中央的 <strong>＋</strong> 對準物件，再連按兩下滑鼠左鍵，即可拿取、開關抽屜或操作機關。<kbd>E</kbd> 也可互動；隔著牆壁或距離太遠時無法操作。</p><h3>背包與物品</h3><p>點右上角的雙肩背包，或按 <kbd>Tab</kbd>，打開右側物品欄。點選縮圖即可裝備，選取的物品會高亮；只顯示本關尚需使用的道具。</p><p>點叉叉、背包，或按 <kbd>Tab</kbd>／<kbd>Esc</kbd> 收起。返回探索後按 <kbd>R</kbd> 檢視所選物品，拖曳可旋轉；<kbd>R</kbd>／<kbd>Esc</kbd> 離開檢視。按 <kbd>G</kbd> 放下手持物品，已收集的任務道具仍會保留。</p><h3>右上角功能</h3><p>滑鼠移入調整區會顯示游標，並停止移動與環視。燈泡開啟任務提示；喇叭切換聲音；星芒切換眼睛與水面動態；雙肩背包開關物品欄；暫停圖示開啟選單。</p><h3>提示與暫停</h3><p><kbd>H</kbd> 查看任務提示；<kbd>N</kbd> 開啟探索導覽。探索中按 <kbd>Esc</kbd> 暫停；介面開啟時按 <kbd>Esc</kbd> 先關閉目前介面。</p><p class="panel-note">物品欄與解謎介面內使用游標操作，滑鼠不會帶動視角。道具放入機關後會從背包收起，取回後重新顯示。</p></section>`;
+}
+function pause(){modal('把時間停在這裡','<p>記憶不會催促你。準備好了，就繼續走。</p>',[['繼續探索',resume],['操作說明',showControls,'secondary'],['回到主畫面',showTitle,'secondary']],'PAUSE');}
 function move(dx,dz){const p=world.camera.position,n=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.1));for(let i=0;i<n;i++){if(walkable(p.x+dx/n,p.z,world.bounds,world.blocks))p.x+=dx/n;if(walkable(p.x,p.z+dz/n,world.bounds,world.blocks))p.z+=dz/n;}}
 function frame(now){requestAnimationFrame(frame);if(document.hidden||renderFailed||renderContext?.lost){elapsedLast=now;return;}try{const dt=Math.min((now-elapsedLast)/1000,1);elapsedLast=now;
   if(mode==='explore'||mode==='panel'||mode==='projection')state.elapsed+=dt;
