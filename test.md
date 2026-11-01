@@ -38,6 +38,114 @@
 - 五關正確解法以 `brief.md` 為準；舊數字密碼不是現行謎底。
 - 功能尚未建立時不捏造啟動、建置或測試命令；建立後將實際命令補入 README 與執行紀錄。
 
+## 第一關三物件直接調整與移除說明（2026-11-01）
+
+- 基準：加薪的branch d0541fa；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），localhost:4181 隔離來源。由 tests/browser-inventory.html 新增第一關檢查點，只執行合法 TRIGGER，不完成解謎；玩家原來源存檔未變更。
+- 改動：首次雙擊拿取三件物品即開啟位置／角度控制，已取得後再次雙擊走 MANIPULATE，不重複拿取；怪核未觸發或本關已完成時仍阻擋該雙擊入口。移除面板用途、影子解法、對齊數／指示、拿取教學及背包備註，放下按鈕改用中性文字。
+- PASS（內建預覽）：月亮燈、兔子玩偶、花瓶分別以中央準星左鍵雙擊開啟，放下後再次雙擊仍可開啟，全程未按 E／R。三個面板只含物件、左右／前後／角度滑桿與放下；月亮燈 90→135°、花瓶左右位置 3.4→3.5，重新開啟仍保留數值。日誌無 error／warn，截圖 docs/screenshots/shadow-object-no-instructions.png。
+- PASS（自動化及建置）：node --test tests/*.test.mjs 85／85；更新場景回歸，已拿取的影子物品仍可發出 MANIPULATE，完成後禁用，不影響手電筒重複拿取保護。node scripts/build.mjs（13 模組）及 git diff --check 通過。臨時 public／dist QA 複本已移除。
+- 本次不代表重新驗收完整五關、正式 Chrome／Edge 環境矩陣或長時間負載。
+
+## 隱藏雙擊觸發文字（2026-11-01）
+
+- 移除怪核觸發物的「雙擊觸發」附註，保留觸發動作、觸發條件及完成後的「已觸發」狀態。
+- node --test tests/inventory.test.mjs tests/scene.test.mjs **31／31 PASS**，含五關實際場景的觸發前空提示、雙擊動作仍存在且可切換狀態、完成後不重複觸發；node scripts/build.mjs（13 模組）、git diff --check PASS。本次未重跑完整瀏覽器人工流程。
+
+## 操作說明重寫與精簡物件提示（2026-11-01）
+
+- 基準：加薪的branch c511079；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），隔離 localhost:4181、1366×768，未變更玩家原來源存檔。
+- 操作說明改為探索與互動、背包與物品、右上角功能、提示與暫停四段；說明中央＋瞄準、左鍵連點兩下、E 替代、右側背包選取／收起、R 檢視、G 放下、圖示及 H／N／Esc。開場快速教學同步更新。
+- PASS（內建預覽）：由暫停進入操作說明，文字完整載入且可捲動，按鈕正常關閉；截圖 docs/screenshots/controls-help-rewrite.png。一般抽屜旁只顯示名稱與既有 E 提示，移除「雙擊互動」附註，仍可雙擊開關。
+- PASS（回歸）：node --test tests/*.test.mjs 85／85，確認一般機關提示為空但雙擊 action 仍存在；既有中央射線回歸通過。node scripts/build.mjs（13 模組）及 git diff --check 通過。首次新遊戲教學的完整 UI 重跑、正式矩陣及五關人工回歸本次 NOT TESTED。
+
+## 抽屜雙擊無反應重測與修正（2026-11-01）
+
+- 基準：加薪的branch 6e7e60f；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），localhost:4181 第二關隔離存檔。未清除或覆寫玩家原來源的進度。
+- 已重現 FAIL：舊版未鎖定滑鼠時按隱藏游標座標射線，畫面準星卻在中央；新回歸案例讓中央有抽屜、點擊座標在 (150,600)，舊版回傳 false。前次人工測試只雙擊畫布中央，未覆蓋此條件，不能用當時 PASS 推斷游標偏離時也正常。
+- 修正：探索雙擊一律使用即時中央射線，與可見準星一致；仍由場景檢查距離、遮擋與可操作狀態，不使用過期導覽目標。互動提示按鈕忽略同一雙擊的第二次 click，避免抽屜開關抵銷。
+- PASS（重測）：新增失敗案例修正後通過，node --test tests/*.test.mjs **85／85**，node scripts/build.mjs（13 模組）、git diff --check 通過。內建正常左鍵雙擊畫布可打開抽屜，雙擊提示按鈕僅切換一次；日誌無 error／warn。
+- PASS（瀏覽器合成事件回歸）：正常由 N 走近抽屜並瞄準後，tests/browser-reticle.mjs 只向畫布送出左下方（12%寬、75%高）的 dblclick，不改攝影機、遊戲狀態或存檔旗標；可正常關閉及再次打開抽屜。證據 docs/screenshots/reticle-drawer-retest.png。這是明確測試夾具合成事件，與一般滑鼠雙擊的預覽結果分開記錄。
+- 重跑方法：將 public/index.html 複製成 public/.qa-reticle.html，在 body 尾加入載入 .qa-reticle.mjs 的 module script，將 tests/browser-reticle.mjs 複製至 public/.qa-reticle.mjs；僅於 localhost 使用。完成後移除 public 與 dist 的兩份測試複本，本次已移除。正式 Chrome／Edge 矩陣及完整五關人工回歸本次 NOT TESTED。
+
+## 場景雙擊開啟與背包雙擊（2026-11-01）
+
+- 基準：加薪的branch c53673b；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），localhost:4181 的第二關隔離存檔，未修改玩家 127.0.0.1:4181 進度。
+- PASS（內建預覽）：雙擊背包後右側物品欄維持開啟，不因兩次 click 抵銷；收起後由 N 導覽走近長椅旁抽屜，顯示「雙擊互動」，直接雙擊場景畫布即顯示「抽屜打開了」及儲存成功，全程未按 E。截圖 docs/screenshots/doubleclick-drawer.png，當次 error／warn 日誌為空。
+- PASS（自動化／建置）：node --test tests/*.test.mjs 84／84；更新通用機關雙擊案例及提示分類，已觸發及已取得的專屬動作不能回退成重複執行。既有射線、距離、遮擋與面板阻擋測試通過。node scripts/build.mjs（13 模組）及 git diff --check 通過。
+- 本次未逐一重玩五關全部機關，也未重做正式 Chrome／Edge 矩陣；這些維持 NOT TESTED。
+
+## 右側方形背包驗收（2026-11-01）
+
+本節為目前物品欄規格，優先於下方全螢幕物品欄的歷史紀錄。
+
+- 基準：加薪的branch 遠端 4b5f1ef、本機同樹；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），隔離 localhost:4181。使用 tests/browser-inventory.html 的第二關空背包及第五關五件待用道具檢查點；未更動 127.0.0.1:4181 玩家存檔。
+- BAG-01 PASS（內建預覽）：收起時只顯示雙肩背包圖示，無常駐縮圖／清單。點圖示或 Tab 開啟右側 360×360px 面板，右上叉叉固定可用；1366×768 與 1920×1080 均是右側方形、無水平溢出，五件道具縮圖皆載入。
+- BAG-02 PASS（內建預覽）：點記憶「承認」與信件後 aria-pressed=true 且面板仍開啟，底部顯示選取名稱。叉叉收起後 R 能開啟對應記憶模型檢視；保持既有本關待用道具篩選，沒有刪除存檔或跨關道具。
+- BAG-03 PASS（內建預覽）：叉叉、背包、Tab／Esc 關閉正常；10 組背包開／關（20 次圖示點擊）後仍可操作。開啟時 exploring=false、cursor=pointer，不移動或環視；關閉後恢復探索。空背包顯示本關暫無待用道具，無無效卡片。
+- 最終命令：node --test tests/*.test.mjs **84／84 PASS**；node scripts/build.mjs PASS（13 模組）、git diff --check PASS；內建預覽 error／warn 日誌為空。臨時 QA 頁已移除。截圖 docs/screenshots/backpack-closed-1366.png、backpack-open-1366.png、backpack-open-1920.png。
+- 正式 Chrome／Edge 四組完整流程、九片照片面板捲動的逐件實機選取與長時間負載本次 NOT TESTED；五件物品實測及既有邏輯回歸不代替全部人工驗收。
+
+## 右上角圖示調整與自由游標（2026-11-01）
+
+- 基準：加薪的branch 遠端 3aadf52、本機相同檔案樹；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），隔離來源 http://localhost:4181/，沿用第二關信件檢查點。未清除 127.0.0.1:4181 玩家存檔。
+- UI-01 PASS（內建預覽）：右上角只有燈泡提示、喇叭、星芒動態、物品欄與暫停五顆圖示，按鈕皆 44×44；移除探索導覽畫面按鈕。燈泡開啟任務提示，物品欄圖示開啟全視窗；暫停僅顯示繼續、操作說明與主畫面，無聲線更換或試聽選單，N 導覽保留。
+- UI-02 PASS（內建預覽及控制器）：點擊右上角按鈕後 controls-hover=true、cursor=pointer、pointerLockElement=null；點回場景後 controls-hover=false、exploring=true、canvas cursor=none。自由環視不請求鎖定，滑入會停用環視、清除移動鍵與導覽，離開重設座標避免跳動；場景邊緣可持續轉向，控制器測試覆蓋超過 360°、區域內停止及返回無跳動。
+- UI-03 PASS（開關狀態／實作及預覽）：靜音與動態按鈕顯示斜線、aria-pressed=true 及「點擊開啟」說明；再次點擊恢復。動態關閉時 low-effects=true、周邊眼睛 opacity=0；沿用世界 setEffects 停止水面與眼睛動畫。靜音使用共用輸出增益，涵蓋環境及已排程音效，並取消語音；未做實體喇叭聽感測試。
+- UI-04 PASS（兩尺寸內建預覽）：1366×768 與 1920×1080 檢視控制區、滑入說明、物品欄及底部操作文字，無水平溢出或互相遮擋；較小尺寸控制區 bottom=116、物品欄 top=164，保留說明空間。截圖 docs/screenshots/controls-icons-1366.png、controls-icons-1920.png。
+- 最終命令：`node --test tests/*.test.mjs` **84／84 PASS**、`node scripts/build.mjs` PASS（13 模組）、`git diff --check` PASS。新增自由環視／控制區重入與邊緣持續轉向測試；最終內建預覽 error／warn 日誌為空。畫布本身不可聚焦，第一次透過畫布送 N 的工具操作逾時；改從可聚焦按鈕送 N 後導覽正常開啟，未將逾時當成通過。
+- 正式 Chrome／Edge 四組完整流程、實體音訊及長時間負載維持 NOT TESTED，局部預覽不代替完整遊戲驗收。
+
+## 怪核觸發物互動提示修正（2026-11-01）
+
+- 問題重現：靠近第二關手機等怪核觸發物時，舊版把不會加入物品欄的觸發動作標成「雙擊拿取」。
+- 修正：觸發、閱讀及收集各自判斷資格；只有目前可收集道具顯示「雙擊拿取」，觸發物顯示「雙擊觸發／已觸發」，紀錄顯示「雙擊閱讀／已閱讀」。提示與雙擊選擇共用條件，阻擋再次取得影子物件或手電筒。
+- 自動化 PASS：`node --test tests/*.test.mjs` **82／82**，含五關實際場景觸發物、觸發前後提示與物品欄不增加、紀錄閱讀、影子及手電筒已取得後不再提示拿取。`node scripts/build.mjs` PASS，13 個應用模組。
+- 內建預覽 PASS（本次範圍）：Windows、Codex IAB（工具未提供實際版本）、預設視窗；隔離 `http://localhost:4181/`，使用 `tests/browser-inventory.html` 的第二關檢查點。手機提示「雙擊觸發」，正常雙擊切成怪核且顯示「已觸發」，物品欄仍為 00；再次雙擊沒有重複觸發，error／warn 日誌為空。截圖：`docs/screenshots/trigger-interaction-hint.png`。未清除 `127.0.0.1:4181` 玩家存檔。
+- 正式 Chrome／Edge × 兩解析度、真實 Pointer Lock 及完整五關人工回歸本次 NOT TESTED；五關觸發分類為自動化覆蓋，不冒充五關人工試玩。
+- 一般收集回歸 PASS：同一隔離第二關走近未寄出的信，提示仍是「雙擊拿取」，雙擊後物品欄由 00 變 01 並顯示信件縮圖與名稱，場景拿取提示消失。
+
+## 本關道具與雙擊拿取驗收（2026-11-01）
+
+本節為現行規格，優先於下方初版顯示全部已收集物品的歷史紀錄。
+
+| 編號 | 操作與預期結果 | 本次結果 |
+| --- | --- | --- |
+| INV-05 | 第二關只列未入槽的本關物品，第三關只列未放入相框的照片；第四關光路記錄後收起手電筒；第五關只列未投遞信件與未入槽記憶 | PASS（五關篩選單元測試；第二、五關內建預覽） |
+| INV-06 | 信件第二關使用後收起，第三、四關不顯示，第五關恢復；錯放照片與記憶取回後再次顯示，重載保持資料 | PASS（存檔及篩選測試；第二關使用／重載與第五關記憶放入／取回 UI） |
+| PICK-01 | 探索時左鍵雙擊已靠近且可見的物品，直接執行拿取，不用按 E；UI 或暫停時不拿取、不重複發物 | PASS（控制器與引擎測試；第二關手機、信件與第五關求助信正常雙擊） |
+| PICK-02 | 分別測鎖定準星、未鎖定點擊位置、超距、牆壁遮擋、物品未顯示與一般家具；不可隔牆或跳過藏點拿取 | PASS（座標／模式單元測試及真實幾何射線回歸）；真實 Pointer Lock 實機仍 NOT TESTED |
+
+### 本次執行紀錄
+
+- 測試人員 Codex；Windows、Node.js 24.22.1、Three.js 0.186.1。基準為已上傳的 d8513bd 內容，最終版本依本次提交追溯。
+- 隔離來源 http://localhost:4181/，與玩家 http://127.0.0.1:4181/ 的儲存分開；沒有清除或覆寫玩家進度。以 tests/browser-inventory.html 明確按鈕及合法引擎動作建立第二、五關檢查點，不以此宣稱本次正常重玩五關。
+- 第二關：正常導覽靠近手機，雙擊場景物件後切換怪核；導覽至信件，雙擊後右上角顯示唯一待用信件，Tab 全視窗不顯示第一關記憶。按 E 開信件凹槽並放入，清單從 1 件變 0 件；重新載入續玩後仍為 0，未刪除跨關資格。
+- 第五關：原本累積的鑰匙、畫、九片照片與無用途歷史物品不再顯示，僅有信件與四片記憶。雙擊求助信正常切換；從裝置放入「記起」後清單從 5 件變 4 件，取回後恢復 5 件，沒有複製道具。
+- 自動化 node --test tests/*.test.mjs：79／79 PASS；node scripts/build.mjs：PASS，13 模組語法與靜態建置完成；git diff --check：PASS。新增篩選、照片取回、影子物件拿取／存檔、手電筒用途、雙擊座標與互斥模式、真實場景遮擋／距離測試。
+- 內建 IAB：1366×768 實際檢查第二關及第五關物品欄，最後 error／warn 日誌空白。未取得瀏覽器實際版本，未以此代替獨立 Chrome／Edge 四組環境；真實鎖定時的雙擊、全五關人工回歸與長時間效能仍 NOT TESTED。
+- 截圖：docs/screenshots/inventory-current-stage.png、inventory-used-hidden.png、inventory-memory-used.png。導覽有一次等待工具逾時，觀察實際抵達後才雙擊；不把工具等待失敗當作成功。
+- 臨時 public/.qa-inventory.html 與 dist 中複本在完成測試後移除，只保留 tests 下的重跑夾具。
+
+## 物品欄初版驗收歷史（2026-11-01）
+
+| 編號 | 操作與預期結果 | 本次結果 |
+| --- | --- | --- |
+| INV-01 | 探索時右上角顯示已收集道具、記憶的模型縮圖及名稱；超過六件顯示總數與查看全部提示，已選物品仍在預覽中 | PASS（狀態單元測試及內建預覽） |
+| INV-02 | 按 Tab 展開全視窗、顯示游標並停止探索輸入；16 件物品可捲動選取，兩解析度無水平溢出；Tab／Esc 收起 | PASS（內建預覽的全視窗、游標與開關；正式 Pointer Lock 矩陣未測） |
+| INV-03 | 點選信件與記憶卡片返回探索並高亮，R 顯示對應模型與名稱，G 放下後收集數不減，重載不遺失信件 | PASS（單元測試及內建預覽） |
+| INV-04 | 反覆開關不累積縮圖 context，正常預覽仍可使用，縮圖失敗清理模型且可重試 | PASS（20 次 UI 開關、50 次快取單元回歸及既有 renderer 資源測試） |
+
+### 右上角與全螢幕物品欄：本次執行紀錄
+
+- 測試人員：Codex；Windows、Node.js 24.22.1、Three.js 0.186.1；基準 main 為 851587f，最終版本依本次 Git 提交追溯。
+- 網址：http://127.0.0.1:4181/；使用獨立測試來源，未更動公開網站或玩家原存檔。瀏覽器為 Codex 內建 IAB，未取得實際版本，不代替獨立 Chrome／Edge 矩陣。
+- 資料：先從新進度確認空物品欄，之後使用 tests/browser-inventory.html 的明確測試按鈕，以 engine 合法動作產生第五關檢查點（12 件道具、4 片記憶）。這是 UI 測試資料，不是本次從第一關正常通關的證據。臨時 public/.qa-inventory.html 與 dist 中複本已移除，不隨遊戲發布。
+- 操作：開始／繼續、Tab 展開、點信件卡片、R 檢視、Esc 關閉、連續 Tab 開關 20 次、點右上角展開、捲到記憶選取、重載續玩、R 檢視「記憶 · 記起」、G 放下；物品數仍為 16。第五關正常導覽至求助信並互動後，黑底紅字主題與物品卡片可正常呈現。
+- 兩尺寸量測：1366×768 與 1920×1080，面板從 (0,0) 覆蓋視窗，卡片共 16 張且所有圖片載入；無水平溢出。展開時 exploring=false、pointerLockElement=null、卡片 cursor=pointer；關閉與選物後 exploring=true。內建瀏覽器未授予真實 Pointer Lock，實機解除／恢復鎖定仍待矩陣驗收。
+- 自動化：node --test tests/*.test.mjs，73／73 PASS；新增四項 inventory 測試，涵蓋不憑空發物、放下不消耗、存檔回讀、正確記憶模型索引、六格保留所選物品、縮圖快取與失敗釋放。node scripts/build.mjs PASS，檢查 13 個模組並產出靜態 dist；git diff --check PASS。
+- 瀏覽器 error／warn 日誌為空。截圖：docs/screenshots/inventory-hud-1366.png、inventory-full-1366.png、inventory-full-1920.png。
+- 未測：正式 Chrome／Edge 四組完整流程、真實 Pointer Lock、長時間 GPU 負載與全部關卡實際重新通關；上述局部 PASS 不代替完整遊戲驗收。
+
 ## 三、需求與案例對照
 
 | 需求 | 來源 | 對應案例 |

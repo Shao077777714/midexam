@@ -13,6 +13,17 @@ export function disposeObjects(root,sharedTextures=[]){
   geometries.forEach(g=>g.dispose());textures.forEach(t=>t.dispose());materials.forEach(m=>m.dispose());
 }
 
+// Static cards reuse a single inspector pool; no live WebGL canvas per inventory tile.
+export function createThumbnailCache(pool,host){
+  const cache=new Map();
+  return {get(kind){
+    if(cache.has(kind))return cache.get(kind);
+    const view=pool.open(host,kind);
+    try{view.render();const url=view.canvas.toDataURL('image/png');if(url==='data:,')throw Error('Thumbnail unavailable');cache.set(kind,url);return url;}
+    finally{view.dispose();}
+  },dispose(){cache.clear();pool.dispose();}};
+}
+
 // A lost main context must pause input, retain state and offer recovery, never stay blank.
 export function watchContext(canvas,renderer,{onLost=()=>{},onRestored=()=>{},onWaiting=()=>{},schedule=setTimeout,cancel=clearTimeout}={}){
   // getExtension may return null after loss: keep the restore handle while GL is healthy.

@@ -37,7 +37,10 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   let root=new T.Group(),entities=[],blocks=[],bounds,door,shadowModels=[],ghosts=[],mirrorModels=[],beamRoot,clockHand,ghostEye,curtain=[],plates=[],mirrorVeil,shadowSupports=[],colliderSources=[],wallEyes,decor=[],sensors=[],opticalHeight=1.65,flood,effectsEnabled=true,searchObjects=[],phenomena;scene.add(root);
   const nearbyLight=new T.PointLight('#c2d8d4',0,3.1,2);scene.add(nearbyLight);
   const ray=new T.Raycaster();
-  const entity=(id,name,group,action,visible=()=>true)=>{group.userData.entity=id;group.traverse(m=>{m.userData.entity=id;});const e={id,name,group,action,visible};entities.push(e);return e;};
+  const entity=(id,name,group,action,visible=()=>true)=>{group.userData.entity=id;group.traverse(m=>{m.userData.entity=id;});const e={id,name,group,action,visible};
+    if(id==='trigger'){e.triggerAction=action;e.canTrigger=()=>{const s=getState();return !s.completed[s.level]&&!s.levels[s.level].triggered;};}
+    if(/^shadow[0-2]$/.test(id)){const index=Number(id.slice(-1));e.pickupAction=()=>onActivate({type:'TAKE_SHADOW',index});e.interactAction=action;e.canInteract=()=>{const s=getState();return !s.completed[0]&&s.levels[0].triggered;};e.canPickup=()=>{const s=getState(),l=s.levels[s.level];return !s.completed[0]&&l.triggered&&!l.collected.includes(['moon','rabbit','vase'][index])&&!shadowAligned(l.shadow[index],SHADOW_TARGETS[index]);};}
+    entities.push(e);return e;};
   const collision=(x,z,w,d)=>blocks.push({x,z,w,d});
   function track(object){const block=footprint(object);blocks.push(block);colliderSources.push({object,block});return block;}
   function refreshColliders(){for(const {object,block} of colliderSources){Object.assign(block,footprint(object));block.active=shown(object);}}
@@ -59,7 +62,10 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
     g.userData.closedCavity=true;front.userData.closedTray=true;track(g);
     entity(id,name,g,()=>onActivate({type:'DRAWER'}));g.userData.front=front;return g;
   }
-  function item(id,name,kind,pos,action,visible=()=>true,scale=1){const g=supported(kind,pos,scale);return entity(id,name,g,action||(()=>onActivate({type:'COLLECT',id})),visible);}
+  function item(id,name,kind,pos,action,visible=()=>true,scale=1){const g=supported(kind,pos,scale),e=entity(id,name,g,action||(()=>onActivate({type:'COLLECT',id})),visible);
+    if(id.startsWith('record-')){e.readAction=e.action;e.canRead=()=>!getState().levels[3].records.includes(id.slice(7));}
+    else if(!action||id==='flashlight'){e.pickupAction=e.action;e.canPickup=()=>{const s=getState(),l=s.levels[s.level];return !s.completed[s.level]&&l.triggered&&(id==='flashlight'?!l.flashlight:!l.collected.includes(id));};}
+    return e;}
   function addDecorations(level){
     const placements=[[3.8,5.7,2.7],[-2.2,-7.3,1.55],[3.9,5.4,3],[-4.3,5.4,2.7],[-3.8,3.5,2.7]];
     const [x,z,w]=placements[level];table(x,z,w,.82);
@@ -235,7 +241,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   function shown(o){for(let p=o;p;p=p.parent)if(!p.visible)return false;return true;}
   function solid(o){if(!o.isMesh)return false;for(let p=o;p;p=p.parent)if(p.userData.nonOccluding)return false;return true;}
   function rayObjects(){return root.children.filter(o=>!o.userData.exterior&&!o.userData.nonOccluding&&!o.isInstancedMesh&&o!==ghostEye);}
-  function target(){ray.setFromCamera(new T.Vector2(0,0),camera);const hits=ray.intersectObjects(rayObjects(),true);for(const hit of hits){if(!shown(hit.object)||!solid(hit.object))continue;if(hit.distance>3.2)break;const e=entities.find(e=>e.id===hit.object.userData.entity&&e.group.visible);if(e)return e;if(hit.object.material?.transparent&&hit.object.material.opacity<.4)continue;if(!hit.object.userData.entity)return null;}return null;}
+  function target(x=0,y=0){if(!Number.isFinite(x)||!Number.isFinite(y)||Math.abs(x)>1||Math.abs(y)>1)return null;ray.setFromCamera(new T.Vector2(x,y),camera);const hits=ray.intersectObjects(rayObjects(),true);for(const hit of hits){if(!shown(hit.object)||!solid(hit.object))continue;if(hit.distance>3.2)break;const e=entities.find(e=>e.id===hit.object.userData.entity&&e.group.visible);if(e)return e;if(hit.object.material?.transparent&&hit.object.material.opacity<.4)continue;if(!hit.object.userData.entity)return null;}return null;}
   function visibleEntities(){return entities.filter(e=>e.group.visible&&e.id!=='exit'||e.id==='exit'&&getState().completed[getState().level]);}
   function focusPoint(e,from=camera.position){
     if(!e.group.visible)return null;
@@ -272,7 +278,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   return {renderer,scene,camera,build,sync,tick,target,near,focusPoint,canApply,approachable,visibleEntities,get bounds(){return bounds},get blocks(){return blocks},get entities(){return entities},get decorations(){return decor},get colliderSources(){return colliderSources},get eyes(){return wallEyes},get flood(){return flood},get phenomena(){return phenomena},wadingAt(x,z){return flood.group.visible&&x>bounds.minX+.11&&x<bounds.maxX-.11&&z>bounds.minZ+.11&&z<bounds.maxZ-.11;},setEffects(enabled){effectsEnabled=enabled;},render(){renderer.render(scene,camera);}};
 }
 // Reuse one preview canvas/context across all items instead of allocating one per interaction.
-export function createInspectorPool({makeCanvas=()=>document.createElement('canvas'),makeRenderer=canvas=>new T.WebGLRenderer({canvas,antialias:true,alpha:true}),makeModel=model,sharedTextures=()=>Object.values(textures)}={}){
+export function createInspectorPool({makeCanvas=()=>document.createElement('canvas'),makeRenderer=canvas=>new T.WebGLRenderer({canvas,antialias:true,alpha:true}),makeModel=model,sharedTextures=()=>Object.values(textures),framed=false}={}){
   let renderer=null,active=null,monitor=null;
   const releaseRenderer=()=>{if(renderer){monitor?.dispose();monitor=null;const lost=renderer.getContext().isContextLost();renderer.dispose();if(!lost)renderer.forceContextLoss?.();renderer=null;}};
   return {
@@ -285,7 +291,9 @@ export function createInspectorPool({makeCanvas=()=>document.createElement('canv
       const scene=new T.Scene();scene.add(new T.HemisphereLight('#fff1e4','#9baf9c',2.2));const light=new T.DirectionalLight('#fff',2);light.position.set(3,5,4);scene.add(light);
       const g=makeModel(kind);scene.add(g);if(['letter','notice','consult','help','drawing','key',...PHOTO_IDS,'phone'].includes(kind))g.rotation.x=.7;
       const bounds=new T.Box3().setFromObject(g),center=bounds.getCenter(new T.Vector3());g.position.sub(center);
-      const camera=new T.PerspectiveCamera(40,width/220,.05,30),size=bounds.getSize(new T.Vector3());camera.position.set(0,.3,Math.max(size.x*2,size.y*2,2));camera.lookAt(0,0,0);
+      const camera=new T.PerspectiveCamera(40,width/220,.05,30),size=bounds.getSize(new T.Vector3());
+      const distance=framed?Math.max(size.y,size.x/camera.aspect)/(2*Math.tan(T.MathUtils.degToRad(20)))*1.35+size.z*.6:Math.max(size.x*2,size.y*2,2);
+      camera.position.set(0,framed?distance*.14:.3,distance);camera.lookAt(0,0,0);
       let disposed=false;
       const inspector={canvas,group:g,render(){if(!disposed&&!r.getContext().isContextLost())r.render(scene,camera);},dispose(){
         if(disposed)return;disposed=true;canvas.onpointerdown=canvas.onpointermove=canvas.onpointerup=canvas.onpointercancel=null;
