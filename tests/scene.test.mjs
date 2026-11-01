@@ -20,7 +20,7 @@ test('all five world triggers can activate once without claiming to be inventory
     let state=newGame();state.level=level;state.levels[level].drawer=true;
     const world=createWorld(null,()=>state,a=>{state=applyAction(state,a).state;},{headless:true});
     const trigger=world.entities.find(e=>e.id==='trigger');
-    assert.ok(trigger);assert.equal(trigger.pickupAction,undefined);assert.equal(interactionHint(trigger),'雙擊觸發');
+    assert.ok(trigger);assert.equal(trigger.pickupAction,undefined);assert.equal(interactionHint(trigger),'');
     doubleClickAction(trigger)();world.sync();assert.equal(state.levels[level].triggered,true);
     assert.equal(interactionHint(trigger),'已觸發');assert.equal(doubleClickAction(trigger),null);assert.deepEqual(state.inventory,[]);
   }

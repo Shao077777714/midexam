@@ -1,7 +1,7 @@
 export const WATER_SPEED_FACTOR=.55;
 export const EYE_SURGE_MS=160;
 export function interactionHint(target){
-  if(target?.triggerAction)return target.canTrigger?.()===false?'已觸發':'雙擊觸發';
+  if(target?.triggerAction)return target.canTrigger?.()===false?'已觸發':'';
   if(target?.readAction)return target.canRead?.()===false?'已閱讀':'雙擊閱讀';
   if(target?.pickupAction)return target.canPickup?.()!==false?'雙擊拿取':'';
   return '';

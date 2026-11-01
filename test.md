@@ -38,6 +38,11 @@
 - 五關正確解法以 `brief.md` 為準；舊數字密碼不是現行謎底。
 - 功能尚未建立時不捏造啟動、建置或測試命令；建立後將實際命令補入 README 與執行紀錄。
 
+## 隱藏雙擊觸發文字（2026-11-01）
+
+- 移除怪核觸發物的「雙擊觸發」附註，保留觸發動作、觸發條件及完成後的「已觸發」狀態。
+- node --test tests/inventory.test.mjs tests/scene.test.mjs **31／31 PASS**，含五關實際場景的觸發前空提示、雙擊動作仍存在且可切換狀態、完成後不重複觸發；node scripts/build.mjs（13 模組）、git diff --check PASS。本次未重跑完整瀏覽器人工流程。
+
 ## 操作說明重寫與精簡物件提示（2026-11-01）
 
 - 基準：加薪的branch c511079；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），隔離 localhost:4181、1366×768，未變更玩家原來源存檔。

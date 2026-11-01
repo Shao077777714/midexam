@@ -63,7 +63,7 @@ test('hidden mouse clicks use the visible center reticle even when the cursor is
 
 test('double-click hints distinguish triggers, reading, and eligible pickups',()=>{
   const action=()=>{};
-  for(const [key,guard,ready,done] of [['triggerAction','canTrigger','雙擊觸發','已觸發'],['readAction','canRead','雙擊閱讀','已閱讀'],['pickupAction','canPickup','雙擊拿取','']]){
+  for(const [key,guard,ready,done] of [['triggerAction','canTrigger','','已觸發'],['readAction','canRead','雙擊閱讀','已閱讀'],['pickupAction','canPickup','雙擊拿取','']]){
     let eligible=true;const target={[key]:action,[guard]:()=>eligible};
     assert.equal(interactionHint(target),ready);assert.equal(doubleClickAction(target),action);
     eligible=false;assert.equal(interactionHint(target),done);assert.equal(doubleClickAction(target),null);
