@@ -1,0 +1,101 @@
+{
+  "name": "dreamcore-environment-v1",
+  "generatedOn": "2026-10-29",
+  "generator": "built-in image_gen",
+  "prompts": "PROMPTS.md",
+  "assets": [
+    {
+      "file": "asphalt-dreamcore-v1.png",
+      "url": "/assets/dreamcore/asphalt-dreamcore-v1.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 4338426,
+      "sha256": "7cba6778866b99837bc936de2a0ad77e56698c1cdc72d8cacdbfff3b8fc535e0",
+      "type": "color-texture",
+      "inGameVerified": false
+    },
+    {
+      "file": "grass-dreamcore-v1.png",
+      "url": "/assets/dreamcore/grass-dreamcore-v1.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 4686930,
+      "sha256": "eba2ff1deb4dbd23fc38d644782a1c68ce56a14ba2dd26986afa645c9425c0b1",
+      "type": "color-texture",
+      "inGameVerified": false
+    },
+    {
+      "file": "siding-tintable-v1.png",
+      "url": "/assets/dreamcore/siding-tintable-v1.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1992863,
+      "sha256": "f2e176ed25d82bc6ddcf022dc9e19892f0809bc3ec7b93f3c2083ecf6a6735d8",
+      "type": "color-texture",
+      "inGameVerified": false
+    },
+    {
+      "file": "sky-eyes-nightmare-v1.png",
+      "url": "/assets/dreamcore/sky-eyes-nightmare-v1.png",
+      "width": 1774,
+      "height": 887,
+      "bytes": 1680532,
+      "sha256": "1f1a575b114dfe74a54a70c5871b11b235112f1ef6d7c34dcbbcfca2774a250b",
+      "type": "color-texture",
+      "inGameVerified": false
+    },
+    {
+      "file": "family-memory-v1.png",
+      "url": "/assets/dreamcore/family-memory-v1.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2124841,
+      "sha256": "daa1515b66c67eb8f1ee668fd1f2e6bab00d4ab3e90999166f90f8340da0b896",
+      "type": "color-texture",
+      "inGameVerified": false
+    },
+    {
+      "file": "family-aged-v2.png",
+      "url": "/assets/dreamcore/family-aged-v2.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2508953,
+      "sha256": "dd11738cbd99fdcaec02ef047b0157e2e3a43be6b022fae2f8f4d75b65030dbd",
+      "type": "aged-photograph",
+      "prompts": "PROMPTS-v2.json",
+      "generatedOn": "2026-10-30",
+      "inGameVerified": true,
+      "verificationScope": "Codex IAB sample display; complete Chrome/Edge matrix pending."
+    },
+    {
+      "file": "family-distorted-v2.png",
+      "url": "/assets/dreamcore/family-distorted-v2.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2822862,
+      "sha256": "ce4aa0db09080941aeac2a8f4e4430f1bac6ae2f69d940968d2b2cd851f18264",
+      "type": "weirdcore-photograph",
+      "prompts": "PROMPTS-v2.json",
+      "generatedOn": "2026-10-30",
+      "inGameVerified": true,
+      "verificationScope": "Codex IAB sample display; complete Chrome/Edge matrix pending."
+    },
+    {
+      "file": "organic-eye-v2.png",
+      "url": "/assets/dreamcore/organic-eye-v2.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1457022,
+      "sha256": "7de0f9a9be436d223aee4483e44468a44d9acc9b19090c798537cb935b1ab06e",
+      "type": "transparent-cutout",
+      "prompts": "PROMPTS-v2.json",
+      "generatedOn": "2026-10-30",
+      "inGameVerified": true,
+      "alphaExtrema": [
+        0,
+        255
+      ],
+      "verificationScope": "Codex IAB sample display; complete Chrome/Edge matrix pending."
+    }
+  ]
+}
