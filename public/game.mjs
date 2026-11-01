@@ -1,9 +1,10 @@
 import * as T from './vendor/three.module.js';
 import {newGame,applyAction,saveGame,loadGame,MEMORIES,ITEMS,SHADOW_TARGETS,shadowAligned,traceMirrors,angleDistance,PHOTO_IDS,PHOTO_CODES,PHOTO_TRAY,opticsStatus,SPECTRA,RECEIVER_FILTERS} from './engine.mjs';
-import {createWorld,createInspector,FAMILY_URL,HORROR_FAMILY_URL} from './scene.mjs';
+import {createWorld,createInspector,createInspectorPool,FAMILY_URL,HORROR_FAMILY_URL} from './scene.mjs';
 import {walkable,findPath} from './navigation.mjs';
 import {createMouseLook,movementSpeed,EYE_SURGE_MS} from './controls.mjs';
-import {watchContext} from './rendering.mjs';
+import {watchContext,createThumbnailCache} from './rendering.mjs';
+import {inventoryEntries,compactInventory} from './inventory.mjs';
 import {chooseVoice,voiceDescription} from './voice.mjs';
 import {LEVELS,RECORDS,PROJECTION} from './content.mjs';
 const $=id=>document.getElementById(id), symbols=['☾','≋','▧','◇','✧'];
@@ -11,6 +12,7 @@ const storage={getItem:k=>localStorage.getItem(k),setItem:(k,v)=>localStorage.se
 let saved=loadGame(storage),state=newGame(),world,mode='title',selected=null,held=null,inspector=null,panelRefresh=null,nearby=null,focusEntity=null,navigation=[],navTarget=null,toastTimer,projectionTime=0,projectionPage=-1,elapsedLast=performance.now(),hintDepth=0,muted=false,lastRender=0,photoController=null,effectsEnabled=true,eyeTimer,mouseLook,lockHelpShown=false,voiceURI='';
 try{voiceURI=localStorage.getItem('dream-gap-voice')||'';}catch{}
 const keys=new Set();
+const thumbnails=createThumbnailCache(createInspectorPool({framed:true}),document.createElement('div'));
 let renderContext=null,renderFailed=false,renderResumeMode='title';
 function renderProblem(error){console.error(error);renderFailed=true;setMode('render-error');document.body.classList.add('render-lost');$('fatal').hidden=false;$('fatal').querySelector('h2').textContent='遊戲畫面暫時中斷';$('fatal-message').textContent='請重新載入畫面，再選擇「繼續上一次的記憶」。已儲存的進度會保留。';}
 function monitorRendering(){renderContext=watchContext($('world'),world.renderer,{
@@ -26,16 +28,16 @@ const add=(parent,...children)=>children.forEach(c=>parent.append(c));
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const audio={ctx:null,gain:null,drone:null,init(){try{if(!this.ctx){this.ctx=new AudioContext();this.gain=this.ctx.createGain();this.gain.gain.value=.018;this.gain.connect(this.ctx.destination);this.drone=this.ctx.createOscillator();this.drone.type='sine';this.drone.frequency.value=110;this.drone.connect(this.gain);this.drone.start();}this.ctx.resume().catch(()=>{});}catch{}},update(){if(this.gain)this.gain.gain.setTargetAtTime(muted||['title','modal'].includes(mode)?0:state.levels[state.level].triggered?.025:.012,this.ctx.currentTime,.3);if(this.drone)this.drone.frequency.setTargetAtTime(state.levels[state.level].triggered?65.4:110,this.ctx.currentTime,1);},tone(f=440,delay=0){if(muted||!this.ctx)return;const o=this.ctx.createOscillator(),g=this.ctx.createGain(),start=this.ctx.currentTime+delay;o.frequency.value=f;g.gain.setValueAtTime(.07,start);g.gain.exponentialRampToValueAtTime(.001,start+.6);o.connect(g);g.connect(this.ctx.destination);o.start(start);o.stop(start+.6);},speak(copy){if(muted||!('speechSynthesis'in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(copy);const voice=chooseVoice(speechSynthesis.getVoices(),voiceURI);if(!voice)return;u.voice=voice;u.lang=voice.lang;u.rate=.82;u.pitch=.74;u.volume=.65;speechSynthesis.speak(u);}};
 function toast(copy){if(!copy)return;$('toast').textContent=copy;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),4200);}
-function setMode(next){mode=next;keys.clear();document.body.classList.toggle('exploring',next==='explore');if(next==='explore')mouseLook?.enter();else mouseLook?.leave();$('crosshair').hidden=next!=='explore';$('interact').hidden=next!=='explore';audio.update();}
-function closePanel(){inspector?.dispose();inspector=null;panelRefresh=null;photoController=null;$('panel').classList.remove('puzzle-panel','optics-panel');$('panel').hidden=true;setMode('explore');}
+function setMode(next){mode=next;keys.clear();document.body.classList.toggle('exploring',next==='explore');$('inventory-hud').hidden=next!=='explore';if(next==='explore')mouseLook?.enter();else mouseLook?.leave();$('crosshair').hidden=next!=='explore';$('interact').hidden=next!=='explore';audio.update();}
+function closePanel(){inspector?.dispose();inspector=null;panelRefresh=null;photoController=null;$('panel').classList.remove('puzzle-panel','optics-panel','inventory-panel');$('panel').hidden=true;setMode('explore');}
 function openPanel(title,kicker='MEMORY / 物件操作'){
-  inspector?.dispose();inspector=null;panelRefresh=null;photoController=null;$('panel').classList.remove('puzzle-panel','optics-panel');setMode('panel');navigation=[];$('modal').hidden=true;$('panel').hidden=false;$('panel-title').textContent=title;$('panel-kicker').textContent=kicker;$('panel-body').replaceChildren();$('panel-close').focus();return $('panel-body');
+  inspector?.dispose();inspector=null;panelRefresh=null;photoController=null;$('panel').classList.remove('puzzle-panel','optics-panel','inventory-panel');setMode('panel');navigation=[];$('modal').hidden=true;$('panel').hidden=false;$('panel-title').textContent=title;$('panel-kicker').textContent=kicker;$('panel-body').replaceChildren();$('panel-close').focus();return $('panel-body');
 }
 function modal(title,body,actions,kicker='DREAM GAP',className=''){
-  inspector?.dispose();inspector=null;panelRefresh=null;photoController=null;$('panel').classList.remove('puzzle-panel','optics-panel');setMode('modal');navigation=[];$('panel').hidden=true;$('modal').hidden=false;$('modal-title').textContent=title;$('modal-kicker').textContent=kicker;const target=$('modal-body');target.replaceChildren();if(typeof body==='string')target.innerHTML=body;else target.append(body);$('modal').querySelector('article').className=`modal ${className}`;$('modal-actions').replaceChildren(...actions.map(([label,fn,cls])=>btn(label,fn,cls||'primary')));$('modal-actions').querySelector('button')?.focus();
+  inspector?.dispose();inspector=null;panelRefresh=null;photoController=null;$('panel').classList.remove('puzzle-panel','optics-panel','inventory-panel');setMode('modal');navigation=[];$('panel').hidden=true;$('modal').hidden=false;$('modal-title').textContent=title;$('modal-kicker').textContent=kicker;const target=$('modal-body');target.replaceChildren();if(typeof body==='string')target.innerHTML=body;else target.append(body);$('modal').querySelector('article').className=`modal ${className}`;$('modal-actions').replaceChildren(...actions.map(([label,fn,cls])=>btn(label,fn,cls||'primary')));$('modal-actions').querySelector('button')?.focus();
 }
 function resume(){$('modal').hidden=true;setMode('explore');toast('直接移動滑鼠環視 · E 互動 · N 導覽 · Esc 暫停');}
-function updateHUD(){const meta=LEVELS[state.level];$('chapter-no').textContent=`記憶 0${state.level+1} / 05`;$('chapter-name').textContent=meta.name;$('world-state').textContent=state.level===4?'BETWEEN WORLDS · 夢與真實':state.levels[state.level].triggered?'WEIRDCORE · 怪核':'DREAMCORE · 夢核';document.body.classList.toggle('weird',state.levels[state.level].triggered);$('memory-icons').innerHTML=MEMORIES.map((m,i)=>`<span class="memory ${state.completed[i]?'found':''}"><i>${symbols[i]}</i>${m}</span>`).join('');}
+function updateHUD(){updateInventoryHUD();const meta=LEVELS[state.level];$('chapter-no').textContent=`記憶 0${state.level+1} / 05`;$('chapter-name').textContent=meta.name;$('world-state').textContent=state.level===4?'BETWEEN WORLDS · 夢與真實':state.levels[state.level].triggered?'WEIRDCORE · 怪核':'DREAMCORE · 夢核';document.body.classList.toggle('weird',state.levels[state.level].triggered);$('memory-icons').innerHTML=MEMORIES.map((m,i)=>`<span class="memory ${state.completed[i]?'found':''}"><i>${symbols[i]}</i>${m}</span>`).join('');}
 function persist(){const result=saveGame(storage,state);if(result.ok){state=applyAction(state,{type:'ACK_SAVE'}).state;$('save-status').textContent='✓ 進度已儲存於此瀏覽器';$('save-status').classList.remove('save-error');}else{$('save-status').textContent='儲存失敗 · 請重試';$('save-status').classList.add('save-error');toast(result.message);}return result.ok;}
 function complete(){audio.tone(660);const good=persist(),meta=LEVELS[state.level];const actions=good?[[state.level===4?'走向清醒':'前往下一段記憶',()=>state.level===4?ending(0):nextLevel()]]:[['重試儲存',()=>complete()]];modal(`找回「${meta.memory}」`,`<p>${esc(meta.story)}</p><p class="muted">${good?'✓ 本關進度已自動儲存，可關閉後再繼續。':'進度尚未儲存，請允許網站儲存資料後重試。'}</p>`,actions,`MEMORY ${state.level+1} / 5`);}
 function dispatch(a,{silent=false}={}){
@@ -64,16 +66,32 @@ function preview(body,kind,onRotate){
   canvas.onpointermove=e=>{if(!last||inspector!==p)return;p.group.rotation.y+=(e.clientX-last[0])*.014;p.group.rotation.x=Math.max(-.7,Math.min(.7,p.group.rotation.x+(e.clientY-last[1])*.008));last=[e.clientX,e.clientY];onRotate?.(p.group.rotation.y);};
   canvas.onpointerup=canvas.onpointercancel=()=>last=null;return p;
 }
-function showInventory(){const body=openPanel('物品與記憶','INVENTORY / Tab');add(body,text('p','選取道具後，靠近對應的凹槽或信箱使用。第二關的信會一直保留到最後。'));const grid=document.createElement('div');grid.className='item-grid';
-  for(const id of state.inventory){const b=btn(ITEMS[id],()=>{selected=id;held=id;closePanel();toast(`已選取：${ITEMS[id]}。靠近機關後按 E 使用。`);},`item-tile ${selected===id?'selected':''}`);b.append(text('small',id==='letter'?'跨關道具 · 請保留':'已收集'));grid.append(b);}if(!state.inventory.length)grid.append(text('p','物品欄還是空的。'));body.append(grid);
-  add(body,text('p','記憶碎片'));const memories=document.createElement('div');memories.className='item-grid';state.memories.forEach((m,i)=>memories.append(btn(`${symbols[i]} ${m}`,()=>showInspection('memory',m),'item-tile')));body.append(memories);
+function itemPicture(entry){const wrap=text('span','','inventory-picture');try{const image=document.createElement('img');image.src=thumbnails.get(entry.kind);image.alt=entry.name;image.draggable=false;wrap.append(image);}catch(error){console.warn('物品縮圖暫時無法顯示',entry.id,error);wrap.append(text('span','◇'));}return wrap;}
+function updateInventoryHUD(){
+  const entries=inventoryEntries(state,held),quick=$('inventory-quick');quick.replaceChildren();$('inventory-count').textContent=String(entries.length).padStart(2,'0');
+  for(const entry of compactInventory(entries,held)){const tile=text('div','',`inventory-mini ${held===entry.id?'selected':''}`);tile.title=entry.name;add(tile,itemPicture(entry),text('span',entry.name));quick.append(tile);}
+  if(!entries.length)quick.append(text('p','還沒有收集到物品。\n靠近道具，按 E 拿取。','inventory-empty'));
+  if(entries.length>6)quick.append(text('p',`還有 ${entries.length-6} 件 · Tab 查看全部`,'inventory-more'));
+  const active=entries.find(e=>e.id===held);$('inventory-equipped').textContent=active?`已選取：${active.name} · R 檢視`:'尚未選取物品 · Tab 開啟物品欄';
+}
+function showInventory(){
+  if(['title','projection','recovering','render-error'].includes(mode))return;
+  const body=openPanel('隨身物品','INVENTORY / 帶著記憶繼續走');$('panel').classList.add('inventory-panel');
+  const entries=inventoryEntries(state,held),intro=text('div','','inventory-intro');
+  add(intro,text('p','每一件留下的物品，都是回去的線索。'),text('p','點選物品即可帶回探索；按 R 檢視，靠近機關後按 E 使用。','panel-note'));body.append(intro);
+  const summary=text('p',`${entries.filter(e=>e.category==='道具').length} 件道具 / ${state.memories.length} 片記憶`,'inventory-summary');body.append(summary);
+  for(const category of ['道具','記憶']){const section=document.createElement('section');section.className='inventory-section';section.append(text('h3',category==='道具'?'收集的物品':'找回的記憶'));const grid=text('div','','inventory-grid');
+    for(const entry of entries.filter(e=>e.category===category)){const tile=btn('',()=>{selected=entry.id;held=entry.id;updateInventoryHUD();closePanel();toast(`已選取：${entry.name}。按 R 檢視；靠近機關後按 E 使用。`);},`inventory-card ${held===entry.id?'selected':''}`);tile.dataset.itemId=entry.id;tile.setAttribute('aria-label',`選取${entry.name}`);tile.setAttribute('aria-pressed',String(held===entry.id));add(tile,itemPicture(entry),text('strong',entry.name),text('small',held===entry.id?'已選取 · 再次點選返回探索':entry.note));grid.append(tile);}
+    if(!grid.childElementCount)grid.append(text('p',category==='道具'?'還沒有物品。回到房間探索，靠近道具按 E 拿取。':'記憶尚未完整。完成關卡後，碎片會保存在這裡。','inventory-empty'));section.append(grid);body.append(section);
+  }
+  const footer=text('div','','inventory-footer');add(footer,text('span','Tab / Esc 收起 · 返回探索後按 R 檢視所選物品'),btn('返回探索',closePanel,'primary'));body.append(footer);
 }
 function showHints(){const body=openPanel('留給自己的提示','HINT / H');const meta=LEVELS[state.level];add(body,text('p',state.levels[state.level].triggered?meta.hint:meta.objective));add(body,btn('多想起一點',()=>{hintDepth++;const p=text('p',meta.deepHint,'hint-copy');body.append(p);},'secondary'));add(body,text('p','先觀察，再嘗試。錯放的物件可以取回，沒有強制倒數。','panel-note'));}
 function showNavigation(){const body=openPanel('環顧這個地方','EXPLORE / 輔助探索');add(body,text('p','選擇目前可見的物件，沿可通行路線走近。抵達後按 E 互動。也可隨時用 WASD 取消導覽。','panel-note'));
   const list=world.visibleEntities();for(const e of list){const center=new T.Box3().setFromObject(e.group).getCenter(new T.Vector3()),distance=Math.hypot(center.x-world.camera.position.x,center.z-world.camera.position.z);const b=btn(e.name,()=>{const start=[world.camera.position.x,world.camera.position.z];const path=findPath(start,[center.x,center.z],world.bounds,world.blocks,p=>world.approachable(e,new T.Vector3(p[0],1.65,p[1])));closePanel();if(!path.length&&!world.near(e))return toast('路線被家具擋住了，試著從另一側靠近。');navigation=path;navTarget=e;if(!path.length)arrive();else toast(`正在走向：${e.name}`);},'nav-item');b.append(text('span',`${distance.toFixed(1)} m →`));body.append(b);}}
 function arrive(){navigation=[];if(navTarget){const p=world.focusPoint(navTarget)||new T.Box3().setFromObject(navTarget.group).getCenter(new T.Vector3());world.camera.lookAt(p);world.camera.rotation.order='YXZ';nearby=world.near(navTarget)?navTarget:null;focusEntity=nearby;if(!nearby)toast('前方仍有遮擋。請調整位置，或先移開家具。');else toast(`按 E：${navTarget.name}`);}navTarget=null;}
-function showInspection(kind,label){const body=openPanel(label,'INSPECT / 拖曳旋轉');held=kind;const p=preview(body,kind);add(body,text('p','按住上方物件拖曳，從不同角度查看；R 或 Esc 離開。','panel-note'));const row=document.createElement('div');row.className='button-row';add(row,btn('向左轉 90°',()=>p.group.rotation.y-=Math.PI/2),btn('向右轉 90°',()=>p.group.rotation.y+=Math.PI/2));body.append(row);}
-function showShadow(index){const body=openPanel(['月亮燈','兔子玩偶','花瓶'][index],'SHADOW / 物件操作');held=['moon','rabbit','vase'][index];preview(body,held);add(body,text('p','調整物件的位置與方向。看向牆面，讓真實投影與淡紫色輪廓重合。'));const status=text('div','','alignment');body.append(status);const v=state.levels[0].shadow[index], inputs={};
+function showInspection(kind,label){const body=openPanel(label,'INSPECT / 拖曳旋轉');held=kind;updateInventoryHUD();const p=preview(body,kind);add(body,text('p','按住上方物件拖曳，從不同角度查看；R 或 Esc 離開。','panel-note'));const row=document.createElement('div');row.className='button-row';add(row,btn('向左轉 90°',()=>p.group.rotation.y-=Math.PI/2),btn('向右轉 90°',()=>p.group.rotation.y+=Math.PI/2));body.append(row);}
+function showShadow(index){const body=openPanel(['月亮燈','兔子玩偶','花瓶'][index],'SHADOW / 物件操作');held=['moon','rabbit','vase'][index];updateInventoryHUD();preview(body,held);add(body,text('p','調整物件的位置與方向。看向牆面，讓真實投影與淡紫色輪廓重合。'));const status=text('div','','alignment');body.append(status);const v=state.levels[0].shadow[index], inputs={};
   for(const [key,label,min,max,step,value] of [['x','左右位置',-4.4,4.4,.1,v.x],['z','前後位置',-3,2.5,.1,v.z],['angle','旋轉角度',0,315,45,v.angle]]){const l=text('label',`${label}　`),out=text('span',String(value)),input=document.createElement('input');input.type='range';input.min=min;input.max=max;input.step=step;input.value=value;input.setAttribute('aria-label',label);inputs[key]=input;l.append(out,input);body.append(l);input.addEventListener('input',()=>{out.textContent=input.value;const result=dispatch({type:'SHADOW',index,x:Number(inputs.x.value),z:Number(inputs.z.value),angle:Number(inputs.angle.value)},{silent:true});if(!result.ok){const current=state.levels[0].shadow[index];for(const key of ['x','z','angle'])inputs[key].value=current[key];out.textContent=input.value;}if(mode==='panel')refresh();});}
   function refresh(){const n=state.levels[0].shadow.filter((v,i)=>shadowAligned(v,SHADOW_TARGETS[i])).length;status.textContent=`已重合 ${n} / 3 個影子 · ${shadowAligned(state.levels[0].shadow[index],SHADOW_TARGETS[index])?'這個影子對齊了':'還需要調整位置或角度'}`;if(inspector)inspector.group.rotation.y=state.levels[0].shadow[index].angle*Math.PI/180;}
   panelRefresh=refresh;refresh();add(body,btn('放下並觀察影子',closePanel,'primary'));
@@ -135,7 +153,7 @@ function handle(a){if(a.type==='DECOR'){if(a.name==='木製音樂盒'&&a.active)
   if(a.type==='MAIL_UI'){const body=openPanel('寄出那封信','MAIL / 最後的選擇');body.append(text('p',state.levels[4].projectionDone?'這次，你想把那些從未說出口的話，送到另一個人手裡。':'你還沒有找回所有記憶。先完成中央裝置的投影。','read-text'));body.append(btn('投入第二關未寄出的信',()=>dispatch({type:'MAIL'}),'primary'));return;}
   if(a.type==='READ'){const body=openPanel('家庭照片','A FADED MEMORY');preview(body,'photo');body.append(text('p',state.completed[0]?'家人的輪廓逐漸清晰，但你的臉仍然模糊。':'你覺得自己應該認識照片裡的人，卻想不起名字。'));return;}
   if(a.type==='EXIT'){if(state.completed[state.level])complete();else toast('出口仍然關著。這段記憶還沒有完整。');return;}
-  const r=dispatch(a);if(r.ok&&a.type==='FLASHLIGHT')held='flashlight';if(r.ok&&a.type==='COLLECT')held=a.id;
+  const r=dispatch(a);if(r.ok&&a.type==='FLASHLIGHT')held='flashlight';if(r.ok&&a.type==='COLLECT')held=a.id;updateInventoryHUD();
 }
 function voiceSettings(){
   const body=openPanel('你的聲音，還在這裡','VOICE / 男性主角');add(body,text('p','主角是一名男性。優先採用可辨識的中文男聲，語速較沉穩；可依這台電腦實際提供的聲線調整。'));
@@ -166,9 +184,10 @@ try{
     if(e.code==='Escape'){if(mode==='panel')closePanel();else if(mode==='explore')pause();return;}
     if(['title','modal','projection','recovering','render-error'].includes(mode))return;
     if(e.code==='Tab'){mode==='panel'?closePanel():showInventory();return;}
-    if(e.code==='KeyR'){if(mode==='panel')closePanel();else if(held)showInspection(held,ITEMS[held]||'手持物件');else toast('先拿起一件可以檢視的物品。');return;}
-    if(mode!=='explore')return;keys.add(e.code);if(e.code==='KeyE')activate(nearby);if(e.code==='KeyH')showHints();if(e.code==='KeyN')showNavigation();if(e.code==='KeyG'){held=null;toast('你放下了手持物件。已收集的任務物品仍保存在物品欄。');}
+    if(e.code==='KeyR'){if(mode==='panel')closePanel();else if(held)showInspection(held,inventoryEntries(state,held).find(e=>e.id===held)?.name||ITEMS[held]||'手持物件');else toast('先拿起一件可以檢視的物品。');return;}
+    if(mode!=='explore')return;keys.add(e.code);if(e.code==='KeyE')activate(nearby);if(e.code==='KeyH')showHints();if(e.code==='KeyN')showNavigation();if(e.code==='KeyG'){held=null;selected=null;updateInventoryHUD();toast('你放下了手持物件。已收集的任務物品仍保存在物品欄。');}
   });
+  $('inventory-expand').onclick=showInventory;
   addEventListener('keyup',e=>keys.delete(e.code));addEventListener('blur',()=>{keys.clear();navigation=[];if(mode==='explore')pause();});
   addEventListener('pointermove',event=>mouseLook.move(event));
   requestAnimationFrame(frame);

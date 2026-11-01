@@ -272,7 +272,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   return {renderer,scene,camera,build,sync,tick,target,near,focusPoint,canApply,approachable,visibleEntities,get bounds(){return bounds},get blocks(){return blocks},get entities(){return entities},get decorations(){return decor},get colliderSources(){return colliderSources},get eyes(){return wallEyes},get flood(){return flood},get phenomena(){return phenomena},wadingAt(x,z){return flood.group.visible&&x>bounds.minX+.11&&x<bounds.maxX-.11&&z>bounds.minZ+.11&&z<bounds.maxZ-.11;},setEffects(enabled){effectsEnabled=enabled;},render(){renderer.render(scene,camera);}};
 }
 // Reuse one preview canvas/context across all items instead of allocating one per interaction.
-export function createInspectorPool({makeCanvas=()=>document.createElement('canvas'),makeRenderer=canvas=>new T.WebGLRenderer({canvas,antialias:true,alpha:true}),makeModel=model,sharedTextures=()=>Object.values(textures)}={}){
+export function createInspectorPool({makeCanvas=()=>document.createElement('canvas'),makeRenderer=canvas=>new T.WebGLRenderer({canvas,antialias:true,alpha:true}),makeModel=model,sharedTextures=()=>Object.values(textures),framed=false}={}){
   let renderer=null,active=null,monitor=null;
   const releaseRenderer=()=>{if(renderer){monitor?.dispose();monitor=null;const lost=renderer.getContext().isContextLost();renderer.dispose();if(!lost)renderer.forceContextLoss?.();renderer=null;}};
   return {
@@ -285,7 +285,9 @@ export function createInspectorPool({makeCanvas=()=>document.createElement('canv
       const scene=new T.Scene();scene.add(new T.HemisphereLight('#fff1e4','#9baf9c',2.2));const light=new T.DirectionalLight('#fff',2);light.position.set(3,5,4);scene.add(light);
       const g=makeModel(kind);scene.add(g);if(['letter','notice','consult','help','drawing','key',...PHOTO_IDS,'phone'].includes(kind))g.rotation.x=.7;
       const bounds=new T.Box3().setFromObject(g),center=bounds.getCenter(new T.Vector3());g.position.sub(center);
-      const camera=new T.PerspectiveCamera(40,width/220,.05,30),size=bounds.getSize(new T.Vector3());camera.position.set(0,.3,Math.max(size.x*2,size.y*2,2));camera.lookAt(0,0,0);
+      const camera=new T.PerspectiveCamera(40,width/220,.05,30),size=bounds.getSize(new T.Vector3());
+      const distance=framed?Math.max(size.y,size.x/camera.aspect)/(2*Math.tan(T.MathUtils.degToRad(20)))*1.35+size.z*.6:Math.max(size.x*2,size.y*2,2);
+      camera.position.set(0,framed?distance*.14:.3,distance);camera.lookAt(0,0,0);
       let disposed=false;
       const inspector={canvas,group:g,render(){if(!disposed&&!r.getContext().isContextLost())r.render(scene,camera);},dispose(){
         if(disposed)return;disposed=true;canvas.onpointerdown=canvas.onpointermove=canvas.onpointerup=canvas.onpointercancel=null;

@@ -13,6 +13,10 @@
     <div class="chapter"><span id="chapter-no">記憶 01 / 05</span><h1 id="chapter-name">失焦的房間</h1><span id="world-state" class="world-state">DREAMCORE · 夢核</span></div>
     <nav class="hud-actions" aria-label="遊戲選單"><button id="hint-button" class="quiet">提示 <kbd>H</kbd></button><button id="navigate-button" class="quiet">探索導覽 <kbd>N</kbd></button><button id="inventory-button" class="quiet">物品欄 <kbd>Tab</kbd></button><button id="pause-button" class="round" aria-label="暫停遊戲">Ⅱ</button></nav>
   </header>
+  <aside id="inventory-hud" aria-label="隨身物品" hidden>
+    <div class="inventory-hud-heading"><span>隨身物品 <span id="inventory-count">00</span></span><button id="inventory-expand" aria-label="展開全螢幕物品欄">展開 <kbd>Tab</kbd> ↗</button></div>
+    <div id="inventory-quick"></div><p id="inventory-equipped" aria-live="polite">尚未選取物品</p>
+  </aside>
   <aside id="memory-hud" hidden><p class="eyebrow">MEMORY FRAGMENTS</p><div id="memory-icons"></div><small id="save-status">每關完成後自動儲存</small></aside>
   <div id="movement-state" role="status"></div>
   <div id="crosshair" aria-hidden="true" hidden>+</div>
