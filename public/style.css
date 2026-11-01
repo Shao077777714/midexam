@@ -280,6 +280,24 @@ body.low-effects #world { animation: none; }
 @media (max-width:700px) { .photo-toolbar p { flex-basis:100%; text-align:center; } .photo-workspace { grid-template-columns:1fr; } .piece-tray { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 /* Immediate first-person input, short transition eyes and readable optical controls. */
 body.exploring, body.exploring * { cursor: none !important; }
+body.exploring #quick-controls, body.exploring #quick-controls * { cursor: auto !important; }
+body.exploring #quick-controls button, body.exploring #quick-controls button * { cursor: pointer !important; }
+body.controls-hover #crosshair { visibility: hidden; }
+#quick-controls { flex-direction: column; align-items: stretch; width: 320px; padding: 10px 12px; background: #22372ff2; border: 1px solid #c4c9ad66; border-radius: 12px 3px 12px 3px; box-shadow: 0 8px 24px #101c2933; }
+#hud { z-index: 6; }
+.controls-caption { font-size: 11px; letter-spacing: .18em; color: #eee3d0; padding: 0 3px; }
+.controls-buttons { display: flex; justify-content: space-between; gap: 6px; }
+.icon-button { position: relative; display: grid; place-items: center; width: 44px; height: 44px; padding: 10px; flex: 0 0 44px; border: 1px solid #c4c9ad66; border-radius: 8px; background: #f0e4cf0c; color: #f8efdf; }
+.icon-button svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.icon-button:hover, .icon-button:focus-visible { background: #526855; border-color: #e1d1a7; }
+.icon-button::after { content: attr(data-tip); position: absolute; top: calc(100% + 12px); right: 0; z-index: 8; width: max-content; max-width: 280px; padding: 8px 12px; color: #fff4dc; background: #14251ff5; border: 1px solid #a9b59d; border-radius: 6px; font-size: 13px; line-height: 1.7; opacity: 0; visibility: hidden; pointer-events: none; }
+.icon-button:hover::after, .icon-button:focus-visible::after { opacity: 1; visibility: visible; }
+.icon-button[aria-pressed=true] { color: #e9b0a2; background: #6b343944; border-color: #cb8d7b; }
+.disabled-mark { display: none; }
+.icon-button[aria-pressed=true] .disabled-mark { display: block; }
+#sound-button[aria-pressed=true] .sound-waves { display: none; }
+body.weird #quick-controls { background: #180e16f5; border-color: #a26b6b99; }
+body.weird .icon-button:hover { background: #58343b; }
 #eye-overlay { transition: opacity .14s ease-out; }
 body.weird #eye-overlay { opacity: .07; }
 body.weird.eyes-surge #eye-overlay { opacity: .78; }
@@ -303,7 +321,7 @@ body.low-effects.weird #eye-overlay, body.low-effects.weird.eyes-surge #eye-over
 .optics-controls > .secondary { width: 100%; margin-top: 12px; }
 .optics-controls > .primary { margin-top: 14px; }
 /* A compact keepsake shelf during exploration, a full viewport when opened. */
-#inventory-hud { position: fixed; top: 88px; right: 30px; width: 320px; z-index: 4; padding: 16px; background: #22372ff2; color: #f8efdf; border: 1px solid #c4c9ad66; box-shadow: 0 12px 32px #101c2933; border-radius: 3px 16px 3px 16px; pointer-events: none; }
+#inventory-hud { position: fixed; top: 164px; right: 30px; width: 320px; z-index: 4; padding: 16px; background: #22372ff2; color: #f8efdf; border: 1px solid #c4c9ad66; box-shadow: 0 12px 32px #101c2933; border-radius: 3px 16px 3px 16px; pointer-events: none; }
 .inventory-hud-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; letter-spacing: .08em; }
 #inventory-count { color: #dbcfb7; margin-left: 6px; font-size: 12px; }
 #inventory-expand { pointer-events: auto; color: inherit; border: 0; border-bottom: 1px solid #c4c9ad66; background: transparent; min-height: 44px; font-size: 12px; padding: 6px 2px; }
@@ -341,6 +359,7 @@ body.weird .inventory-card { background: #1d1216; border-color: #87515a; color: 
 body.weird .inventory-card small { color: #e2b4aa; }
 body.weird .inventory-card:hover, body.weird .inventory-card.selected { border-color: #f4b6a6; outline-color: #f4b6a6; box-shadow: 0 8px 24px #0005; }
 body.weird .inventory-panel > header, body.weird .inventory-footer { background: #100a0e; color: #efb6aa; }
-@media (max-width:800px) { #inventory-hud { right: 16px; top: 100px; width: 270px; } .panel.inventory-panel { padding: 20px; } .inventory-panel > header { top: -20px; } .inventory-footer { bottom: -20px; } }
+@media (max-width:800px) { #inventory-hud { right: 16px; top: 164px; width: 270px; } .panel.inventory-panel { padding: 20px; } .inventory-panel > header { top: -20px; } .inventory-footer { bottom: -20px; } }
 @media (max-height:800px) { #inventory-hud { width: 290px; padding: 10px 14px; } .inventory-mini .inventory-picture { height: 42px; } .inventory-mini > span:last-child { font-size: 11px; } .inventory-card .inventory-picture { height: 105px; } .inventory-panel h2 { font-size: 32px; } }
+@media (max-height:800px) { #quick-controls { width: 290px; } }
 @media (max-width:800px) { .optics-workspace { grid-template-columns: 1fr; } .optics-panel { width: calc(100vw - 32px); } }
