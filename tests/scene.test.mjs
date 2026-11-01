@@ -7,6 +7,7 @@ import {newGame,SHADOW_TARGETS,applyAction,SEARCHES} from '../public/engine.mjs'
 import {createWorld} from '../public/scene.mjs';
 import {findPath,walkable} from '../public/navigation.mjs';
 import {EXTERIOR} from '../public/atmosphere.mjs';
+import {interactionHint,doubleClickAction} from '../public/controls.mjs';
 
 function fixture(level=0,triggered=true){
   const state=newGame();state.level=level;
@@ -14,6 +15,27 @@ function fixture(level=0,triggered=true){
   const signals=[],world=createWorld(null,()=>state,a=>signals.push(a),{headless:true});
   return {state,world,signals};
 }
+test('all five world triggers can activate once without claiming to be inventory pickups',()=>{
+  for(let level=0;level<5;level++){
+    let state=newGame();state.level=level;state.levels[level].drawer=true;
+    const world=createWorld(null,()=>state,a=>{state=applyAction(state,a).state;},{headless:true});
+    const trigger=world.entities.find(e=>e.id==='trigger');
+    assert.ok(trigger);assert.equal(trigger.pickupAction,undefined);assert.equal(interactionHint(trigger),'雙擊觸發');
+    doubleClickAction(trigger)();world.sync();assert.equal(state.levels[level].triggered,true);
+    assert.equal(interactionHint(trigger),'已觸發');assert.equal(doubleClickAction(trigger),null);assert.deepEqual(state.inventory,[]);
+  }
+});
+
+test('only available shadow props and flashlight promise pickup, while records promise reading',()=>{
+  const shadows=fixture(0,false),shadow=shadows.world.entities.find(e=>e.id==='shadow0');
+  assert.equal(interactionHint(shadow),'');shadows.state.levels[0].triggered=true;assert.equal(interactionHint(shadow),'雙擊拿取');
+  shadows.state.levels[0].collected.push('moon');assert.equal(interactionHint(shadow),'');assert.equal(doubleClickAction(shadow),null);
+  const mirrors=fixture(3),flashlight=mirrors.world.entities.find(e=>e.id==='flashlight'),record=mirrors.world.entities.find(e=>e.id.startsWith('record-'));
+  assert.equal(interactionHint(flashlight),'雙擊拿取');mirrors.state.levels[3].flashlight=true;assert.equal(interactionHint(flashlight),'');assert.equal(doubleClickAction(flashlight),null);
+  assert.equal(record.pickupAction,undefined);assert.equal(interactionHint(record),'雙擊閱讀');
+  mirrors.state.levels[3].records.push(record.id.slice(7));assert.equal(interactionHint(record),'已閱讀');assert.equal(doubleClickAction(record),null);
+});
+
 test('pickup rays require the visible object surface within reach and stop at opaque obstacles',()=>{
   const {world}=fixture(1),letter=world.entities.find(e=>e.id==='letter');
   const aim=()=>{world.camera.lookAt(new T.Box3().setFromObject(letter.group).getCenter(new T.Vector3()));world.camera.updateMatrixWorld(true);world.scene.updateMatrixWorld(true);};

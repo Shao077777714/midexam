@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,saveGame,loadGame,applyAction,MEMORIES,SHADOW_TARGETS} from '../public/engine.mjs';
-import {doubleClickPickup} from '../public/controls.mjs';
+import {doubleClickPickup,interactionHint,doubleClickAction} from '../public/controls.mjs';
 import {inventoryEntries,compactInventory} from '../public/inventory.mjs';
 import {createThumbnailCache} from '../public/rendering.mjs';
 
@@ -54,6 +54,17 @@ test('double-click picks only a fresh ray hit in exploration, using cursor coord
   world.target=()=>null;assert.equal(doubleClickPickup(event,{mode:'explore',canvas,world}),false);
   world.target=()=>({action(){calls++;}});assert.equal(doubleClickPickup(event,{mode:'explore',canvas,world}),false);assert.equal(calls,2);
 });
+test('double-click hints distinguish triggers, reading, and eligible pickups',()=>{
+  const action=()=>{};
+  for(const [key,guard,ready,done] of [['triggerAction','canTrigger','雙擊觸發','已觸發'],['readAction','canRead','雙擊閱讀','已閱讀'],['pickupAction','canPickup','雙擊拿取','']]){
+    let eligible=true;const target={[key]:action,[guard]:()=>eligible};
+    assert.equal(interactionHint(target),ready);assert.equal(doubleClickAction(target),action);
+    eligible=false;assert.equal(interactionHint(target),done);assert.equal(doubleClickAction(target),null);
+  }
+  assert.equal(interactionHint({action}), '');assert.equal(doubleClickAction({action}),null);
+  assert.equal(interactionHint(null),'');assert.equal(doubleClickAction(null),null);
+});
+
 test('compact shelf keeps the selected old item visible without hiding it behind newer memories',()=>{
   const entries=Array.from({length:16},(_,i)=>({id:String(i)}));
   const shown=compactInventory(entries,'0');assert.equal(shown.length,6);assert.equal(shown[0].id,'0');assert.equal(new Set(shown.map(e=>e.id)).size,6);

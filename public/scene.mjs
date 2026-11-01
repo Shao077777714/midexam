@@ -37,7 +37,10 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   let root=new T.Group(),entities=[],blocks=[],bounds,door,shadowModels=[],ghosts=[],mirrorModels=[],beamRoot,clockHand,ghostEye,curtain=[],plates=[],mirrorVeil,shadowSupports=[],colliderSources=[],wallEyes,decor=[],sensors=[],opticalHeight=1.65,flood,effectsEnabled=true,searchObjects=[],phenomena;scene.add(root);
   const nearbyLight=new T.PointLight('#c2d8d4',0,3.1,2);scene.add(nearbyLight);
   const ray=new T.Raycaster();
-  const entity=(id,name,group,action,visible=()=>true)=>{group.userData.entity=id;group.traverse(m=>{m.userData.entity=id;});const e={id,name,group,action,visible};if(id==='trigger')e.pickupAction=action;if(/^shadow[0-2]$/.test(id))e.pickupAction=()=>onActivate({type:'TAKE_SHADOW',index:Number(id.slice(-1))});entities.push(e);return e;};
+  const entity=(id,name,group,action,visible=()=>true)=>{group.userData.entity=id;group.traverse(m=>{m.userData.entity=id;});const e={id,name,group,action,visible};
+    if(id==='trigger'){e.triggerAction=action;e.canTrigger=()=>{const s=getState();return !s.completed[s.level]&&!s.levels[s.level].triggered;};}
+    if(/^shadow[0-2]$/.test(id)){const index=Number(id.slice(-1));e.pickupAction=()=>onActivate({type:'TAKE_SHADOW',index});e.canPickup=()=>{const s=getState(),l=s.levels[s.level];return !s.completed[0]&&l.triggered&&!l.collected.includes(['moon','rabbit','vase'][index])&&!shadowAligned(l.shadow[index],SHADOW_TARGETS[index]);};}
+    entities.push(e);return e;};
   const collision=(x,z,w,d)=>blocks.push({x,z,w,d});
   function track(object){const block=footprint(object);blocks.push(block);colliderSources.push({object,block});return block;}
   function refreshColliders(){for(const {object,block} of colliderSources){Object.assign(block,footprint(object));block.active=shown(object);}}
@@ -59,7 +62,10 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
     g.userData.closedCavity=true;front.userData.closedTray=true;track(g);
     entity(id,name,g,()=>onActivate({type:'DRAWER'}));g.userData.front=front;return g;
   }
-  function item(id,name,kind,pos,action,visible=()=>true,scale=1){const g=supported(kind,pos,scale),e=entity(id,name,g,action||(()=>onActivate({type:'COLLECT',id})),visible);e.pickupAction=e.action;return e;}
+  function item(id,name,kind,pos,action,visible=()=>true,scale=1){const g=supported(kind,pos,scale),e=entity(id,name,g,action||(()=>onActivate({type:'COLLECT',id})),visible);
+    if(id.startsWith('record-')){e.readAction=e.action;e.canRead=()=>!getState().levels[3].records.includes(id.slice(7));}
+    else if(!action||id==='flashlight'){e.pickupAction=e.action;e.canPickup=()=>{const s=getState(),l=s.levels[s.level];return !s.completed[s.level]&&l.triggered&&(id==='flashlight'?!l.flashlight:!l.collected.includes(id));};}
+    return e;}
   function addDecorations(level){
     const placements=[[3.8,5.7,2.7],[-2.2,-7.3,1.55],[3.9,5.4,3],[-4.3,5.4,2.7],[-3.8,3.5,2.7]];
     const [x,z,w]=placements[level];table(x,z,w,.82);

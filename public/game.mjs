@@ -2,7 +2,7 @@ import * as T from './vendor/three.module.js';
 import {newGame,applyAction,saveGame,loadGame,MEMORIES,ITEMS,SHADOW_TARGETS,shadowAligned,traceMirrors,angleDistance,PHOTO_IDS,PHOTO_CODES,PHOTO_TRAY,opticsStatus,SPECTRA,RECEIVER_FILTERS} from './engine.mjs';
 import {createWorld,createInspector,createInspectorPool,FAMILY_URL,HORROR_FAMILY_URL} from './scene.mjs';
 import {walkable,findPath} from './navigation.mjs';
-import {createMouseLook,movementSpeed,EYE_SURGE_MS,doubleClickPickup} from './controls.mjs';
+import {createMouseLook,movementSpeed,EYE_SURGE_MS,doubleClickPickup,interactionHint} from './controls.mjs';
 import {watchContext,createThumbnailCache} from './rendering.mjs';
 import {inventoryEntries,compactInventory} from './inventory.mjs';
 import {chooseVoice,voiceDescription} from './voice.mjs';
@@ -174,7 +174,7 @@ function frame(now){requestAnimationFrame(frame);if(document.hidden||renderFaile
     const speed=movementSpeed(world.wadingAt(world.camera.position.x,world.camera.position.z));$('movement-state').textContent=world.wadingAt(world.camera.position.x,world.camera.position.z)?'水淹區 · 行動變慢':'';
     let x=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0),z=(keys.has('KeyS')?1:0)-(keys.has('KeyW')?1:0);if(x||z){navigation=[];navTarget=null;focusEntity=null;const n=Math.hypot(x,z);x/=n;z/=n;const yaw=world.camera.rotation.y;move((x*Math.cos(yaw)+z*Math.sin(yaw))*dt*speed,(-x*Math.sin(yaw)+z*Math.cos(yaw))*dt*speed);}
     else if(navigation.length){let budget=dt*movementSpeed(world.wadingAt(world.camera.position.x,world.camera.position.z),true);while(navigation.length&&budget>0){const p=navigation[0],dx=p[0]-world.camera.position.x,dz=p[1]-world.camera.position.z,dist=Math.hypot(dx,dz);if(dist<.001){navigation.shift();continue;}const step=Math.min(dist,budget);move(dx/dist*step,dz/dist*step);world.camera.rotation.y=Math.atan2(-dx,-dz);world.camera.rotation.x=0;budget-=step;if(step<.001)break;}if(!navigation.length)arrive();}
-    const target=world.target();if(focusEntity&&(!focusEntity.group.visible||!world.near(focusEntity)))focusEntity=null;nearby=focusEntity||target;$('interact').hidden=!nearby;$('interact-name').textContent=nearby?nearby.name+(nearby.pickupAction?' · 雙擊拿取':''):'';
+    const target=world.target();if(focusEntity&&(!focusEntity.group.visible||!world.near(focusEntity)))focusEntity=null;nearby=focusEntity||target;$('interact').hidden=!nearby;const hint=interactionHint(nearby);$('interact-name').textContent=nearby?nearby.name+(hint?' · '+hint:''):'';
   }else $('interact').hidden=true;
   if(mode==='projection'){projectionTime+=dt;const page=Math.min(3,Math.floor(projectionTime/5));if(page!==projectionPage){projectionPage=page;const el=$('projection-copy');if(el)el.textContent=PROJECTION[page];audio.speak(PROJECTION[page]);}if(projectionTime>=20){$('modal').hidden=true;dispatch({type:'PROJECTION_END'});modal('你記起來了','<p>投影緩緩熄滅。那些破碎的記憶，終於重新連結。<br><br>第二關的未寄出信，還在你的物品欄裡。</p>',[['走向信箱',resume]],'THE UNSENT LETTER');}}
   world.tick(now*.001);if(mode==='title'){world.camera.position.set(1.5+Math.sin(now*.00008)*.15,2.1,5.5);world.camera.lookAt(-1,1,-1.4);}if(now-lastRender>33){world.render();inspector?.render();lastRender=now;}}catch(error){renderProblem(error);}

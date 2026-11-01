@@ -1,12 +1,23 @@
 export const WATER_SPEED_FACTOR=.55;
 export const EYE_SURGE_MS=160;
-// Only the fresh visible ray hit can be picked; UI events and stale navigation focus never collect.
+export function interactionHint(target){
+  if(target?.triggerAction)return target.canTrigger?.()===false?'已觸發':'雙擊觸發';
+  if(target?.readAction)return target.canRead?.()===false?'已閱讀':'雙擊閱讀';
+  return target?.pickupAction&&target.canPickup?.()!==false?'雙擊拿取':'';
+}
+// Use the same eligibility as the prompt; triggering and reading never promise a pickup.
+export function doubleClickAction(target){
+  if(target?.triggerAction)return target.canTrigger?.()===false?null:target.triggerAction;
+  if(target?.readAction)return target.canRead?.()===false?null:target.readAction;
+  return target?.pickupAction&&target.canPickup?.()!==false?target.pickupAction:null;
+}
+// Only the fresh visible ray hit can be used; UI events and stale navigation focus never interact.
 export function doubleClickPickup(event,{mode,canvas,locked,world}){
   if(mode!=='explore'||event.button!==0||event.target!==canvas)return false;
   const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return false;
   const x=locked?0:(event.clientX-r.left)/r.width*2-1,y=locked?0:1-(event.clientY-r.top)/r.height*2;
-  const target=world.target(x,y);if(!target?.pickupAction)return false;
-  target.pickupAction();return true;
+  const action=doubleClickAction(world.target(x,y));if(!action)return false;
+  action();return true;
 }
 export function movementSpeed(inWater,navigation=false){return (navigation?3.2:2.7)*(inWater?WATER_SPEED_FACTOR:1);}
 
