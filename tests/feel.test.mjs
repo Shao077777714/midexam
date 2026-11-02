@@ -7,11 +7,11 @@ import {setPhotoMood} from '../public/models.mjs';
 import {createWorld} from '../public/scene.mjs';
 import {findPath} from '../public/navigation.mjs';
 
-function inputFixture(refuse=false){
+function inputFixture(refuse=false,edgeTurn=false){
   const events=new Map(),moves=[];let requests=0,unlocks=0,denied=0;
   const doc={pointerLockElement:null,addEventListener:(name,fn)=>events.set(name,fn),removeEventListener:name=>events.delete(name),exitPointerLock(){this.pointerLockElement=null;events.get('pointerlockchange')?.();}};
-  const canvas={requestPointerLock(){requests++;if(refuse)return Promise.reject(Error('unsupported'));}};
-  const look=createMouseLook({canvas,documentRef:doc,onLook:(...xy)=>moves.push(xy),onUnlock:()=>unlocks++,onDenied:()=>denied++});
+  const canvas={getBoundingClientRect:()=>({left:0,top:0,right:1000,bottom:700}),requestPointerLock(){requests++;if(refuse)return Promise.reject(Error('unsupported'));}};
+  const look=createMouseLook({canvas,documentRef:doc,edgeTurn,onLook:(...xy)=>moves.push(xy),onUnlock:()=>unlocks++,onDenied:()=>denied++});
   return {doc,canvas,look,moves,events,get requests(){return requests;},get unlocks(){return unlocks;},get denied(){return denied;}};
 }
 const action=(s,a)=>{const r=applyAction(s,a);assert.equal(r.ok,true,r.message);return r.state;};
@@ -23,6 +23,22 @@ test('entering exploration requests mouse lock immediately and free movement nee
   f.look.move({target:f.canvas,clientX:100,clientY:100,buttons:0});f.look.move({target:f.canvas,clientX:125,clientY:90,buttons:0});assert.deepEqual(f.moves,[[25,-10]]);
   f.look.leave();f.look.move({target:f.canvas,clientX:130,clientY:80});assert.equal(f.moves.length,1);
 });
+test('free exploration can reach HUD controls without locking, and resumes without a camera jump',()=>{
+  const f=inputFixture();f.look.enter({lock:false});assert.equal(f.requests,0);
+  f.look.move({target:f.canvas,clientX:100,clientY:100});f.look.move({target:f.canvas,clientX:120,clientY:90});
+  f.look.leave();f.look.move({target:{},clientX:1000,clientY:50});assert.deepEqual(f.moves,[[20,-10]]);
+  f.look.enter({lock:false});f.look.move({target:f.canvas,clientX:900,clientY:150});assert.deepEqual(f.moves,[[20,-10]]);
+  f.look.move({target:f.canvas,clientX:910,clientY:152});assert.deepEqual(f.moves,[[20,-10],[10,2]]);assert.equal(f.requests,0);
+});
+
+test('free look can keep turning at screen edges and stops immediately while using controls',()=>{
+  const f=inputFixture(false,true);f.look.enter({lock:false});f.look.move({target:f.canvas,clientX:999,clientY:350});
+  for(let i=0;i<100;i++)f.look.tick(.1);assert.ok(f.moves.reduce((sum,[x])=>sum+x,0)*.0025>Math.PI*2);
+  const count=f.moves.length;f.look.leave();f.look.tick(.1);assert.equal(f.moves.length,count);
+  f.look.enter({lock:false});f.look.tick(.1);assert.equal(f.moves.length,count);
+  f.look.move({target:f.canvas,clientX:500,clientY:350});f.look.tick(.1);assert.equal(f.moves.length,count);
+});
+
 test('denied Pointer Lock retains free mouse look and gives the fallback notification',async()=>{
   const f=inputFixture(true);f.look.enter();await Promise.resolve();assert.equal(f.denied,1);assert.equal(f.look.enabled,true);
   f.look.move({target:f.canvas,clientX:10,clientY:20});f.look.move({target:f.canvas,clientX:15,clientY:17});assert.deepEqual(f.moves,[[5,-3]]);
@@ -51,16 +67,12 @@ test('opened television presents a photo on a visible supported tray below eye h
   const screen=w.entities.find(e=>e.id==='search-television').group.getObjectByName('screen');assert.equal(screen.material.isMeshBasicMaterial,true);
   s.levels[2].collected.push('p8');w.sync();assert.equal(e.group.visible,false);assert.equal(screen.material.map,null);
 });
-test('mirror direction alone, incorrect colors and missing confirmation cannot unlock records',()=>{
-  let s=mirrorState();assert.equal(opticsStatus(s.levels[3]).trace.solved,true);assert.equal(opticsStatus(s.levels[3]).ready,false);assert.equal(applyAction(s,{type:'CALIBRATE'}).ok,false);
-  for(let index=0;index<3;index++)s=action(s,{type:'MIRROR_FILTER',index,filter:index+1});assert.equal(opticsStatus(s.levels[3]).ready,true);assert.equal(s.levels[3].opticsUnlocked,false);assert.equal(applyAction(s,{type:'SEARCH',id:'work-panel'}).ok,false);
-  s=action(s,{type:'CALIBRATE'});assert.equal(s.levels[3].opticsUnlocked,true);assert.equal(applyAction(s,{type:'SEARCH',id:'work-panel'}).ok,true);
-});
+test('legacy optical calibration cannot finish the new switchboard puzzle',()=>{let s=mirrorState();for(let index=0;index<3;index++)s=action(s,{type:'MIRROR_FILTER',index,filter:index+1});s=action(s,{type:'CALIBRATE'});assert.equal(s.completed[3],false);assert.equal(s.levels[3].switchboardOn,false);assert.equal(applyAction(s,{type:'ACTIVATE_BOARD'}).ok,false);});
 test('received light colors use the actual reflection segment and match displayed beam colors',()=>{
   const s=mirrorState(),l=s.levels[3];l.mirrorFilters=[1,2,3];const status=opticsStatus(l);assert.deepEqual(status.segmentFilters,[0,1,2,3]);assert.deepEqual(status.received,[1,2,3]);l.mirrorFilters[1]=3;assert.equal(opticsStatus(l).ready,false);l.mirrors[0]=0;assert.equal(opticsStatus(l).trace.solved,false);
 });
 test('v2 mirror saves keep unlocked progress while unfinished mirrors receive the new controls',()=>{
-  for(const unlocked of [false,true]){const s=newGame();s.version=2;s.levels[3].opticsUnlocked=unlocked;for(const l of s.levels)delete l.mirrorFilters;const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,3);assert.equal(r.state.levels[3].opticsUnlocked,unlocked);assert.deepEqual(r.state.levels[3].mirrorFilters,unlocked?[1,2,3]:[0,0,0]);}
+  for(const unlocked of [false,true]){const s=newGame();s.version=2;s.levels[3].opticsUnlocked=unlocked;for(const l of s.levels)delete l.mirrorFilters;const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,4);assert.equal(r.state.levels[3].opticsUnlocked,unlocked);assert.deepEqual(r.state.levels[3].mirrorFilters,unlocked?[1,2,3]:[0,0,0]);}
 });
 test('invalid mirror filter input and malformed modern saves are rejected',()=>{
   const s=mirrorState();for(const filter of [-1,4,1.2,NaN])assert.equal(applyAction(s,{type:'MIRROR_FILTER',index:0,filter}).ok,false);

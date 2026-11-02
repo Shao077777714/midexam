@@ -7,6 +7,7 @@ import {newGame,SHADOW_TARGETS,applyAction,SEARCHES} from '../public/engine.mjs'
 import {createWorld} from '../public/scene.mjs';
 import {findPath,walkable} from '../public/navigation.mjs';
 import {EXTERIOR} from '../public/atmosphere.mjs';
+import {interactionHint,doubleClickAction} from '../public/controls.mjs';
 
 function fixture(level=0,triggered=true){
   const state=newGame();state.level=level;
@@ -14,6 +15,35 @@ function fixture(level=0,triggered=true){
   const signals=[],world=createWorld(null,()=>state,a=>signals.push(a),{headless:true});
   return {state,world,signals};
 }
+test('all five world triggers can activate once without claiming to be inventory pickups',()=>{
+  for(let level=0;level<5;level++){
+    let state=newGame();state.level=level;state.levels[level].drawer=true;
+    const world=createWorld(null,()=>state,a=>{state=applyAction(state,a).state;},{headless:true});
+    const trigger=world.entities.find(e=>e.id==='trigger');
+    assert.ok(trigger);assert.equal(trigger.pickupAction,undefined);assert.equal(interactionHint(trigger),'');
+    doubleClickAction(trigger)();world.sync();assert.equal(state.levels[level].triggered,true);
+    assert.equal(interactionHint(trigger),'已觸發');assert.equal(doubleClickAction(trigger),null);assert.deepEqual(state.inventory,[]);
+  }
+});
+
+test('only available shadow props and new cassette pickups promise pickup',()=>{
+  const shadows=fixture(0,false),shadow=shadows.world.entities.find(e=>e.id==='shadow0');
+  assert.equal(interactionHint(shadow),'');shadows.state.levels[0].triggered=true;assert.equal(interactionHint(shadow),'雙擊拿取');
+  shadows.state.levels[0].collected.push('moon');assert.equal(interactionHint(shadow),'');assert.equal(doubleClickAction(shadow),shadow.action);doubleClickAction(shadow)();assert.deepEqual(shadows.signals.at(-1),{type:'MANIPULATE',index:0});
+  shadows.state.completed[0]=true;assert.equal(doubleClickAction(shadow),null);
+  const f=fixture(3),tape=f.world.entities.find(e=>e.id==='tape-work');assert.equal(interactionHint(tape),'雙擊拿取');f.state.levels[3].collected.push('tape-work');f.world.sync();assert.equal(tape.group.visible,false);assert.equal(doubleClickAction(tape),null);
+});
+
+test('pickup rays require the visible object surface within reach and stop at opaque obstacles',()=>{
+  const {world}=fixture(1),letter=world.entities.find(e=>e.id==='letter');
+  const aim=()=>{world.camera.lookAt(new T.Box3().setFromObject(letter.group).getCenter(new T.Vector3()));world.camera.updateMatrixWorld(true);world.scene.updateMatrixWorld(true);};
+  world.camera.position.set(1.7,1.65,-9.2);aim();assert.equal(world.target()?.id,'letter');assert.equal(typeof world.target().pickupAction,'function');
+  const wall=new T.Mesh(new T.BoxGeometry(1,2,.1),new T.MeshBasicMaterial());wall.position.set(1.7,1.3,-9.8);letter.group.parent.add(wall);aim();assert.equal(world.target(),null);
+  wall.visible=false;aim();assert.equal(world.target()?.id,'letter');
+  world.camera.position.set(1.7,1.65,-5);aim();assert.notEqual(world.target()?.id,'letter');
+  world.camera.position.set(1.7,1.65,-9.2);letter.group.visible=false;aim();assert.notEqual(world.target()?.id,'letter');
+  assert.equal(world.target(3,0),null);
+});
 const near=(a,b)=>assert.ok(Math.abs(a-b)<.004,`${a} != ${b}`);
 
 test('every portable model rests on its actual geometry at different rotations and scales',()=>{
@@ -105,7 +135,18 @@ test('chair navigation leaves room for the chair to move instead of parking the 
   const path=findPath([0,5.9],[p.x,p.z],world.bounds,world.blocks,a=>world.approachable(e,new T.Vector3(a[0],1.65,a[1])));assert.ok(path.length);const end=path.at(-1);assert.equal(world.canApply({type:'CHAIR'},new T.Vector3(end[0],1.65,end[1])),true);
 });
 
-test('optical beams and grounded receivers align with the actual flashlight lens height',()=>{
-  const {state,world}=fixture(3);state.levels[3].flashlight=true;state.levels[3].mirrors=[45,135,135];world.sync();const lens=world.entities.find(e=>e.id==='flashlight').group.getObjectByName('lens'),height=lens.getWorldPosition(new T.Vector3()).y;
-  let beams=0,receivers=0;world.scene.traverse(o=>{if(o.isLine){beams++;near(o.geometry.attributes.position.getY(0),height);}if(o.name==='light-receiver'){receivers++;near(o.getWorldPosition(new T.Vector3()).y,height);}});assert.equal(beams,4);assert.equal(receivers,3);
+test('the switchboard has solid table support and circuit box has an opaque wall backing',()=>{const board=fixture(3).world.entities.find(e=>e.id==='switchboard').group;near(new T.Box3().setFromObject(board).min.y,1.075);const circuit=fixture(4).world.entities.find(e=>e.id==='circuitbox').group;assert.ok(circuit.userData.mount);});
+
+test('3D circuit tiles follow saved swaps and rotations, with powered copper matching connectivity',()=>{
+  const {state,world}=fixture(4),l=state.levels[4];l.circuit=[0,1,2,3,4,5,6,7,8];l.circuitAngles=[90,0,0,0,0,0,0,0,0];world.sync();
+  const box=world.entities.find(e=>e.id==='circuitbox').group,tile=box.getObjectByName('circuit-tile0');near(tile.rotation.z,-Math.PI/2);near(tile.position.x,-.35);near(tile.position.y,1.05);
+  const copper=tile.getObjectByName('copper');assert.notEqual(copper.material.emissive.getHex(),0);
+  [l.circuit[0],l.circuit[8]]=[l.circuit[8],l.circuit[0]];l.circuitAngles[8]=180;world.sync();near(tile.position.x,.35);near(tile.position.y,.35);near(tile.rotation.z,-Math.PI);
+});
+
+test('3D switchboard plugs and dial markers follow the same wiring and signal values as the controls',()=>{
+  const {state,world}=fixture(3),l=state.levels[3],board=world.entities.find(e=>e.id==='switchboard').group;l.wires=[2,0,1];l.signals=[2,4,3];world.sync();
+  const wire=board.getObjectByName('board-wire0'),end=wire.geometry.parameters.path.getPoint(1);near(end.x,.56);near(end.y,.44);
+  const marker=board.getObjectByName('signal-marker0');near(marker.rotation.y,Math.PI/3);
+  l.wires[0]=null;world.sync();near(board.getObjectByName('board-wire0').geometry.parameters.path.getPoint(1).y,.14);
 });

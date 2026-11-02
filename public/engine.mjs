@@ -1,3 +1,4 @@
+import {puzzleState,puzzleAction,validPuzzle,switchboardReady,lampsReady,NEW_ITEMS,BOARD_ITEMS,PARTS,HIDES} from './puzzles.mjs';
 import {shadowPlacementFree} from './spatial.mjs';
 export const SAVE_KEY='dream-gap-save-v1';
 export const MEMORIES=['記起','聽見','看見','承認','改變'];
@@ -6,8 +7,8 @@ export const PHOTO_CODES=['H','C','F','A','I','D','B','G','E'];
 export const PHOTO_TRAY=[4,0,7,2,8,5,1,6,3].map(i=>PHOTO_IDS[i]);
 export const PHOTO_HIDES={p4:'radio',p5:'book',p6:'cushion',p7:'cabinet',p8:'television'};
 export const RECORD_HIDES={work:'work-panel',family:'family-phone',self:'mirror-recess'};
-export const SEARCHES=[[],['clock'],Object.values(PHOTO_HIDES),Object.values(RECORD_HIDES),[]];
-export const ITEMS={key:'舊家鑰匙',drawing:'孩子的畫',letter:'未寄出的信',...Object.fromEntries(PHOTO_IDS.map((id,i)=>[id,`照片碎片 ${PHOTO_CODES[i]}`]))};
+export const SEARCHES=[[],['clock'],Object.values(PHOTO_HIDES),Object.values(RECORD_HIDES),['lamp-crate','linen-box','power-radio']];
+export const ITEMS={...NEW_ITEMS,key:'舊家鑰匙',drawing:'孩子的畫',letter:'未寄出的信',...Object.fromEntries(PHOTO_IDS.map((id,i)=>[id,`照片碎片 ${PHOTO_CODES[i]}`]))};
 export const SHADOW_TARGETS=[{x:-2.8,z:-2,angle:0},{x:0,z:-1.2,angle:90},{x:2.8,z:-2,angle:180}];
 export const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
 export const angleDistance=(a,b)=>Math.abs(((a-b+540)%360)-180);
@@ -50,14 +51,14 @@ export function opticsStatus(level){
   return {trace,segmentFilters,received,matched:received.map((v,i)=>v===RECEIVER_FILTERS[i]),ready:trace.solved&&received.every((v,i)=>v===RECEIVER_FILTERS[i])};
 }
 export function shadowAligned(value,target){return Math.hypot(value.x-target.x,value.z-target.z)<0.32&&angleDistance(value.angle,target.angle)<12;}
-function levelState(){return {triggered:false,drawer:false,chair:false,frame:false,collected:[],slots:{},shadow:[{x:-3.7,z:1,angle:90},{x:0.6,z:1.4,angle:0},{x:3.4,z:0.8,angle:45}],searched:[],pieceAngles:[90,180,270,90,270,180,90,180,270],photos:Array(9).fill(null),photoRead:false,mirrors:[0,45,0],mirrorFilters:[0,0,0],torchAngle:0,flashlight:false,opticsUnlocked:false,records:[],sequence:[],projecting:false,projectionDone:false,mailed:false};}
-export function newGame(){return {version:3,level:0,unlocked:0,completed:[false,false,false,false,false],memories:[],inventory:[],letter:false,elapsed:0,levels:Array.from({length:5},levelState),persisted:false};}
+function levelState(){return {...puzzleState(),triggered:false,drawer:false,chair:false,frame:false,collected:[],slots:{},shadow:[{x:-3.7,z:1,angle:90},{x:0.6,z:1.4,angle:0},{x:3.4,z:0.8,angle:45}],searched:[],pieceAngles:[90,180,270,90,270,180,90,180,270],photos:Array(9).fill(null),photoRead:false,mirrors:[0,45,0],mirrorFilters:[0,0,0],torchAngle:0,flashlight:false,opticsUnlocked:false,records:[],sequence:[],projecting:false,projectionDone:false,mailed:false};}
+export function newGame(){return {version:4,level:0,unlocked:0,completed:[false,false,false,false,false],memories:[],inventory:[],letter:false,elapsed:0,levels:Array.from({length:5},levelState),persisted:false};}
 export function canComplete(s){const l=s.levels[s.level];if(!l.triggered)return false; switch(s.level){
 case 0:return l.shadow.every((v,i)=>shadowAligned(v,SHADOW_TARGETS[i]));
 case 1:return ['key','drawing','letter'].every(id=>l.slots[id]===id);
 case 2:return l.photos.every((v,i)=>v&&v.id===`p${i}`&&angleDistance(v.angle,0)<1)&&l.photoRead;
-case 3:return l.opticsUnlocked&&['work','family','self'].every(id=>l.records.includes(id));
-case 4:return l.sequence.join(',')==='0,1,2,3'&&l.projectionDone&&l.mailed&&s.letter&&s.completed.slice(0,4).every(Boolean);
+case 3:return l.switchboardOn&&switchboardReady(l);
+case 4:return lampsReady(l)&&l.projectionDone&&l.mailed&&s.letter&&s.completed.slice(0,4).every(Boolean);
 default:return false;}}
 export function applyAction(current,a){
   const s=structuredClone(current),l=s.levels[s.level]; let message='';
@@ -69,23 +70,32 @@ export function applyAction(current,a){
   }
   if(a.type==='ACK_SAVE'){s.persisted=true;return {state:s,ok:true,message:'進度已儲存',completedNow:false};}
   if(s.completed[s.level])return fail('本關已完成，請從出口前往下一關。');
-  if(a.type==='TRIGGER'){if(l.triggered)return fail('世界已經改變。');l.triggered=true;message='那些被藏起來的記憶，開始浮現。';}
+  const puzzle=puzzleAction(s,a);
+  if(puzzle){if(!puzzle.ok)return {...fail(puzzle.message),distorted:puzzle.distorted};message=puzzle.message;}
+  else if(a.type==='TRIGGER'){if(l.triggered)return fail('世界已經改變。');l.triggered=true;message='那些被藏起來的記憶，開始浮現。';}
   else if(a.type==='DRAWER'){
-    if(s.level===3&&!l.opticsUnlocked)return fail('抽屜鎖著。先讓光找到三個標記。');
+
     l.drawer=!l.drawer;message=l.drawer?'抽屜打開了。':'抽屜關上了。';
   } else if(a.type==='CHAIR'){l.chair=!l.chair;message=l.chair?'你移開了椅子。':'椅子回到原位。';}
   else if(a.type==='FRAME'){l.frame=!l.frame;message='你查看了相框後方。';}
   else {
     if(!l.triggered)return fail('這裡似乎還缺少一個讓世界改變的契機。');
     switch(a.type){
+      case 'TAKE_SHADOW': {
+        if(s.level!==0||!Number.isInteger(a.index)||a.index<0||a.index>2)return fail('這裡沒有這件影子物品。');
+        const id=['moon','rabbit','vase'][a.index];
+        if(l.collected.includes(id)||shadowAligned(l.shadow[a.index],SHADOW_TARGETS[a.index]))return fail('這件物品已拿取或已經對齊。');
+        l.collected.push(id);message=`已拿起${['月亮燈','兔子玩偶','花瓶'][a.index]}。`;break;
+      }
       case 'SEARCH':
         if(!SEARCHES[s.level].includes(a.id))return fail('這裡沒有可以打開的夾層。');
-        if(s.level===3&&!l.opticsUnlocked)return fail('先讓光依序找到三個標記。');
+
         if(l.searched.includes(a.id))return fail('這個夾層已經打開了。');
         l.searched.push(a.id);message=a.id==='television'?'電視照片托架已展開，螢幕映出了碎片。':'夾層打開了。裡面似乎留下了什麼。';break;
       case 'COLLECT': {
-        const allowed=s.level===1?['key','drawing','letter']:s.level===2?PHOTO_IDS:[];
+        const allowed=s.level===1?['key','drawing','letter']:s.level===2?PHOTO_IDS:s.level===3?BOARD_ITEMS:s.level===4?PARTS:[];
         if(!allowed.includes(a.id)||l.collected.includes(a.id))return fail('這個物件無法重複拿取。');
+        if(HIDES[a.id]&&!l.searched.includes(HIDES[a.id]))return fail('先打開對應的藏物夾層。');
         if(a.id==='p3'&&!l.drawer)return fail('先打開抽屜。');
         if(a.id==='key'&&!l.searched.includes('clock'))return fail('先掀開長椅旁座鐘的上蓋。');
         if(PHOTO_HIDES[a.id]&&!l.searched.includes(PHOTO_HIDES[a.id]))return fail('先打開藏著照片的夾層。');
@@ -136,7 +146,7 @@ export function applyAction(current,a){
         if(a.index!==l.sequence.length)return fail('順序不對。先記起過去，再聽見他人。');
         l.sequence.push(a.index);message='碎片回到了它的位置。';break;
       case 'REMOVE_MEMORY':if(s.level!==4||l.projecting||l.projectionDone)return fail('投影已啟動。');l.sequence.pop();break;
-      case 'PROJECT':if(s.level!==4||l.sequence.join(',')!=='0,1,2,3'||l.projecting||l.projectionDone)return fail('先將四片記憶依序放好。');l.projecting=true;message='記憶正在重新連結……';break;
+      case 'PROJECT':if(s.level!==4||!lampsReady(l)||!s.completed.slice(0,4).every(Boolean)||l.projecting||l.projectionDone)return fail('先修復電路，依過去、現在、未來點亮三盞燈。');l.projecting=true;message='記憶正在重新連結……';break;
       case 'PROJECTION_END':if(s.level!==4||!l.projecting)return fail('投影尚未啟動。');l.projecting=false;l.projectionDone=true;message='現在，你可以寄出那封信了。';break;
       case 'MAIL':if(s.level!==4||!s.letter||!l.projectionDone)return fail('記憶投影完成後，才能寄出第二關的信。');l.mailed=true;message='這一次，你終於願意面對。';break;
       default:return fail('未知操作。');
@@ -149,7 +159,7 @@ export function applyAction(current,a){
 export function saveGame(storage,state){try{storage.setItem(SAVE_KEY,JSON.stringify(state));return {ok:true};}catch{return {ok:false,message:'無法儲存進度，請允許此網站儲存資料後重試。'};}}
 export function loadGame(storage){try{
   const raw=storage.getItem(SAVE_KEY);if(!raw)return {state:null,error:null};const s=JSON.parse(raw);
-  if(![1,2,3].includes(s.version)||!Number.isInteger(s.level)||s.level<0||s.level>4||!Number.isInteger(s.unlocked)||s.level>s.unlocked||s.unlocked>4||!Array.isArray(s.completed)||s.completed.length!==5||s.completed.some(v=>typeof v!=='boolean')||!Array.isArray(s.levels)||s.levels.length!==5||!Array.isArray(s.inventory)||s.inventory.some(id=>!(id in ITEMS))||typeof s.letter!=='boolean'||!Number.isFinite(s.elapsed)||s.elapsed<0)throw Error();
+  if(![1,2,3,4].includes(s.version)||!Number.isInteger(s.level)||s.level<0||s.level>4||!Number.isInteger(s.unlocked)||s.level>s.unlocked||s.unlocked>4||!Array.isArray(s.completed)||s.completed.length!==5||s.completed.some(v=>typeof v!=='boolean')||!Array.isArray(s.levels)||s.levels.length!==5||!Array.isArray(s.inventory)||s.inventory.some(id=>!(id in ITEMS))||typeof s.letter!=='boolean'||!Number.isFinite(s.elapsed)||s.elapsed<0)throw Error();
   let gap=false;for(const v of s.completed){if(!v)gap=true;else if(gap)throw Error();}
   const count=s.completed.filter(Boolean).length;if(s.unlocked!==Math.min(4,count)||s.memories?.join(',')!==MEMORIES.slice(0,count).join(',')||(s.completed[1]&&!s.letter))throw Error();
   const legacy=s.version===1;
@@ -164,6 +174,14 @@ export function loadGame(storage){try{
   }
   if(s.version===2){for(const l of s.levels)l.mirrorFilters=l.opticsUnlocked?[1,2,3]:[0,0,0];s.version=3;}
   s.levels.forEach(l=>{if(typeof l.triggered!=='boolean'||!Array.isArray(l.shadow)||l.shadow.length!==3||l.shadow.some(v=>![v.x,v.z,v.angle].every(Number.isFinite))||!Array.isArray(l.photos)||l.photos.length!==9||l.photos.some(v=>v!==null&&(!v||!PHOTO_IDS.includes(v.id)||!Number.isFinite(v.angle)))||new Set(l.photos.filter(Boolean).map(v=>v.id)).size!==l.photos.filter(Boolean).length||!Array.isArray(l.searched)||l.searched.some(id=>!SEARCHES.flat().includes(id))||!Array.isArray(l.pieceAngles)||l.pieceAngles.length!==9||l.pieceAngles.some(v=>!Number.isFinite(v))||!Array.isArray(l.mirrors)||l.mirrors.length!==3||l.mirrors.some(v=>!Number.isFinite(v))||!Array.isArray(l.mirrorFilters)||l.mirrorFilters.length!==3||l.mirrorFilters.some(v=>!Number.isInteger(v)||v<0||v>3)||!Array.isArray(l.records)||!Array.isArray(l.sequence)||!Array.isArray(l.collected)||!l.slots||typeof l.slots!=='object'||!Number.isFinite(l.torchAngle))throw Error();});
+  if(s.version===3){
+    s.levels.forEach((l,i)=>{Object.assign(l,puzzleState());
+      // Preserve earned checkpoints. In-progress old mechanisms become the new puzzle.
+      if(i===3&&s.completed[3]){l.recordOrder=[0,1,2];l.diagram=[0,1,2,3];l.diagramAngles.fill(0);l.wires=[2,0,1];l.signals=[2,4,3];l.switchboardOn=true;}
+      if(i===4&&(l.projectionDone||l.projecting||s.completed[4])){l.installed.fill(true);l.circuit=[0,1,2,3,4,5,6,7,8];l.circuitAngles=[90,0,0,0,0,0,0,0,0];l.lampOrder=[0,1,2];}
+    });s.version=4;
+  }
+  if(s.levels.some(l=>!validPuzzle(l)))throw Error();
   // Projection playback is transient: a reload must allow replay, never strand the player.
   s.levels.forEach(l=>l.projecting=false);
   s.persisted=true;return {state:s,error:null};

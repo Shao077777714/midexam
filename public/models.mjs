@@ -1,3 +1,4 @@
+import {createPuzzleModel} from './puzzle-models.mjs';
 import * as T from './vendor/three.module.js';
 
 const material = (color, options={}) => new T.MeshStandardMaterial({color,roughness:.72,...options});
@@ -55,6 +56,7 @@ function photoMaps(mesh,textures,n=null){
   }mesh.userData.photoMaps=maps;mesh.material.map=maps.aged;return mesh;
 }
 export function createModel(kind, textures={}) {
+  const puzzle=createPuzzleModel(kind);if(puzzle)return puzzle;
   const g=new T.Group();g.userData.kind=kind;
   if(kind==='moon'){
     cyl(g,.24,.28,.1,[0,.05,0],'#bba275',{metalness:.7});const moon=emblem('moon','#efd490');moon.scale.setScalar(1.65);moon.position.set(-.06,.65,0);g.add(moon);

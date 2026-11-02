@@ -1,6 +1,7 @@
-import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
-for (const file of ['engine.mjs','navigation.mjs','content.mjs','spatial.mjs','models.mjs','atmosphere.mjs','scene.mjs','game.mjs','voice.mjs','controls.mjs','phenomena.mjs','rendering.mjs']) execFileSync(process.execPath,['--check',`public/${file}`]);
+const modules=(await readdir('public')).filter(file=>file.endsWith('.mjs'));
+for (const file of modules) execFileSync(process.execPath,['--check',`public/${file}`]);
 await mkdir('public/vendor', {recursive:true});
 for (const file of ['three.module.js','three.core.js']) await cp(`node_modules/three/build/${file}`, `public/vendor/${file}`);
 await cp('node_modules/three/LICENSE', 'public/vendor/THREE-LICENSE.txt');
@@ -9,4 +10,4 @@ await cp('public', 'dist', {recursive:true});
 const html=await readFile('dist/index.html','utf8');
 if (!html.includes('game.mjs')) throw new Error('Missing game entry');
 await writeFile('dist/.build-info.json', JSON.stringify({name:'dream-gap',three:'0.186.1',static:true})+'\n');
-console.log('Static game built: dist/ (no backend or CDN required)');
+console.log(`Static game built: dist/ (${modules.length} modules; no backend or CDN required)`);

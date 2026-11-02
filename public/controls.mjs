@@ -1,9 +1,49 @@
 export const WATER_SPEED_FACTOR=.55;
 export const EYE_SURGE_MS=160;
+export const PITCH_LIMIT=85*Math.PI/180;
+export function turnView(rotation,dx,dy){
+  rotation.y-=dx*.0025;
+  rotation.x=Math.max(-PITCH_LIMIT,Math.min(PITCH_LIMIT,rotation.x-dy*.0025));
+}
+// One owner for cursor/lock transitions. Releasing Alt behind a panel never enables look.
+export function createExploreInput({look,onChange=()=>{},onSuspend=()=>{}}){
+  let mode='title';const alt=new Set();
+  function sync(){const exploring=mode==='explore',cursor=exploring&&alt.size>0;
+    if(exploring&&!cursor)look.enter();else look.leave();
+    onChange({exploring,cursor,active:exploring&&!cursor});
+  }
+  return {
+    setMode(next){mode=next;sync();},
+    key(code,down){if(!['AltLeft','AltRight'].includes(code))return false;const before=alt.size;if(down)alt.add(code);else alt.delete(code);if(before!==alt.size){onSuspend();sync();}return true;},
+    blur(){alt.clear();mode='modal';onSuspend();sync();},
+    get active(){return mode==='explore'&&alt.size===0;},get cursor(){return mode==='explore'&&alt.size>0;}
+  };
+}
+export function interactionHint(target){
+  if(target?.triggerAction)return target.canTrigger?.()===false?'已觸發':'';
+  if(target?.readAction)return target.canRead?.()===false?'已閱讀':'雙擊閱讀';
+  if(target?.pickupAction)return target.canPickup?.()!==false?'雙擊拿取':'';
+  return '';
+}
+// Use the same eligibility as the prompt; triggering and reading never promise a pickup.
+export function doubleClickAction(target){
+  if(target?.triggerAction)return target.canTrigger?.()===false?null:target.triggerAction;
+  if(target?.readAction)return target.canRead?.()===false?null:target.readAction;
+  if(target?.pickupAction){if(target.canPickup?.()!==false)return target.pickupAction;return target.interactAction&&target.canInteract?.()!==false?target.interactAction:null;}
+  return target?.action||null;
+}
+// Only the fresh visible ray hit can be used; UI events and stale navigation focus never interact.
+export function doubleClickPickup(event,{mode,canvas,world}){
+  if(mode!=='explore'||event.button!==0||event.target!==canvas)return false;
+  const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return false;
+  // Exploration hides the cursor: the visible reticle, not its invisible position, is the aim.
+  const action=doubleClickAction(world.target(0,0));if(!action)return false;
+  action();return true;
+}
 export function movementSpeed(inWater,navigation=false){return (navigation?3.2:2.7)*(inWater?WATER_SPEED_FACTOR:1);}
 
 // Keep free mouse look usable when a browser refuses Pointer Lock.
-export function createMouseLook({canvas,documentRef,onLook,onUnlock=()=>{},onDenied=()=>{}}){
+export function createMouseLook({canvas,documentRef,onLook,onUnlock=()=>{},onDenied=()=>{},edgeTurn=false}){
   let enabled=false,last=null,wasLocked=false,ignoredUnlocks=0;
   const change=()=>{
     const locked=documentRef.pointerLockElement===canvas;
@@ -15,7 +55,7 @@ export function createMouseLook({canvas,documentRef,onLook,onUnlock=()=>{},onDen
   };
   documentRef.addEventListener('pointerlockchange',change);
   return {
-    enter(){enabled=true;last=null;this.lock();},
+    enter({lock=true}={}){enabled=true;last=null;if(lock)this.lock();},
     leave(){enabled=false;last=null;if(documentRef.pointerLockElement===canvas){ignoredUnlocks++;documentRef.exitPointerLock();}},
     lock(){
       if(!enabled||documentRef.pointerLockElement===canvas)return;
@@ -30,6 +70,13 @@ export function createMouseLook({canvas,documentRef,onLook,onUnlock=()=>{},onDen
       else{const current=[event.clientX,event.clientY];if(!last){last=current;return false;}dx=current[0]-last[0];dy=current[1]-last[1];last=current;}
       if(!Number.isFinite(dx)||!Number.isFinite(dy)||(!dx&&!dy))return false;
       onLook(dx,dy);return true;
+    },
+    tick(dt){
+      if(!edgeTurn||!enabled||!last||documentRef.pointerLockElement===canvas)return;
+      const r=canvas.getBoundingClientRect(),margin=24;
+      const edge=(v,min,max)=>v<min+margin?-Math.min(1,(min+margin-v)/margin):v>max-margin?Math.min(1,(v-max+margin)/margin):0;
+      const x=edge(last[0],r.left,r.right),y=edge(last[1],r.top,r.bottom);
+      if(x||y)onLook(x*450*Math.min(dt,.1),y*450*Math.min(dt,.1));
     },
     dispose(){this.leave();documentRef.removeEventListener('pointerlockchange',change);},
     get enabled(){return enabled;},get locked(){return documentRef.pointerLockElement===canvas;}
