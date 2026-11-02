@@ -279,12 +279,10 @@ body.low-effects #world { animation: none; }
 .panel .panel-note { font-size: 18px; line-height: 1.7; }
 @media (max-width:700px) { .photo-toolbar p { flex-basis:100%; text-align:center; } .photo-workspace { grid-template-columns:1fr; } .piece-tray { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 /* Immediate first-person input, short transition eyes and readable optical controls. */
-body.exploring, body.exploring * { cursor: none !important; }
+body.exploring #world { cursor: default; }
+body.exploring.looking #world { cursor: grabbing; }
 body.exploring #quick-controls, body.exploring #quick-controls * { cursor: auto !important; }
 body.exploring #quick-controls button, body.exploring #quick-controls button * { cursor: pointer !important; }
-body.cursor-mode #crosshair { visibility: hidden; }
-body.exploring.cursor-mode, body.exploring.cursor-mode * { cursor: auto !important; }
-body.exploring.cursor-mode button, body.exploring.cursor-mode button * { cursor: pointer !important; }
 #quick-controls { flex-direction: column; align-items: stretch; width: 320px; padding: 10px 12px; background: #22372ff2; border: 1px solid #c4c9ad66; border-radius: 12px 3px 12px 3px; box-shadow: 0 8px 24px #101c2933; }
 #hud { z-index: 6; }
 .controls-caption { font-size: 11px; letter-spacing: .18em; color: #eee3d0; padding: 0 3px; }
@@ -361,9 +359,6 @@ body.weird .inventory-card:hover, body.weird .inventory-card.selected { border-c
 .circuit-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(310px,1fr);gap:12px 32px;align-items:start}.circuit-body>p,.circuit-body>.button-row{grid-column:1;margin:8px 0}.circuit-body>.circuit-layout{grid-column:2;grid-row:1 / span 5;align-self:center}.circuit-body .circuit-layout{grid-template-columns:35px minmax(200px,1fr) 45px}
 @media(max-width:800px){.circuit-body{display:block}.mechanism-body .recording-list{grid-template-columns:1fr}.circuit-layout{margin:20px 0}}
 
-/* Exploration owns pointer movement; HUD becomes interactive only while Alt is held. */
-body.exploring:not(.cursor-mode) #quick-controls { pointer-events: none; }
-body.exploring:not(.cursor-mode) #quick-controls button { cursor: none !important; }
 #control-bar, #memory-hud { pointer-events: none; }
 body.exploring #world:focus { outline: none; }
 

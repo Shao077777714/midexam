@@ -191,6 +191,32 @@
 - 瀏覽器 error／warn 日誌為空。截圖：docs/screenshots/inventory-hud-1366.png、inventory-full-1366.png、inventory-full-1920.png。
 - 未測：正式 Chrome／Edge 四組完整流程、真實 Pointer Lock、長時間 GPU 負載與全部關卡實際重新通關；上述局部 PASS 不代替完整遊戲驗收。
 
+## 最新 main 整合今天兩項操作調整（2026-11-02）
+
+- main 基準：63d32727fd2dc3f457435980d7d11f86c7300a74；加薪的branch 上一遠端提交 64cd952。保留 main 的五關謎題、第四關三段錄音、第五關燈具電路、音效、持續眼睛、±85° 俯仰與 v4 存檔；本次操作要求取代 main 的 Alt 模式。
+- 按住場景左鍵拖曳才環視，放開顯示游標，取消／失焦／介面切換立即停止。游標射線雙擊仍可互動，移動後短暫抑制誤雙擊。物件提示與導覽抵達只顯示名稱，不附加 E、雙擊或狀態文字。
+- PASS（Windows、Node.js 24.22.1）：node --test tests/*.test.mjs **111／111**，包含 main 新謎題與五關流程、舊存檔遷移、拖曳／放開及 ±85°、距離／遮擋。node scripts/build.mjs 檢查 **16 模組**通過；git diff origin/main --check 通過（主線原有 content.md 尾端空行保留）。
+- PASS（Codex IAB，版本未提供，1280×720）：localhost:4181 第一關舊存檔成功載入；導覽月亮燈僅顯示「月亮燈」。以瀏覽器 drag 操作由 (700,350) 到 (800,390)，視角隨左鍵拖曳轉動；結束後 looking=false、cursor=default、pointerLocked=false，可直接點右上角打開背包。再次正常雙擊場景月亮燈開啟位置／角度面板，全程不用 E。error／warn 日誌空白。截圖 docs/screenshots/main-merged-name-only.png。
+- PASS（新版謎題入口）：以 tests/browser-inventory.html 在 localhost 建立合法動作的第四關檢查點，正常載入、觸發怪核、導覽並開啟「重建記憶總機」，三錄音卡與未收齊時停用的接通按鈕正常顯示；error／warn 為空。此檢查點不代表人工完成前三關。整合時已移除 main 遺留的 Alt 限制 HUD 點擊樣式，保留主線 puzzleUI 與音效初始化。臨時 public/.qa-merge.html 已移除。
+- 原 127.0.0.1:4181 只重載至主畫面，續玩入口保留，未清除或覆寫玩家存檔。正式 Chrome／Edge 四組完整人工流程、展示設備及新玩家時長本次 NOT TESTED。
+
+## 物品提示僅顯示名稱（2026-11-02）
+
+- 基準：加薪的branch 遠端 0204f9f，本機同樹；Windows、Node.js 24.22.1。
+- 所有場景物品提示只顯示名稱，移除雙擊拿取／閱讀、已閱讀／已觸發與 E 徽章；探索導覽抵達訊息亦僅顯示名稱。教學與操作說明保留，雙擊及 E 的互動判定不變。
+- PASS：node --test tests/inventory.test.mjs tests/scene.test.mjs 32／32；涵蓋五關觸發、閱讀、拿取、重複操作保護及距離／遮擋。node scripts/build.mjs（13 模組）與 git diff --check 通過。
+- 本次為文字呈現調整，未重跑瀏覽器人工五關或正式 Chrome／Edge 環境矩陣，維持 NOT TESTED。
+
+## 左鍵按住環視、放開游標（2026-11-02）
+
+本節取代舊版探索時自由環視／隱藏游標的操作規格；原測試結果保留當時版本。
+
+- 基準：加薪的branch 39abd6e；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），隔離 localhost:4181 的第一關既有存檔，未改動 127.0.0.1:4181 玩家進度。
+- 改動：場景左鍵按住並拖曳才轉動，未按住時游標可見且移動不轉視角；放開、失焦、介面／控制區切換及取消指標清除拖曳。取消未按住時的邊緣自動轉向，平常物件提示與雙擊依可見游標位置射線；移動超過 6px 的拖曳結束後 350ms 防止誤雙擊。開場教學、操作說明、底部文字及現行文件同步。
+- PASS（自動化）：node --test tests/*.test.mjs **88／88**，新增左鍵限定、放開／遺失按鈕／面板重入、無跳動、拖曳誤擊抑制與可見游標座標測試；node scripts/build.mjs（13 模組）與 git diff --check 通過。
+- PASS（內建預覽及合成指標）：tests/browser-drag-look.mjs 在 localhost 測試頁發送 pointer 事件，不直接改攝影機或存檔；未按下 looking=false、cursor=default；按住移動 looking=true、cursor=grabbing，場景視角改變；放開恢復 default 且 pointerLock=false。一般 UI 點背包可開啟，放開後正常雙擊月亮燈仍可開啟調整；error／warn 日誌為空。截圖 docs/screenshots/hold-left-look.png。
+- 測試頁方法：複製 index.html 為 public/.qa-drag.html，載入由 tests/browser-drag-look.mjs 複製的 public/.qa-drag.mjs；本次完成後已移除 public 與 dist 複本。原生滑鼠長按的正式 Chrome／Edge 四組矩陣、完整五關人工回歸及長時間負載未重跑，合成事件不冒充實體裝置驗收。
+
 ## 三、需求與案例對照
 
 | 需求 | 來源 | 對應案例 |

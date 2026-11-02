@@ -1,21 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from '../public/vendor/three.module.js';
-import {createExploreInput,createMouseLook,turnView,PITCH_LIMIT} from '../public/controls.mjs';
+import {createMouseLook,turnView,PITCH_LIMIT} from '../public/controls.mjs';
 import {newGame,loadGame,MEMORIES} from '../public/engine.mjs';
 import {createWorld} from '../public/scene.mjs';
-
-test('Alt suspends look, supports both Alt keys, and release behind a panel never captures input',()=>{
-  const calls=[],states=[];let stopped=0;
-  const input=createExploreInput({look:{enter(){calls.push('enter');},leave(){calls.push('leave');}},onChange:s=>states.push(s),onSuspend:()=>stopped++});
-  input.setMode('explore');assert.equal(input.active,true);
-  input.key('AltLeft',true);assert.equal(input.cursor,true);assert.equal(input.active,false);
-  input.key('AltRight',true);input.key('AltLeft',false);assert.equal(input.cursor,true);
-  input.setMode('panel');input.key('AltRight',false);assert.equal(input.active,false);assert.equal(calls.at(-1),'leave');
-  input.setMode('explore');assert.equal(input.active,true);assert.equal(calls.at(-1),'enter');
-  input.key('AltLeft',true);input.blur();input.setMode('explore');assert.equal(input.cursor,false);assert.equal(input.active,true);assert.ok(stopped>=4);
-  assert.equal(input.key('KeyW',true),false);assert.equal(states.at(-1).active,true);
-});
 
 test('downward mouse motion reaches 85 degrees down; upward motion reaches 85 up without flipping',()=>{
   const rotation=new T.Euler(0,0,0,'YXZ');turnView(rotation,0,10000);assert.equal(rotation.x,-PITCH_LIMIT);
@@ -23,14 +11,14 @@ test('downward mouse motion reaches 85 degrees down; upward motion reaches 85 up
   turnView(rotation,0,-10000);assert.equal(rotation.x,PITCH_LIMIT);camera.rotation.copy(rotation);assert.ok(camera.getWorldDirection(new T.Vector3()).y>.99);
 });
 
-test('denied pointer lock can look down continuously at the lower edge and Alt reentry resets deltas',async()=>{
-  const events=new Map(),rotation={x:0,y:0};
-  const documentRef={pointerLockElement:null,addEventListener:(n,f)=>events.set(n,f),removeEventListener(){}};
-  const canvas={getBoundingClientRect:()=>({left:0,top:0,right:1366,bottom:768}),requestPointerLock:()=>Promise.reject(Error('not granted'))};
-  const look=createMouseLook({canvas,documentRef,edgeTurn:true,onLook:(x,y)=>turnView(rotation,x,y)}),input=createExploreInput({look});
-  input.setMode('explore');await Promise.resolve();look.move({target:canvas,clientX:600,clientY:767});for(let n=0;n<40;n++)look.tick(.1);assert.equal(rotation.x,-PITCH_LIMIT);
-  input.key('AltLeft',true);const previous={...rotation};look.move({target:canvas,clientX:1200,clientY:0});look.tick(1);assert.deepEqual(rotation,previous);
-  input.key('AltLeft',false);await Promise.resolve();look.move({target:canvas,clientX:100,clientY:100});assert.deepEqual(rotation,previous);look.dispose();
+test('held drag reaches the new main pitch limit and a panel stops it without requiring pointer lock',()=>{
+  const rotation={x:0,y:0},documentRef={pointerLockElement:null,addEventListener(){},removeEventListener(){}};
+  const canvas={requestPointerLock(){assert.fail('drag look must not request pointer lock');}};
+  const look=createMouseLook({canvas,documentRef,dragToLook:true,onLook:(x,y)=>turnView(rotation,x,y)});
+  look.enter();look.down({target:canvas,button:0,clientX:0,clientY:0});
+  look.move({target:canvas,buttons:1,clientX:0,clientY:10000});assert.equal(rotation.x,-PITCH_LIMIT);
+  look.leave();const previous={...rotation};look.move({target:canvas,buttons:1,clientX:0,clientY:0});assert.deepEqual(rotation,previous);
+  look.enter();look.move({target:canvas,buttons:0,clientX:0,clientY:0});assert.deepEqual(rotation,previous);look.dispose();
 });
 
 test('window eyes stay visible across long ticks, disabled effects, resync, reload and dawn, then hide in dreamcore',()=>{

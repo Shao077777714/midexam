@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,saveGame,loadGame,applyAction,MEMORIES,SHADOW_TARGETS} from '../public/engine.mjs';
-import {doubleClickPickup,interactionHint,doubleClickAction} from '../public/controls.mjs';
+import {doubleClickPickup,doubleClickAction} from '../public/controls.mjs';
 import {inventoryEntries,compactInventory} from '../public/inventory.mjs';
 import {createThumbnailCache} from '../public/rendering.mjs';
 
@@ -58,17 +58,25 @@ test('hidden mouse clicks use the visible center reticle even when the cursor is
   assert.equal(opened,1);
 });
 
-test('double-click hints distinguish triggers, reading, and eligible pickups',()=>{
+test('visible-cursor double-click uses the item under the cursor and still rejects UI or off-canvas hits',()=>{
+  const canvas={getBoundingClientRect:()=>({left:20,top:30,width:200,height:100})};let ray,calls=0;
+  const world={target(x,y){ray=[x,y];return {action(){calls++;}};}};
+  const context={mode:'explore',canvas,world,aim:'cursor'},event={target:canvas,button:0,clientX:170,clientY:55};
+  assert.equal(doubleClickPickup(event,context),true);assert.deepEqual(ray,[.5,.5]);assert.equal(calls,1);
+  assert.equal(doubleClickPickup({...event,clientX:500},context),false);assert.equal(doubleClickPickup({...event,target:{}},context),false);assert.equal(calls,1);
+});
+
+test('double-click eligibility distinguishes triggers, reading, and eligible pickups',()=>{
   const action=()=>{};
-  for(const [key,guard,ready,done] of [['triggerAction','canTrigger','','已觸發'],['readAction','canRead','雙擊閱讀','已閱讀'],['pickupAction','canPickup','雙擊拿取','']]){
+  for(const [key,guard] of [['triggerAction','canTrigger'],['readAction','canRead'],['pickupAction','canPickup']]){
     let eligible=true;const target={[key]:action,[guard]:()=>eligible};
-    assert.equal(interactionHint(target),ready);assert.equal(doubleClickAction(target),action);
-    eligible=false;assert.equal(interactionHint(target),done);assert.equal(doubleClickAction(target),null);
+    assert.equal(doubleClickAction(target),action);
+    eligible=false;assert.equal(doubleClickAction(target),null);
   }
-  assert.equal(interactionHint({action}), '');assert.equal(doubleClickAction({action}),action);
+  assert.equal(doubleClickAction({action}),action);
   assert.equal(doubleClickAction({action,pickupAction:action,canPickup:()=>false}),null);
   assert.equal(doubleClickAction({action,triggerAction:action,canTrigger:()=>false}),null);
-  assert.equal(interactionHint(null),'');assert.equal(doubleClickAction(null),null);
+  assert.equal(doubleClickAction(null),null);
 });
 
 test('compact shelf keeps the selected old item visible without hiding it behind newer memories',()=>{
