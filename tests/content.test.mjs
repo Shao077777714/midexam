@@ -24,6 +24,17 @@ test('content pack has five ordered levels with narrative, clues, three non-answ
   }
 });
 
+test('level four follows this branch brief and verify cause-and-effect puzzle',async()=>{
+  const level=await readJson('content/level-4.json');
+  assert.ok(level.sources.some(source=>source.startsWith('brief.md')));
+  assert.ok(level.sources.some(source=>source.startsWith('verify.md')));
+  assert.ok(!level.sources.some(source=>source.startsWith('agent.md')));
+  assert.match(level.answer.summary,/依賴加深 → 工作缺勤 → 錯過孩子的重要活動 → 家人帶孩子離開/);
+  for(const item of ['因果齒輪','三個轉盤','四張事件紀錄牌','啟動桿']){
+    assert.ok(JSON.stringify(level).includes(item),`level four is missing brief/verify puzzle detail: ${item}`);
+  }
+});
+
 test('asset manifest points to existing deployed files and separates planned assets',async()=>{
   const manifest=await readJson('assets/manifest.json');
   assert.ok(manifest.available.images.length>0);
