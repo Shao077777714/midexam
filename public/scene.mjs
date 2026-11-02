@@ -4,7 +4,7 @@ import {SHADOW_TARGETS,shadowAligned,MIRROR_POINTS,traceMirrors,PHOTO_IDS,optics
 import {createModel,emblem,setPhotoMood} from './models.mjs';
 import {restOn,mountOn,footprint,circleHits} from './spatial.mjs';
 import {buildPhenomena} from './phenomena.mjs';
-import {buildExterior,buildEyes,buildFlood} from './atmosphere.mjs';
+import {buildExterior,buildEyes,buildWindowEyes,buildFlood} from './atmosphere.mjs';
 import {disposeObjects,watchContext} from './rendering.mjs';
 const loader=new T.TextureLoader(),textures={};
 if(typeof document!=='undefined')for(const [k,f] of Object.entries({grass:'grass-dreamcore-v1.png',siding:'siding-tintable-v1.png',road:'asphalt-dreamcore-v1.png',eyes:'sky-eyes-nightmare-v1.png',family:'family-aged-v2.png',corrupt:'family-distorted-v2.png',organic:'organic-eye-v2.png'})){
@@ -35,7 +35,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   const hemi=new T.HemisphereLight('#fce6da','#899c89',2.5);scene.add(hemi);
   const sun=new T.DirectionalLight('#fff0d9',3);sun.position.set(-9,12,4);sun.castShadow=true;sun.shadow.mapSize.set(512,512);Object.assign(sun.shadow.camera,{left:-14,right:14,top:14,bottom:-14,near:.5,far:45});sun.shadow.bias=-.0004;scene.add(sun);
   const spot=new T.SpotLight('#fff2c6',95,30,Math.PI*.4,.3,1);spot.position.set(0,2.6,4.8);spot.target.position.set(0,2,-7);spot.castShadow=true;spot.shadow.mapSize.set(1024,1024);spot.shadow.bias=-.00015;scene.add(spot,spot.target);
-  let root=new T.Group(),entities=[],blocks=[],bounds,door,shadowModels=[],ghosts=[],mirrorModels=[],beamRoot,clockHand,ghostEye,curtain=[],plates=[],mirrorVeil,shadowSupports=[],colliderSources=[],wallEyes,decor=[],sensors=[],opticalHeight=1.65,flood,effectsEnabled=true,searchObjects=[],phenomena;scene.add(root);
+  let root=new T.Group(),entities=[],blocks=[],bounds,door,shadowModels=[],ghosts=[],mirrorModels=[],beamRoot,clockHand,ghostEye,curtain=[],plates=[],mirrorVeil,shadowSupports=[],colliderSources=[],wallEyes,windowEyes,decor=[],sensors=[],opticalHeight=1.65,flood,effectsEnabled=true,searchObjects=[],phenomena;scene.add(root);
   const nearbyLight=new T.PointLight('#c2d8d4',0,3.1,2);scene.add(nearbyLight);
   const ray=new T.Raycaster();
   const entity=(id,name,group,action,visible=()=>true)=>{group.userData.entity=id;group.traverse(m=>{m.userData.entity=id;});const e={id,name,group,action,visible};
@@ -152,7 +152,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
     for(let z=bounds.minZ+2;z<bounds.maxZ;z+=4){box(root,[1.8,.035,.3],[0,4.72,z],'#f6eed8',{emissive:'#f6e6c5',emissiveIntensity:2});}
     buildExterior(root,textures);
     const sky=mesh(new T.SphereGeometry(280,32,16),new T.MeshBasicMaterial({map:textures.eyes||null,side:T.BackSide,transparent:true,opacity:0,depthWrite:false,fog:false}),root);sky.castShadow=false;sky.receiveShadow=false;sky.userData.nonOccluding=true;ghostEye=sky;
-    wallEyes=buildEyes(root,bounds,textures);flood=buildFlood(root,bounds,level);
+    wallEyes=buildEyes(root,bounds,textures);windowEyes=buildWindowEyes(root,bounds,textures);flood=buildFlood(root,bounds,level);
     const flowerGeo=new T.SphereGeometry(.065,6,4),flowerMat=mat('#c3b2dc'),flowers=new T.InstancedMesh(flowerGeo,flowerMat,level===1?160:45),dummy=new T.Object3D();
     const stems=new T.InstancedMesh(new T.CylinderGeometry(.008,.008,.16,5),mat('#7e9466'),flowers.count);
     for(let i=0;i<flowers.count;i++){const x=level===1?Math.sin(i*25.43)*2.9:bounds.minX+.2+Math.abs(Math.sin(i*12.1))*.4,z=bounds.minZ+.3+Math.abs(Math.cos(i*4.73))*(d-.6);dummy.position.set(x,.16,z);dummy.scale.set(1.5,.35,1.5);dummy.updateMatrix();flowers.setMatrixAt(i,dummy.matrix);dummy.position.y=.08;dummy.scale.set(1,1,1);dummy.updateMatrix();stems.setMatrixAt(i,dummy.matrix);}root.add(flowers,stems);
@@ -208,9 +208,9 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
       const central=box(root,[3,2.7,.12],[-3.2,2,-7.02],'#b9c5bd',{metalness:.98,roughness:.18});mounted(central,'z',bounds.minZ+.1,1);
       const portrait=textures.family?.clone();if(portrait){portrait.repeat.set(.36,.7);portrait.offset.set(.62,.23);portrait.needsUpdate=true;}mesh(new T.PlaneGeometry(1.3,2.2),new T.MeshBasicMaterial({map:portrait||null}),root,[-3.2,2,bounds.minZ+.223]);mirrorVeil=box(root,[1.34,2.24,.015],[-3.2,2,bounds.minZ+.24],'#93a9a3',{transparent:true,opacity:.96});
       drawer(3.9,-4,'隱藏抽屜');
-      supplyStation('work-panel','工作檔案匣','book',4.5,-5.4,['tape-work','map0','plug0']);
-      supplyStation('family-phone','失聯的答錄機','radio',-4.5,-4.6,['tape-family','map1','plug1']);
-      supplyStation('mirror-recess','鏡旁的合頁日記','book',2.2,5.2,['tape-self','map2','map3','plug2']);
+      supplyStation('work-panel','工作檔案匣','book',4.5,-5.4,['tape-work']);
+      supplyStation('family-phone','失聯的答錄機','radio',-4.5,-4.6,['tape-family']);
+      supplyStation('mirror-recess','鏡旁的合頁日記','book',2.2,5.2,['tape-self']);
       table(0,3.8,2.25,1.15);const board=supported('switchboard',[0,1.075,3.8]);entity('switchboard','老式電話總機',board,()=>onActivate({type:'BOARD_UI'}),()=>getState().levels[3].triggered);track(board);const boardLight=new T.PointLight('#dec69c',1.8,3.5);boardLight.position.set(0,2.3,4.3);root.add(boardLight);
 
     } else {
@@ -234,11 +234,14 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
     addDecorations(i);addUncannyFurniture(i);phenomena=buildPhenomena(root,bounds,i,blocks,textures);blocks.push(...phenomena.blocks);
     // Attach every remaining wall plaque after its orientation has been established.
     root.traverse(g=>{if(!g.userData.wallSign||g.userData.mount||g.parent!==root)return;const p=g.position;if(Math.abs(p.x-bounds.maxX)<.6)mounted(g,'x',bounds.maxX-.1,-1);else if(Math.abs(p.z-bounds.minZ)<.5)mounted(g,'z',bounds.minZ+.1,1);});
+    // Reserve clear space around mounted clues before exposing the eye grid.
+    const clear=[];root.traverse(g=>{if(!g.userData.mount||!(g.userData.entity||g.userData.wallSign))return;let p=g;while(p&&p!==wallEyes.group)p=p.parent;if(p!==wallEyes.group)clear.push(new T.Box3().setFromObject(g).expandByScalar(.14));});
+    const spacedEyes=wallEyes.pupils.filter(({eye})=>{const b=new T.Box3().setFromObject(eye);if(!clear.some(c=>c.intersectsBox(b)))return true;eye.removeFromParent();disposeObjects(eye,Object.values(textures));return false;});wallEyes.pupils.splice(0,wallEyes.pupils.length,...spacedEyes);
     sync();
   }
   function sync(){const s=getState(),l=s.levels[s.level],weird=l.triggered;
     scene.background.set(weird?'#10191b':'#cbdee5');scene.fog.color.set(weird?'#263738':'#e7d9cf');scene.fog.near=weird?16:45;scene.fog.far=weird?90:180;
-    hemi.color.set(weird?'#a7c2bd':'#fae6d6');hemi.groundColor.set(weird?'#494354':'#a2ad90');hemi.intensity=weird?.48:1.65;sun.intensity=weird?.17:2.1;sun.color.set(weird?'#bbc6e0':'#fff0d7');spot.intensity=s.level===0?(weird?75:45):0;ghostEye.material.opacity=weird?.85:0;wallEyes.group.visible=weird;
+    hemi.color.set(weird?'#a7c2bd':'#fae6d6');hemi.groundColor.set(weird?'#494354':'#a2ad90');hemi.intensity=weird?.48:1.65;sun.intensity=weird?.17:2.1;sun.color.set(weird?'#bbc6e0':'#fff0d7');spot.intensity=s.level===0?(weird?75:45):0;ghostEye.material.opacity=weird?.85:0;wallEyes.group.visible=weird;windowEyes.group.visible=weird;
     photoCorrupted=weird;setPhotoMood(root,weird);phenomena.setVisible(weird);nearbyLight.intensity=weird?.9:0;flood.group.visible=weird&&[1,3,4].includes(s.level);
     for(const {id,g,kind,tray,screen,light} of searchObjects){const open=l.searched.includes(id),lid=g.getObjectByName('lid'),hatch=g.getObjectByName('hatch');if(lid)lid.rotation[kind==='book'?'z':'x']=open?(kind==='book'?1.6:-1.65):0;if(hatch)hatch.rotation.y=open?-1.45:0;if(tray){const available=open&&!l.collected.includes('p8');tray.visible=open;const map=available?screen.userData.photoMaps[weird?'horror':'aged']:null;if(screen.material.map!==map){screen.material.map=map;screen.material.needsUpdate=true;}screen.material.color.set(available?'#fff':'#3c514c');light.intensity=available?4:0;}}
     door.material.color.set(s.completed[s.level]?'#ddcf9f':weird?'#5d766b':'#9bab99');door.material.emissive.set(s.completed[s.level]?'#665431':'#000000');
@@ -255,7 +258,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
       const wire=board?.getObjectByName(`board-wire${n}`),socket=l.wires[n];if(wire&&wire.userData.socket!==socket){wire.geometry.dispose();const x=(n-1)*.56,target=socket===null?x:(socket-1)*.56;wire.geometry=new T.TubeGeometry(new T.CatmullRomCurve3([new T.Vector3(x,.12,.35),new T.Vector3(x-.13,.14,.1),new T.Vector3(target,socket===null?.14:.44,.03)]),20,.018,6,false);wire.userData.socket=socket;}
       }}
     if(s.level===4){const circuit=entities.find(e=>e.id==='circuitbox')?.group,power=circuitStatus(l);if(circuit)for(let cell=0;cell<9;cell++){const tile=circuit.getObjectByName(`circuit-tile${l.circuit[cell]}`);tile.position.set((cell%3-1)*.35,1.05-Math.floor(cell/3)*.35,.16);tile.rotation.z=-l.circuitAngles[cell]*Math.PI/180;tile.traverse(o=>{if(o.name==='copper')o.material.emissive.set(power.reached.includes(cell)?'#66501f':'#000');});}for(let n=0;n<3;n++){const lamp=entities.find(e=>e.id===`time-lamp${n}`)?.group;if(!lamp)continue;lamp.getObjectByName('lamp-glow').visible=n!==0||l.installed[0];lamp.getObjectByName('lamp-shade').visible=n!==1||l.installed[1];if(n===2)lamp.getObjectByName('lamp-battery').visible=l.installed[2];const lit=l.lampOrder.includes(n);lamp.getObjectByName('lamp-glow').material.emissiveIntensity=lit?2:0;lamp.getObjectByName('time-light').intensity=lit?5:0;}
-      if(l.projectionDone){hemi.intensity=2;sun.intensity=2.4;sun.color.set('#ffe6b9');scene.background.set('#e2e8de');scene.fog.color.set('#e9ded0');ghostEye.material.opacity=.05;}}
+      if(l.projectionDone){hemi.intensity=2;sun.intensity=2.4;sun.color.set('#ffe6b9');scene.background.set('#e2e8de');scene.fog.color.set('#e9ded0');ghostEye.material.opacity=weird?.85:0;}}
     refreshColliders();renderer.shadowMap.needsUpdate=true;scene.updateMatrixWorld(true);
   }
   function tick(time){nearbyLight.position.copy(camera.position);nearbyLight.position.y+=.1;const reduced=!effectsEnabled||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;flood.tick(time,reduced);wallEyes.tick(camera,time,reduced);if(!reduced)curtain.forEach((m,i)=>m.rotation.y=Math.PI/2+Math.sin(time*.5+i)*.012);if(clockHand)clockHand.rotation.z=getState().completed[0]?-time*.2:0;}
@@ -296,7 +299,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   function approachable(e,from){if(!near(e,from))return false;if(e.id==='switchboard'&&(from.z<e.group.position.z+.95||Math.abs(from.x-e.group.position.x)>1.2))return false;if(e.id==='search-television'||e.id==='p8'){const tv=searchObjects.find(v=>v.id==='television');if(from.z<tv.g.position.z+.95||Math.abs(from.x-tv.g.position.x)>1)return false;}if(/^shadow[0-2]$/.test(e.id)){const target=SHADOW_TARGETS[Number(e.id.slice(-1))];return Math.abs(from.x-e.group.position.x)>.95&&Math.abs(from.x-target.x)>.95;}if(e.id==='chair')return canApply({type:'CHAIR'},from);if(e.id==='drawer')return canApply({type:'DRAWER'},from);if(e.id==='decor-cabinet')return canApply({type:'CABINET',open:true},from);if(e.id.startsWith('search-'))return canApply({type:'SEARCH',id:e.id.slice(7)},from);if(e.id.startsWith('mirror'))return Math.hypot(from.x-e.group.position.x,from.z-e.group.position.z)>1.5;return true;}
   build();
   if(!headless)addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
-  return {renderer,scene,camera,build,sync,tick,target,near,focusPoint,canApply,approachable,visibleEntities,get bounds(){return bounds},get blocks(){return blocks},get entities(){return entities},get decorations(){return decor},get colliderSources(){return colliderSources},get eyes(){return wallEyes},get flood(){return flood},get phenomena(){return phenomena},wadingAt(x,z){return flood.group.visible&&x>bounds.minX+.11&&x<bounds.maxX-.11&&z>bounds.minZ+.11&&z<bounds.maxZ-.11;},setEffects(enabled){effectsEnabled=enabled;},render(){renderer.render(scene,camera);}};
+  return {renderer,scene,camera,build,sync,tick,target,near,focusPoint,canApply,approachable,visibleEntities,get bounds(){return bounds},get blocks(){return blocks},get entities(){return entities},get decorations(){return decor},get colliderSources(){return colliderSources},get eyes(){return wallEyes},get windowEyes(){return windowEyes},get flood(){return flood},get phenomena(){return phenomena},wadingAt(x,z){return flood.group.visible&&x>bounds.minX+.11&&x<bounds.maxX-.11&&z>bounds.minZ+.11&&z<bounds.maxZ-.11;},setEffects(enabled){effectsEnabled=enabled;},render(){renderer.render(scene,camera);}};
 }
 // Reuse one preview canvas/context across all items instead of allocating one per interaction.
 export function createInspectorPool({makeCanvas=()=>document.createElement('canvas'),makeRenderer=canvas=>new T.WebGLRenderer({canvas,antialias:true,alpha:true}),makeModel=model,sharedTextures=()=>Object.values(textures),framed=false}={}){

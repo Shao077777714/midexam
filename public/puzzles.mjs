@@ -23,7 +23,7 @@ export const CIRCUIT_PORTS=[[0,1],[1,3],[1,3],[0,1,2,3],[1,3],[1,3],[0,1],[1,3],
 export function puzzleState(){return {recordOrder:[],diagram:Array(4).fill(null),diagramAngles:[90,270,180,90],wires:[null,null,null],signals:[1,1,1],switchboardOn:false,installed:[false,false,false],circuit:[1,0,2,3,4,6,5,7,8],circuitAngles:[90,90,90,0,90,90,0,90,90],lampOrder:[]};}
 export function diagramReady(l){return l.diagram.every((v,i)=>v===i&&l.diagramAngles[i]===0);}
 export function switchboardStatus(l){return {order:l.recordOrder.join(',')==='0,1,2',diagram:diagramReady(l),wires:l.wires.map((v,i)=>v===SOCKETS[i]),signals:l.signals.map((v,i)=>v===RECORDINGS[i].beats)};}
-export function switchboardReady(l){const v=switchboardStatus(l);return v.order&&v.diagram&&v.wires.every(Boolean)&&v.signals.every(Boolean);}
+export function switchboardReady(l){return RECORDINGS.every(t=>l.collected.includes(t.id))&&l.recordOrder.join(',')==='0,1,2';}
 export function portsAt(l,cell){return CIRCUIT_PORTS[l.circuit[cell]].map(p=>(p+l.circuitAngles[cell]/90)%4);}
 export function circuitStatus(l){
   const reached=new Set(),queue=[];
@@ -66,11 +66,10 @@ export function puzzleAction(s,a){
       if(!index(a.index,3)||!index(a.value-1,5)||!l.collected.includes(RECORDINGS[a.index].id))return fail('先取得錄音並觀察節奏。');
       l.signals[a.index]=a.value;return done('訊號旋鈕已調整。');
     }
-    const status=switchboardStatus(l);
-    if(!status.order)return fail('總機回放的日期交錯了。請按錄音中的時間重排。');
-    if(!status.diagram)return fail('線路圖還有斷裂或方向顛倒。');
-    const badWire=status.wires.indexOf(false);if(badWire>=0)return fail(`${LINE_NAMES[badWire]}線未接通，檢查圖紙與插孔。`);
-    const badSignal=status.signals.indexOf(false);if(badSignal>=0)return {ok:false,message:`${LINE_NAMES[badSignal]}訊號失真。重聽該錄音的敲擊節奏。`,distorted:badSignal};
+    if(!RECORDINGS.every(t=>l.collected.includes(t.id)))return fail('還缺少錄音。請到三處夾層找齊三段訊息。');
+    if(l.recordOrder.join(',')!=='0,1,2')return fail('日期還沒有連起來。請取回錄音，按三月八日、十二日、十五日由早到晚排列。');
+    // The simplified board repairs itself once the three memories are in order.
+    l.diagram=[0,1,2,3];l.diagramAngles=[0,0,0,0];l.wires=[...SOCKETS];l.signals=RECORDINGS.map(t=>t.beats);
     l.switchboardOn=true;return done('三段訊息連起來了。我不能再假裝自己沒有失去控制。');
   }
   if(s.level!==4)return fail('這裡沒有配電箱。');

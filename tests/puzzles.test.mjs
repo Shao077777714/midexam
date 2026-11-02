@@ -8,15 +8,21 @@ function checkpoint(level){const s=newGame();s.level=s.unlocked=level;s.complete
 test('new quest parts cannot be collected before trigger or before opening the correct hiding place',()=>{
   for(const [level,id,hide] of [[3,'tape-work','work-panel'],[4,'bulb','lamp-crate']]){let s=checkpoint(level);assert.equal(applyAction(s,{type:'COLLECT',id}).ok,false);s=action(s,{type:'TRIGGER'});assert.equal(applyAction(s,{type:'COLLECT',id}).ok,false);s=action(s,{type:'SEARCH',id:hide});s=action(s,{type:'COLLECT',id});assert.equal(applyAction(s,{type:'COLLECT',id}).ok,false);assert.ok(s.inventory.includes(id));}
 });
-test('sorting, diagram orientation, every wire and every signal independently gate activation',()=>{
+test('three collected recordings in date order plus explicit activation are the only board gates',()=>{
   const ready=boardPrepared(checkpoint(3));assert.equal(ready.completed[3],false);
-  const cases=[{type:'RECORD_ORDER',index:0},{type:'DIAGRAM_ROTATE',index:2,delta:90},...SOCKETS.map((v,index)=>({type:'CONNECT',index,socket:(v+1)%3})),...RECORDINGS.map((v,index)=>({type:'SIGNAL',index,value:1}))];
-  for(const a of cases){const s=action(ready,a),r=applyAction(s,{type:'ACTIVATE_BOARD'});assert.equal(r.ok,false,JSON.stringify(a));assert.equal(r.state.completed[3],false);if(a.type==='SIGNAL')assert.equal(r.distorted,a.index);}
-  const r=applyAction(ready,{type:'ACTIVATE_BOARD'});assert.equal(r.completedNow,true);assert.equal(applyAction(r.state,{type:'ACTIVATE_BOARD'}).ok,false);assert.equal(r.state.memories.filter(m=>m==='承認').length,1);
+  for(const mutate of [s=>s.levels[3].recordOrder=[2,0,1],s=>s.levels[3].recordOrder=[0,1],s=>s.levels[3].collected.pop()]){
+    const s=structuredClone(ready);mutate(s);const r=applyAction(s,{type:'ACTIVATE_BOARD'});assert.equal(r.ok,false);assert.equal(r.state.completed[3],false);
+  }
+  const r=applyAction(ready,{type:'ACTIVATE_BOARD'});assert.equal(r.completedNow,true);assert.deepEqual(r.state.levels[3].wires,SOCKETS);assert.equal(r.state.levels[3].diagram.every((v,i)=>v===i),true);assert.equal(applyAction(r.state,{type:'ACTIVATE_BOARD'}).ok,false);assert.equal(r.state.memories.filter(m=>m==='承認').length,1);
 });
-test('diagram swaps preserve all pieces, and rewiring takes the occupied plug back rather than duplicating',()=>{
-  let s=boardPrepared(checkpoint(3));s=action(s,{type:'DIAGRAM',index:0,slot:1});assert.deepEqual(s.levels[3].diagram,[1,0,2,3]);assert.equal(diagramReady(s.levels[3]),false);assert.equal(applyAction(s,{type:'CONNECT',index:0,socket:2}).ok,false);
-  s=action(s,{type:'DIAGRAM',index:0,slot:0});s=action(s,{type:'CONNECT',index:0,socket:0});assert.deepEqual(s.levels[3].wires,[0,null,1]);assert.ok(inventoryEntries(s).some(e=>e.id==='plug1'));assert.equal(new Set(s.inventory).size,s.inventory.length);
+test('wrong date order has clear feedback, can be removed and reordered, and keeps the cross-stage letter',()=>{
+  let s=boardPrepared(checkpoint(3));s=action(s,{type:'RECORD_ORDER',index:0});s=action(s,{type:'RECORD_ORDER',index:0});assert.deepEqual(s.levels[3].recordOrder,[1,2,0]);assert.match(applyAction(s,{type:'ACTIVATE_BOARD'}).message,/日期/);
+  for(const index of [1,2,0,0,1,2])s=action(s,{type:'RECORD_ORDER',index});
+  s=loadGame({getItem:()=>JSON.stringify(s)}).state;assert.ok(s);s=action(s,{type:'ACTIVATE_BOARD'});assert.equal(s.completed[3],true);assert.equal(s.letter,true);assert.ok(s.inventory.includes('letter'));assert.equal(new Set(s.inventory).size,s.inventory.length);
+});
+test('unfinished v4 saves with obsolete diagram and signal work can activate using just the recordings',()=>{
+  const s=boardPrepared(checkpoint(3));Object.assign(s.levels[3],{diagram:[1,null,0,null],diagramAngles:[90,180,270,90],wires:[1,null,0],signals:[5,1,2]});s.inventory.push('plug0','map0');
+  const loaded=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(loaded.error,null);assert.equal(applyAction(loaded.state,{type:'ACTIVATE_BOARD'}).completedNow,true);assert.deepEqual(inventoryEntries(loaded.state).map(e=>e.id),RECORDINGS.map(t=>t.id));
 });
 test('malformed indices, angles, signal values and uncollected recordings are rejected without changing progress',()=>{
   let s=action(checkpoint(3),{type:'TRIGGER'});

@@ -5,7 +5,7 @@
 <button id="seed">建立第五關物品欄檢查點</button>
 <button id="corridor">建立第二關雙擊拿取檢查點</button>
 <script type="module">
-import {BOARD_ITEMS,RECORDINGS,SOCKETS} from './puzzles.mjs';
+import {RECORDINGS} from './puzzles.mjs';
 import {newGame,applyAction,SHADOW_TARGETS,SEARCHES,RECORD_HIDES,saveGame} from './engine.mjs';
 function seed(target){
   if(location.hostname!=='localhost'||!['4181','4182'].includes(location.port))throw Error('Use isolated localhost:4181 or :4182, never the player origin');
@@ -17,7 +17,7 @@ function seed(target){
   act({type:'TRIGGER'});act({type:'SEARCH',id:'clock'});act({type:'CHAIR'});for(const id of ['key','drawing','letter']){act({type:'COLLECT',id});act({type:'SLOT',slot:id,id});}next();
   act({type:'TRIGGER'});for(const type of ['DRAWER','CHAIR','FRAME'])act({type});for(const id of SEARCHES[2])act({type:'SEARCH',id});for(let i=0;i<9;i++){act({type:'COLLECT',id:`p${i}`});act({type:'PHOTO',id:`p${i}`,slot:i,angle:0});}act({type:'PHOTO_READ'});next();
   if(target===3){launch();return;}
-  act({type:'TRIGGER'});for(const id of ['work-panel','family-phone','mirror-recess'])act({type:'SEARCH',id});for(const id of BOARD_ITEMS)act({type:'COLLECT',id});for(let index=0;index<3;index++)act({type:'RECORD_ORDER',index});for(let index=0;index<4;index++){while(state.levels[3].diagramAngles[index]!==0)act({type:'DIAGRAM_ROTATE',index,delta:90});act({type:'DIAGRAM',index,slot:index});}for(let index=0;index<3;index++){act({type:'CONNECT',index,socket:SOCKETS[index]});act({type:'SIGNAL',index,value:RECORDINGS[index].beats});}act({type:'ACTIVATE_BOARD'});next();
+  act({type:'TRIGGER'});for(const id of ['work-panel','family-phone','mirror-recess'])act({type:'SEARCH',id});for(const t of RECORDINGS)act({type:'COLLECT',id:t.id});for(let index=0;index<3;index++)act({type:'RECORD_ORDER',index});act({type:'ACTIVATE_BOARD'});next();
   launch();
 }
 document.querySelector('#board').onclick=()=>seed(3);

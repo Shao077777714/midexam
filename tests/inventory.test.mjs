@@ -16,7 +16,7 @@ test('restored memories keep their actual model index and the cross-stage letter
   const state=newGame();state.completed[0]=true;state.unlocked=1;state.level=1;state.memories=['記起'];state.inventory=['letter'];state.letter=true;
   let raw;saveGame({setItem(k,v){raw=v;}},state);const restored=loadGame({getItem:()=>raw}).state;
   assert.deepEqual(inventoryEntries(restored).map(e=>[e.kind,e.name]),[['letter','未寄出的信']]);
-  restored.level=3;restored.inventory.push('plug0');assert.ok(inventoryEntries(restored).some(e=>e.id==='plug0'));
+  restored.level=3;restored.inventory.push('tape-work','plug0');assert.ok(inventoryEntries(restored).some(e=>e.id==='tape-work'));assert.ok(!inventoryEntries(restored).some(e=>e.id==='plug0'));
 });
 test('used corridor items hide but the archived letter returns only when needed in stage five',()=>{
   const state=newGame();state.level=1;state.inventory=['key','drawing','letter'];state.letter=true;
