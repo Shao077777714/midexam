@@ -7,11 +7,11 @@ import {setPhotoMood} from '../public/models.mjs';
 import {createWorld} from '../public/scene.mjs';
 import {findPath} from '../public/navigation.mjs';
 
-function inputFixture(refuse=false,edgeTurn=false){
+function inputFixture(refuse=false,edgeTurn=false,dragToLook=false){
   const events=new Map(),moves=[];let requests=0,unlocks=0,denied=0;
   const doc={pointerLockElement:null,addEventListener:(name,fn)=>events.set(name,fn),removeEventListener:name=>events.delete(name),exitPointerLock(){this.pointerLockElement=null;events.get('pointerlockchange')?.();}};
   const canvas={getBoundingClientRect:()=>({left:0,top:0,right:1000,bottom:700}),requestPointerLock(){requests++;if(refuse)return Promise.reject(Error('unsupported'));}};
-  const look=createMouseLook({canvas,documentRef:doc,edgeTurn,onLook:(...xy)=>moves.push(xy),onUnlock:()=>unlocks++,onDenied:()=>denied++});
+  const look=createMouseLook({canvas,documentRef:doc,edgeTurn,dragToLook,onLook:(...xy)=>moves.push(xy),onUnlock:()=>unlocks++,onDenied:()=>denied++});
   return {doc,canvas,look,moves,events,get requests(){return requests;},get unlocks(){return unlocks;},get denied(){return denied;}};
 }
 const action=(s,a)=>{const r=applyAction(s,a);assert.equal(r.ok,true,r.message);return r.state;};
@@ -49,6 +49,22 @@ test('menu unlocks are deliberate, Escape unlocks pause, and late lock acquisiti
   f.look.enter();f.doc.pointerLockElement=f.canvas;f.events.get('pointerlockchange')();f.doc.exitPointerLock();assert.equal(f.unlocks,1);
   f.look.leave();f.doc.pointerLockElement=f.canvas;f.events.get('pointerlockchange')();assert.equal(f.doc.pointerLockElement,null);
 });
+test('drag look rotates only while the left button is held and restores the cursor on release',()=>{
+  const f=inputFixture(false,false,true);f.look.enter();assert.equal(f.requests,0);
+  f.look.move({target:f.canvas,clientX:100,clientY:100,buttons:0});f.look.move({target:f.canvas,clientX:120,clientY:120,buttons:0});assert.deepEqual(f.moves,[]);
+  assert.equal(f.look.down({target:{},button:0}),false);assert.equal(f.look.down({target:f.canvas,button:2}),false);
+  f.look.down({target:f.canvas,button:0,clientX:120,clientY:120});f.look.move({target:f.canvas,clientX:150,clientY:130,buttons:1});assert.deepEqual(f.moves,[[30,10]]);assert.equal(f.look.dragging,true);
+  f.look.up({timeStamp:1000});f.look.move({target:f.canvas,clientX:500,clientY:350,buttons:0});assert.equal(f.look.dragging,false);assert.equal(f.moves.length,1);assert.equal(f.look.canDoubleClick({timeStamp:1100}),false);assert.equal(f.look.canDoubleClick({timeStamp:1400}),true);
+});
+
+test('drag look cancels on menus or lost buttons, with no jump or edge rotation after release',()=>{
+  const f=inputFixture(false,true,true);f.look.enter();f.look.down({target:f.canvas,button:0,clientX:999,clientY:350});f.look.leave();f.look.tick(.1);assert.equal(f.look.dragging,false);assert.deepEqual(f.moves,[]);
+  f.look.enter();f.look.move({target:f.canvas,clientX:900,clientY:500,buttons:1});assert.deepEqual(f.moves,[]);
+  f.look.down({target:f.canvas,button:0,clientX:900,clientY:500});f.look.move({target:f.canvas,clientX:910,clientY:502,buttons:1});assert.deepEqual(f.moves,[[10,2]]);
+  f.look.move({target:f.canvas,clientX:999,clientY:502,buttons:0,timeStamp:2000});f.look.tick(.1);assert.equal(f.look.dragging,false);assert.equal(f.moves.length,1);
+  f.look.down({target:f.canvas,button:0,clientX:500,clientY:350});f.look.up({timeStamp:2500});assert.equal(f.look.canDoubleClick({timeStamp:2501}),true);
+});
+
 test('water applies exactly the same 55 percent factor to manual and assisted movement',()=>{
   for(const assisted of [false,true])assert.equal(movementSpeed(true,assisted)/movementSpeed(false,assisted),.55);
   assert.equal(movementSpeed(false),2.7);assert.ok(EYE_SURGE_MS<=200);

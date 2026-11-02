@@ -38,6 +38,16 @@
 - 五關正確解法以 `brief.md` 為準；舊數字密碼不是現行謎底。
 - 功能尚未建立時不捏造啟動、建置或測試命令；建立後將實際命令補入 README 與執行紀錄。
 
+## 左鍵按住環視、放開游標（2026-11-02）
+
+本節取代舊版探索時自由環視／隱藏游標的操作規格；原測試結果保留當時版本。
+
+- 基準：加薪的branch 39abd6e；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），隔離 localhost:4181 的第一關既有存檔，未改動 127.0.0.1:4181 玩家進度。
+- 改動：場景左鍵按住並拖曳才轉動，未按住時游標可見且移動不轉視角；放開、失焦、介面／控制區切換及取消指標清除拖曳。取消未按住時的邊緣自動轉向，平常物件提示與雙擊依可見游標位置射線；移動超過 6px 的拖曳結束後 350ms 防止誤雙擊。開場教學、操作說明、底部文字及現行文件同步。
+- PASS（自動化）：node --test tests/*.test.mjs **88／88**，新增左鍵限定、放開／遺失按鈕／面板重入、無跳動、拖曳誤擊抑制與可見游標座標測試；node scripts/build.mjs（13 模組）與 git diff --check 通過。
+- PASS（內建預覽及合成指標）：tests/browser-drag-look.mjs 在 localhost 測試頁發送 pointer 事件，不直接改攝影機或存檔；未按下 looking=false、cursor=default；按住移動 looking=true、cursor=grabbing，場景視角改變；放開恢復 default 且 pointerLock=false。一般 UI 點背包可開啟，放開後正常雙擊月亮燈仍可開啟調整；error／warn 日誌為空。截圖 docs/screenshots/hold-left-look.png。
+- 測試頁方法：複製 index.html 為 public/.qa-drag.html，載入由 tests/browser-drag-look.mjs 複製的 public/.qa-drag.mjs；本次完成後已移除 public 與 dist 複本。原生滑鼠長按的正式 Chrome／Edge 四組矩陣、完整五關人工回歸及長時間負載未重跑，合成事件不冒充實體裝置驗收。
+
 ## 第一關三物件直接調整與移除說明（2026-11-01）
 
 - 基準：加薪的branch d0541fa；Windows、Node.js 24.22.1、Three.js 0.186.1、Codex IAB（版本未提供），localhost:4181 隔離來源。由 tests/browser-inventory.html 新增第一關檢查點，只執行合法 TRIGGER，不完成解謎；玩家原來源存檔未變更。

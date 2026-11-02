@@ -61,6 +61,14 @@ test('hidden mouse clicks use the visible center reticle even when the cursor is
   assert.equal(opened,1);
 });
 
+test('visible-cursor double-click uses the item under the cursor and still rejects UI or off-canvas hits',()=>{
+  const canvas={getBoundingClientRect:()=>({left:20,top:30,width:200,height:100})};let ray,calls=0;
+  const world={target(x,y){ray=[x,y];return {action(){calls++;}};}};
+  const context={mode:'explore',canvas,world,aim:'cursor'},event={target:canvas,button:0,clientX:170,clientY:55};
+  assert.equal(doubleClickPickup(event,context),true);assert.deepEqual(ray,[.5,.5]);assert.equal(calls,1);
+  assert.equal(doubleClickPickup({...event,clientX:500},context),false);assert.equal(doubleClickPickup({...event,target:{}},context),false);assert.equal(calls,1);
+});
+
 test('double-click hints distinguish triggers, reading, and eligible pickups',()=>{
   const action=()=>{};
   for(const [key,guard,ready,done] of [['triggerAction','canTrigger','','已觸發'],['readAction','canRead','雙擊閱讀','已閱讀'],['pickupAction','canPickup','雙擊拿取','']]){

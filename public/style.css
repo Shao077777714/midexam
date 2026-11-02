@@ -279,7 +279,8 @@ body.low-effects #world { animation: none; }
 .panel .panel-note { font-size: 18px; line-height: 1.7; }
 @media (max-width:700px) { .photo-toolbar p { flex-basis:100%; text-align:center; } .photo-workspace { grid-template-columns:1fr; } .piece-tray { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 /* Immediate first-person input, short transition eyes and readable optical controls. */
-body.exploring, body.exploring * { cursor: none !important; }
+body.exploring #world { cursor: default; }
+body.exploring.looking #world { cursor: grabbing; }
 body.exploring #quick-controls, body.exploring #quick-controls * { cursor: auto !important; }
 body.exploring #quick-controls button, body.exploring #quick-controls button * { cursor: pointer !important; }
 body.controls-hover #crosshair { visibility: hidden; }
