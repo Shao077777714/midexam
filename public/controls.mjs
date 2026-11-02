@@ -1,12 +1,6 @@
 export const WATER_SPEED_FACTOR=.55;
 export const EYE_SURGE_MS=160;
-export function interactionHint(target){
-  if(target?.triggerAction)return target.canTrigger?.()===false?'已觸發':'';
-  if(target?.readAction)return target.canRead?.()===false?'已閱讀':'雙擊閱讀';
-  if(target?.pickupAction)return target.canPickup?.()!==false?'雙擊拿取':'';
-  return '';
-}
-// Use the same eligibility as the prompt; triggering and reading never promise a pickup.
+// Trigger, reading and pickup eligibility remain independent of the name-only label.
 export function doubleClickAction(target){
   if(target?.triggerAction)return target.canTrigger?.()===false?null:target.triggerAction;
   if(target?.readAction)return target.canRead?.()===false?null:target.readAction;
