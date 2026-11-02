@@ -16,13 +16,13 @@ test('restored memories keep their actual model index and the cross-stage letter
   const state=newGame();state.completed[0]=true;state.unlocked=1;state.level=1;state.memories=['記起'];state.inventory=['letter'];state.letter=true;
   let raw;saveGame({setItem(k,v){raw=v;}},state);const restored=loadGame({getItem:()=>raw}).state;
   assert.deepEqual(inventoryEntries(restored).map(e=>[e.kind,e.name]),[['letter','未寄出的信']]);
-  restored.level=3;restored.levels[3].flashlight=true;assert.ok(inventoryEntries(restored).some(e=>e.id==='flashlight'));
+  restored.level=3;restored.inventory.push('plug0');assert.ok(inventoryEntries(restored).some(e=>e.id==='plug0'));
 });
 test('used corridor items hide but the archived letter returns only when needed in stage five',()=>{
   const state=newGame();state.level=1;state.inventory=['key','drawing','letter'];state.letter=true;
   state.levels[1].slots={key:'key',letter:'letter'};assert.deepEqual(inventoryEntries(state).map(e=>e.id),['drawing']);
   const before=JSON.stringify(state.inventory);state.level=2;assert.deepEqual(inventoryEntries(state),[]);state.level=3;assert.deepEqual(inventoryEntries(state),[]);
-  state.level=4;state.memories=MEMORIES.slice(0,4);state.levels[4].sequence=[0,1];assert.deepEqual(inventoryEntries(state).map(e=>e.id),['letter','memory2','memory3']);
+  state.level=4;state.memories=MEMORIES.slice(0,4);state.levels[4].sequence=[0,1];assert.deepEqual(inventoryEntries(state).map(e=>e.id),['letter']);
   state.levels[4].mailed=true;state.levels[4].projectionDone=true;assert.deepEqual(inventoryEntries(state),[]);assert.equal(JSON.stringify(state.inventory),before);
 });
 test('placed photo pieces hide, but taking back a wrong placement makes them available again',()=>{
@@ -38,10 +38,7 @@ test('picked shadow props survive dropping and reloading, then hide when aligned
   state=loadGame({getItem:()=>JSON.stringify(state)}).state;assert.deepEqual(inventoryEntries(state).map(e=>e.id),['moon']);
   state=applyAction(state,{type:'SHADOW',index:0,...SHADOW_TARGETS[0]}).state;assert.deepEqual(inventoryEntries(state,'moon'),[]);
 });
-test('flashlight and completed-stage inventory hide after their purpose is finished',()=>{
-  const state=newGame();state.level=3;state.levels[3].flashlight=true;assert.equal(inventoryEntries(state).length,1);
-  state.levels[3].opticsUnlocked=true;assert.equal(inventoryEntries(state).length,0);state.level=1;state.inventory=['key'];state.completed[1]=true;assert.deepEqual(inventoryEntries(state),[]);
-});
+test('installed lamp parts and completed-stage inventory hide without deletion',()=>{const state=newGame();state.level=4;state.inventory=['bulb'];assert.equal(inventoryEntries(state).length,1);state.levels[4].installed[0]=true;assert.equal(inventoryEntries(state).length,0);assert.deepEqual(state.inventory,['bulb']);state.level=1;state.inventory=['key'];state.completed[1]=true;assert.deepEqual(inventoryEntries(state),[]);});
 test('double-click picks only a fresh ray hit in exploration, using the same reticle with or without Pointer Lock',()=>{
   const canvas={getBoundingClientRect:()=>({left:20,top:30,width:200,height:100})};let calls=0,ray;
   const world={target(x,y){ray=[x,y];return {pickupAction(){calls++;}};}};
