@@ -38,12 +38,22 @@ export function buildExterior(root, textures={}) {
 export function buildEyes(root,bounds,textures={}) {
   const group=new T.Group(),pupils=[];root.add(group);group.visible=false;
   const locations=[];
-  for(let i=0;i<5;i++)locations.push({axis:'x',surface:bounds.maxX-.1,normal:-1,pos:[bounds.maxX-.1,3.65+(i%2)*.22,bounds.minZ+1.3+i*(bounds.maxZ-bounds.minZ-2.6)/4]});
-  for(const x of [-4.4,-2.4,0,2.4,4.4].filter(x=>Math.abs(x)<bounds.maxX-.3))locations.push({axis:'z',surface:bounds.minZ+.1,normal:1,pos:[x,4.05,bounds.minZ+.1]});
-  for(let i=0;i<12;i++)locations.push({axis:'x',surface:bounds.maxX-.1,normal:-1,pos:[bounds.maxX-.1,1.55+(i%2)*1.05,bounds.minZ+1.2+i*(bounds.maxZ-bounds.minZ-2.4)/11],small:true});
-  for(let i=0;i<5;i++)locations.push({axis:'z',surface:bounds.maxZ-.1,normal:-1,pos:[(i-2)*(bounds.maxX>4?2.15:1.15),3.05,bounds.maxZ-.1],small:true});
+  const width=bounds.maxX-bounds.minX,depth=bounds.maxZ-bounds.minZ;
+  // Equal cells on each solid wall, with the same two heights and eye size.
+  for(const axis of ['x','z'])for(const normal of [-1,1]){
+    if(axis==='x'&&normal===1)continue; // The left wall is glazed; use its solid base below.
+    const span=axis==='x'?depth:width,count=Math.max(3,Math.ceil(span/1.9));
+    const surface=axis==='x'?bounds.maxX-.1:normal===1?bounds.minZ+.1:bounds.maxZ-.1;
+    for(const y of [1.65,3.65])for(let c=0;c<count;c++){
+      const along=(axis==='x'?bounds.minZ:bounds.minX)+(c+.5)*span/count;
+      if(axis==='z'&&normal===1&&Math.abs(along)<1.1)continue; // Keep the exit clear.
+      locations.push({axis,surface,normal,pos:axis==='x'?[surface,y,along]:[along,y,surface],small:false});
+    }
+  }
+  const count=Math.ceil(depth/3.5);
+  for(let c=0;c<count;c++)locations.push({axis:'x',surface:bounds.minX+.1,normal:1,pos:[bounds.minX+.1,.52,bounds.minZ+(c+.5)*depth/count],small:true});
   locations.forEach(({axis,surface,normal,pos,small},i)=>{
-    const eye=new T.Group();group.add(eye);eye.position.set(...pos);if(axis==='x')eye.rotation.y=-Math.PI/2;else if(normal<0)eye.rotation.y=Math.PI;
+    const eye=new T.Group();group.add(eye);eye.position.set(...pos);if(axis==='x')eye.rotation.y=normal>0?Math.PI/2:-Math.PI/2;else if(normal<0)eye.rotation.y=Math.PI;
     const tissue=part(eye,new T.SphereGeometry(.46,24,16),'#96766e',[0,0,.015],{roughness:.28});tissue.scale.set(1.5,.62,.23);
     part(eye,new T.BoxGeometry(.85,.24,.025),'#6a514b',[0,0,-.09]);
     const membrane=part(eye,new T.PlaneGeometry(1.9,1.9),'#fff',[0,0,.14],{map:textures.organic||null,emissiveMap:textures.organic||null,emissive:'#ffffff',emissiveIntensity:.2,transparent:true,alphaTest:.12,roughness:.18,depthWrite:true});
@@ -56,7 +66,7 @@ export function buildEyes(root,bounds,textures={}) {
     const disk=part(iris,new T.CylinderGeometry(.14,.14,.008,32),'#403e26',[0,0,0],{roughness:.35});disk.rotation.x=Math.PI/2;
     const pupil=part(iris,new T.SphereGeometry(.105,20,12),'#111b1b',[0,0,.024],{roughness:.15});pupil.scale.z=.35;
     const glint=part(iris,new T.SphereGeometry(.023,10,6),'#dce5d3',[-.04,.05,.063]);glint.castShadow=false;
-    eye.scale.setScalar(small?.43+(i%3)*.08:.9+(i%3)*.23);mountOn(eye,axis,surface,normal);pupils.push({eye,iris});
+    eye.scale.setScalar(small?.27:.62);mountOn(eye,axis,surface,normal);pupils.push({eye,iris});
   });
   return {group,pupils,tick(camera,time,reducedMotion=false){
     if(!group.visible)return;
@@ -64,6 +74,21 @@ export function buildEyes(root,bounds,textures={}) {
   }};
 }
 
+
+// Permanent, unlit eyes on supported facades outside the window. They do not blink
+// or share the short-lived screen overlay. Walls and opaque backing still occlude them.
+export function buildWindowEyes(root,bounds,textures={}){
+  const group=new T.Group();group.userData.exterior=true;group.visible=false;root.add(group);
+  const count=Math.ceil((bounds.maxZ-bounds.minZ)/6)+2;
+  for(let i=0;i<count;i++){
+    const facade=new T.Group();facade.position.set(bounds.minX-10,0,bounds.minZ-3+i*6);facade.rotation.y=Math.PI/2;group.add(facade);
+    part(facade,new T.BoxGeometry(6,4.6,.18),'#191b19',[0,3.6,0]);
+    for(const x of [-2.4,2.4])part(facade,new T.BoxGeometry(.18,1.3,.22),'#525449',[x,.65,0]);
+    const eye=new T.Mesh(new T.PlaneGeometry(5.5,4.4),new T.MeshBasicMaterial({map:textures.organic||textures.eyes||null,color:'#e3d0c6',transparent:true,alphaTest:.1,depthWrite:true,fog:false}));
+    eye.position.set(0,3.6,.1);eye.frustumCulled=false;facade.add(eye);
+  }
+  return {group};
+}
 
 export function buildFlood(root,bounds,level){
   const group=new T.Group();group.userData.nonOccluding=true;group.userData.flood=true;root.add(group);group.visible=false;

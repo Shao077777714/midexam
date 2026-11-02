@@ -1,5 +1,24 @@
 export const WATER_SPEED_FACTOR=.55;
 export const EYE_SURGE_MS=160;
+export const PITCH_LIMIT=85*Math.PI/180;
+export function turnView(rotation,dx,dy){
+  rotation.y-=dx*.0025;
+  rotation.x=Math.max(-PITCH_LIMIT,Math.min(PITCH_LIMIT,rotation.x-dy*.0025));
+}
+// One owner for cursor/lock transitions. Releasing Alt behind a panel never enables look.
+export function createExploreInput({look,onChange=()=>{},onSuspend=()=>{}}){
+  let mode='title';const alt=new Set();
+  function sync(){const exploring=mode==='explore',cursor=exploring&&alt.size>0;
+    if(exploring&&!cursor)look.enter();else look.leave();
+    onChange({exploring,cursor,active:exploring&&!cursor});
+  }
+  return {
+    setMode(next){mode=next;sync();},
+    key(code,down){if(!['AltLeft','AltRight'].includes(code))return false;const before=alt.size;if(down)alt.add(code);else alt.delete(code);if(before!==alt.size){onSuspend();sync();}return true;},
+    blur(){alt.clear();mode='modal';onSuspend();sync();},
+    get active(){return mode==='explore'&&alt.size===0;},get cursor(){return mode==='explore'&&alt.size>0;}
+  };
+}
 export function interactionHint(target){
   if(target?.triggerAction)return target.canTrigger?.()===false?'已觸發':'';
   if(target?.readAction)return target.canRead?.()===false?'已閱讀':'雙擊閱讀';
