@@ -188,7 +188,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
       const c=chair(2,-4);entity('chair','擋住門後的椅子',c,()=>onActivate({type:'CHAIR'}));c.userData.movable=true;
       item('drawing','孩子的畫','drawing',[2.45,.012,-4.3],null,()=>getState().levels[1].chair);
       table(1.7,-10.5,1.5,1);item('letter','未寄出的信','letter',[1.7,1.075,-10.5]);
-      for(let n=0;n<4;n++){const doorSide=box(root,[.1,2.9,1.3],[3.25,1.45,1-n*3.5],n%2?'#c1cbbd':'#d1bcba');const plaque=sign(root,`0${n+1}`,[3.15,2.6,1-n*3.5],.4,.3);plaque.rotation.y=-Math.PI/2;mounted(plaque,'x',3.2,-1);}
+      for(let n=0;n<4;n++){const z=1-n*3.5,doorSide=box(root,[.1,2.9,1.3],[3.25,1.45,z],n%2?'#c1cbbd':'#d1bcba');const plaque=sign(root,`0${n+1}`,[3.15,2.6,z],.4,.3);plaque.rotation.y=-Math.PI/2;mounted(plaque,'x',3.2,-1);const id=`echo-door-${n}`;entity(id,`第${n+1}扇門的聲音線索`,doorSide,()=>onActivate({type:'SOUND_CUE',index:n}),()=>getState().levels[1].triggered);plaque.userData.entity=id;plaque.traverse(m=>{m.userData.entity=id;});}
       ['key','drawing','letter'].forEach((id,n)=>{const g=sign(root,['房　子','家庭回憶','信　件'][n],[3.2,1.7,-10.6-n*1.55],.95,.8);g.rotation.y=-Math.PI/2;mounted(g,'x',bounds.maxX-.1,-1);entity(`slot-${id}`,['房子凹槽','家庭回憶凹槽','信件凹槽'][n],g,()=>onActivate({type:'SLOT_UI',slot:id}));});
     } else if(i===2){
       table(0,0,3.6,2.1);for(const [x,z] of [[-1.25,.5],[1.25,.5],[0,-.6]]){const plate=cylinder(root,.31,.33,.04,[x,1.095,z],'#e9e6ce');plates.push(plate);const cup=supported('cup',[x+.3,1.075,z-.45],.7);for(const dx of [-.4,.42])box(root,[.022,.01,.25],[x+dx,1.081,z],'#b9b3a3',{metalness:.7});}
