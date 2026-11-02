@@ -1,5 +1,11 @@
 export const WATER_SPEED_FACTOR=.55;
 export const EYE_SURGE_MS=160;
+export const PITCH_LIMIT=85*Math.PI/180;
+export function turnView(rotation,dx,dy){
+  rotation.y-=dx*.0025;
+  rotation.x=Math.max(-PITCH_LIMIT,Math.min(PITCH_LIMIT,rotation.x-dy*.0025));
+}
+
 // Trigger, reading and pickup eligibility remain independent of the name-only label.
 export function doubleClickAction(target){
   if(target?.triggerAction)return target.canTrigger?.()===false?null:target.triggerAction;

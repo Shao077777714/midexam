@@ -26,15 +26,12 @@ test('all five world triggers can activate once without claiming to be inventory
   }
 });
 
-test('shadow props, flashlight and records retain their eligible double-click actions',()=>{
+test('only available shadow props and new cassette pickups promise pickup',()=>{
   const shadows=fixture(0,false),shadow=shadows.world.entities.find(e=>e.id==='shadow0');
-  assert.equal(doubleClickAction(shadow),null);shadows.state.levels[0].triggered=true;assert.equal(doubleClickAction(shadow),shadow.pickupAction);
+  shadows.state.levels[0].triggered=true;
   shadows.state.levels[0].collected.push('moon');assert.equal(doubleClickAction(shadow),shadow.action);doubleClickAction(shadow)();assert.deepEqual(shadows.signals.at(-1),{type:'MANIPULATE',index:0});
   shadows.state.completed[0]=true;assert.equal(doubleClickAction(shadow),null);
-  const mirrors=fixture(3),flashlight=mirrors.world.entities.find(e=>e.id==='flashlight'),record=mirrors.world.entities.find(e=>e.id.startsWith('record-'));
-  assert.equal(doubleClickAction(flashlight),flashlight.pickupAction);mirrors.state.levels[3].flashlight=true;assert.equal(doubleClickAction(flashlight),null);
-  assert.equal(record.pickupAction,undefined);assert.equal(doubleClickAction(record),record.readAction);
-  mirrors.state.levels[3].records.push(record.id.slice(7));assert.equal(doubleClickAction(record),null);
+  const f=fixture(3),tape=f.world.entities.find(e=>e.id==='tape-work');f.state.levels[3].collected.push('tape-work');f.world.sync();assert.equal(tape.group.visible,false);assert.equal(doubleClickAction(tape),null);
 });
 
 test('pickup rays require the visible object surface within reach and stop at opaque obstacles',()=>{
@@ -138,7 +135,18 @@ test('chair navigation leaves room for the chair to move instead of parking the 
   const path=findPath([0,5.9],[p.x,p.z],world.bounds,world.blocks,a=>world.approachable(e,new T.Vector3(a[0],1.65,a[1])));assert.ok(path.length);const end=path.at(-1);assert.equal(world.canApply({type:'CHAIR'},new T.Vector3(end[0],1.65,end[1])),true);
 });
 
-test('optical beams and grounded receivers align with the actual flashlight lens height',()=>{
-  const {state,world}=fixture(3);state.levels[3].flashlight=true;state.levels[3].mirrors=[45,135,135];world.sync();const lens=world.entities.find(e=>e.id==='flashlight').group.getObjectByName('lens'),height=lens.getWorldPosition(new T.Vector3()).y;
-  let beams=0,receivers=0;world.scene.traverse(o=>{if(o.isLine){beams++;near(o.geometry.attributes.position.getY(0),height);}if(o.name==='light-receiver'){receivers++;near(o.getWorldPosition(new T.Vector3()).y,height);}});assert.equal(beams,4);assert.equal(receivers,3);
+test('the switchboard has solid table support and circuit box has an opaque wall backing',()=>{const board=fixture(3).world.entities.find(e=>e.id==='switchboard').group;near(new T.Box3().setFromObject(board).min.y,1.075);const circuit=fixture(4).world.entities.find(e=>e.id==='circuitbox').group;assert.ok(circuit.userData.mount);});
+
+test('3D circuit tiles follow saved swaps and rotations, with powered copper matching connectivity',()=>{
+  const {state,world}=fixture(4),l=state.levels[4];l.circuit=[0,1,2,3,4,5,6,7,8];l.circuitAngles=[90,0,0,0,0,0,0,0,0];world.sync();
+  const box=world.entities.find(e=>e.id==='circuitbox').group,tile=box.getObjectByName('circuit-tile0');near(tile.rotation.z,-Math.PI/2);near(tile.position.x,-.35);near(tile.position.y,1.05);
+  const copper=tile.getObjectByName('copper');assert.notEqual(copper.material.emissive.getHex(),0);
+  [l.circuit[0],l.circuit[8]]=[l.circuit[8],l.circuit[0]];l.circuitAngles[8]=180;world.sync();near(tile.position.x,.35);near(tile.position.y,.35);near(tile.rotation.z,-Math.PI);
+});
+
+test('3D switchboard plugs and dial markers follow the same wiring and signal values as the controls',()=>{
+  const {state,world}=fixture(3),l=state.levels[3],board=world.entities.find(e=>e.id==='switchboard').group;l.wires=[2,0,1];l.signals=[2,4,3];world.sync();
+  const wire=board.getObjectByName('board-wire0'),end=wire.geometry.parameters.path.getPoint(1);near(end.x,.56);near(end.y,.44);
+  const marker=board.getObjectByName('signal-marker0');near(marker.rotation.y,Math.PI/3);
+  l.wires[0]=null;world.sync();near(board.getObjectByName('board-wire0').geometry.parameters.path.getPoint(1).y,.14);
 });

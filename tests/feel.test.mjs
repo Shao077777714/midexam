@@ -83,16 +83,12 @@ test('opened television presents a photo on a visible supported tray below eye h
   const screen=w.entities.find(e=>e.id==='search-television').group.getObjectByName('screen');assert.equal(screen.material.isMeshBasicMaterial,true);
   s.levels[2].collected.push('p8');w.sync();assert.equal(e.group.visible,false);assert.equal(screen.material.map,null);
 });
-test('mirror direction alone, incorrect colors and missing confirmation cannot unlock records',()=>{
-  let s=mirrorState();assert.equal(opticsStatus(s.levels[3]).trace.solved,true);assert.equal(opticsStatus(s.levels[3]).ready,false);assert.equal(applyAction(s,{type:'CALIBRATE'}).ok,false);
-  for(let index=0;index<3;index++)s=action(s,{type:'MIRROR_FILTER',index,filter:index+1});assert.equal(opticsStatus(s.levels[3]).ready,true);assert.equal(s.levels[3].opticsUnlocked,false);assert.equal(applyAction(s,{type:'SEARCH',id:'work-panel'}).ok,false);
-  s=action(s,{type:'CALIBRATE'});assert.equal(s.levels[3].opticsUnlocked,true);assert.equal(applyAction(s,{type:'SEARCH',id:'work-panel'}).ok,true);
-});
+test('legacy optical calibration cannot finish the new switchboard puzzle',()=>{let s=mirrorState();for(let index=0;index<3;index++)s=action(s,{type:'MIRROR_FILTER',index,filter:index+1});s=action(s,{type:'CALIBRATE'});assert.equal(s.completed[3],false);assert.equal(s.levels[3].switchboardOn,false);assert.equal(applyAction(s,{type:'ACTIVATE_BOARD'}).ok,false);});
 test('received light colors use the actual reflection segment and match displayed beam colors',()=>{
   const s=mirrorState(),l=s.levels[3];l.mirrorFilters=[1,2,3];const status=opticsStatus(l);assert.deepEqual(status.segmentFilters,[0,1,2,3]);assert.deepEqual(status.received,[1,2,3]);l.mirrorFilters[1]=3;assert.equal(opticsStatus(l).ready,false);l.mirrors[0]=0;assert.equal(opticsStatus(l).trace.solved,false);
 });
 test('v2 mirror saves keep unlocked progress while unfinished mirrors receive the new controls',()=>{
-  for(const unlocked of [false,true]){const s=newGame();s.version=2;s.levels[3].opticsUnlocked=unlocked;for(const l of s.levels)delete l.mirrorFilters;const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,3);assert.equal(r.state.levels[3].opticsUnlocked,unlocked);assert.deepEqual(r.state.levels[3].mirrorFilters,unlocked?[1,2,3]:[0,0,0]);}
+  for(const unlocked of [false,true]){const s=newGame();s.version=2;s.levels[3].opticsUnlocked=unlocked;for(const l of s.levels)delete l.mirrorFilters;const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,4);assert.equal(r.state.levels[3].opticsUnlocked,unlocked);assert.deepEqual(r.state.levels[3].mirrorFilters,unlocked?[1,2,3]:[0,0,0]);}
 });
 test('invalid mirror filter input and malformed modern saves are rejected',()=>{
   const s=mirrorState();for(const filter of [-1,4,1.2,NaN])assert.equal(applyAction(s,{type:'MIRROR_FILTER',index:0,filter}).ok,false);
