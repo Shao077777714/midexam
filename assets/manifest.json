@@ -1,0 +1,106 @@
+{
+  "available": {
+    "images": [
+      {
+        "path": "public/assets/dreamcore/grass-dreamcore-v1.png",
+        "purpose": "窗外草地與住宅區遠景材質。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/dreamcore/asphalt-dreamcore-v1.png",
+        "purpose": "窗外道路材質。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/dreamcore/siding-tintable-v1.png",
+        "purpose": "窗外房屋外牆，可在材質層調色。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/dreamcore/sky-eyes-nightmare-v1.png",
+        "purpose": "怪核天空背景。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/dreamcore/family-memory-v1.png",
+        "purpose": "家庭照片與早期記憶展示素材。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/dreamcore/family-aged-v2.png",
+        "purpose": "第三關老化家庭照片拼圖素材。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/dreamcore/family-distorted-v2.png",
+        "purpose": "第三關怪核家庭照片變體。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/dreamcore/organic-eye-v2.png",
+        "purpose": "怪核場景眼睛與周邊注視效果。",
+        "status": "available"
+      }
+    ],
+    "audio": [
+      {
+        "path": "public/assets/audio/ambience/dreamcore_loop.wav",
+        "purpose": "夢核循環氛圍音。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/ambience/weirdcore_loop.wav",
+        "purpose": "怪核循環氛圍音。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/puzzle/correct.wav",
+        "purpose": "謎題完成提示音。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/puzzle/retry.wav",
+        "purpose": "答錯或需重試提示音。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/corridor/child_laugh.wav",
+        "purpose": "第二關孩子笑聲線索。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/corridor/keys.wav",
+        "purpose": "第二關鑰匙轉動線索。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/corridor/argument.wav",
+        "purpose": "第二關爭吵線索。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/corridor/unanswered_call.wav",
+        "purpose": "第二關無人接聽的電話線索。",
+        "status": "available"
+      }
+    ]
+  },
+  "planned": [
+    {
+      "purpose": "第一關時鐘倒轉、影子對齊與房間切換的短音效。",
+      "status": "planned"
+    },
+    {
+      "purpose": "第三關照片碎片放置、拼合完成與翻面閱讀的互動音效。",
+      "status": "planned"
+    },
+    {
+      "purpose": "第四關錄音播放、日期排序正確／錯誤及接通回饋。",
+      "status": "planned"
+    },
+    {
+      "purpose": "第五關電路連通、燈具依序點亮、投影啟動與清晨轉場音效。",
+      "status": "planned"
+    }
+  ]
+}
