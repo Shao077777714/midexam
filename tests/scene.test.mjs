@@ -148,3 +148,21 @@ test('3D switchboard plugs and dial markers follow the same wiring and signal va
   const marker=board.getObjectByName('signal-marker0');near(marker.rotation.y,Math.PI/3);
   l.wires[0]=null;world.sync();near(board.getObjectByName('board-wire0').geometry.parameters.path.getPoint(1).y,.14);
 });
+
+
+test('rabbit target is on the front of the real door and stays attached when the exit opens',()=>{
+ const state=newGame(),w=createWorld(null,()=>state,()=>{},{headless:true});
+ const targets=[];w.scene.traverse(o=>{if(o.userData.shadowTarget)targets.push(o);});
+ assert.deepEqual([...new Set(targets.map(o=>o.userData.shadowTarget))].sort(),['moon','rabbit','vase']);
+ assert.ok(targets.every(o=>!o.visible));state.levels[0].triggered=true;w.sync();assert.ok(targets.every(o=>o.visible));
+ const rabbit=targets.filter(o=>o.userData.shadowTarget==='rabbit'),door=w.entities.find(e=>e.id==='exit').group;
+ assert.ok(rabbit.length>0);const panel=door.getObjectByName('exit-panel'),front=new T.Box3().setFromObject(panel).max.z;
+ for(const mesh of rabbit){
+  assert.equal(mesh.parent,door);assert.equal(mesh.material.depthTest,true);assert.equal(mesh.userData.nonOccluding,true);
+  const b=new T.Box3().setFromObject(mesh);assert.ok(b.min.z>front+.005,'door must not hide the silhouette');
+  assert.ok(b.min.y>0&&b.max.y<3.2);assert.ok(b.min.x>-.785&&b.max.x<.785);
+ }
+ const before=new T.Box3().setFromObject(rabbit[0]).getCenter(new T.Vector3());w.setExitProgress(1);
+ assert.ok(before.distanceTo(new T.Box3().setFromObject(rabbit[0]).getCenter(new T.Vector3()))>.1);
+ state.levels[0].triggered=false;w.sync();assert.ok(targets.every(o=>!o.visible));
+});
