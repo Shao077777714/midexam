@@ -1,6 +1,6 @@
 import {createAudioDirector} from './audio-director.mjs';
 import {VOICE_CLIPS} from './voice-clips.mjs';
-import {currentGoal,tickGuidance} from './guidance.mjs';
+import {currentGoal} from './guidance.mjs';
 import {FAMILY_PHOTOS,FINAL_HALL,FINAL_ECHOES,createFinalePlayback} from './finale.mjs';
 import {createPuzzleUI} from './puzzle-ui.mjs';
 import {RECORDINGS} from './puzzles.mjs';
@@ -20,17 +20,6 @@ const finalePlayback=createFinalePlayback();
 const finaleOverlay=document.createElement('aside');finaleOverlay.id='finale-memory';finaleOverlay.hidden=true;finaleOverlay.setAttribute('role','status');finaleOverlay.setAttribute('aria-live','polite');
 finaleOverlay.innerHTML='<div class="finale-photo" aria-hidden="true"></div><div class="finale-words"><p class="eyebrow">那些沒有被接住的聲音</p><p class="finale-quote"></p><p class="finale-detail"></p></div><span class="finale-eye first" aria-hidden="true"></span><span class="finale-eye second" aria-hidden="true"></span>';document.body.append(finaleOverlay);
 let finaleActive=null,doorTime=0,pageFocused=true;
-const guidePanel=document.createElement('aside');guidePanel.id='objective-panel';guidePanel.hidden=true;guidePanel.setAttribute('aria-label','目前目標與回憶提示');
-guidePanel.innerHTML='<p class="eyebrow">留給自己的路標</p><h2>現在要做什麼</h2><p id="objective-copy"></p><div class="progressive-hint"><h3 id="hint-heading">先觀察，再靠近</h3><p id="hint-copy" aria-live="polite">需要時，回憶會逐步浮現。</p></div>';document.body.append(guidePanel);
-function updateGuidance(dt){
- const goal=currentGoal(state),l=state.levels[state.level],old=l.guidance,running=pageFocused&&((mode==='explore'&&!controlHover)||mode==='panel');
- l.guidance=tickGuidance(old,goal,dt,running);const g=l.guidance;
- guidePanel.hidden=!['explore','panel'].includes(mode);guidePanel.dataset.hintTier=g.tier;guidePanel.dataset.stalledSeconds=Math.floor(g.seconds);guidePanel.dataset.goal=goal.id;
- const copy=(id,value)=>{if($(id).textContent!==value)$(id).textContent=value;};
- copy('objective-copy',goal.copy);copy('hint-heading',g.tier?`想起一點 · ${g.tier} / 5`:'先觀察，再靠近');copy('hint-copy',g.tier?goal.hints[g.tier-1]:'需要時，回憶會逐步浮現。');
- if(running&&(old.bestProgress!==g.bestProgress||old.tier!==g.tier||Math.floor(old.seconds/15)!==Math.floor(g.seconds/15)))persist();
-}
-
 function resetFinale(){finalePlayback.reset();finaleActive=null;finaleOverlay.hidden=true;}
 function updateFinale(dt){
   const running=mode==='explore'&&!controlHover,view=finalePlayback.step({distance:FINAL_HALL.startZ-world.camera.position.z,seen:state.levels[5].echoesSeen,dt,running});
@@ -56,7 +45,7 @@ const add=(parent,...children)=>children.forEach(c=>parent.append(c));
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const audio=createAudioDirector({snapshot:()=>({level:state.level,triggered:state.levels[state.level].triggered,muted,active:!['title','render-error','recovering'].includes(mode),paused:mode==='paused'||!pageFocused||document.hidden,overlay:['modal','panel','projection'].includes(mode)}),onStatus(status){const button=$('sound-button');button.dataset.voice=status.voice;button.dataset.loaded=String(status.ready);button.dataset.paused=String(status.paused);if(status.error)button.title=status.error;}});
 function toast(copy){if(!copy)return;$('toast').textContent=copy;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),4200);}
-function setMode(next){mode=next;guidePanel.hidden=!['explore','panel'].includes(next);if(next!=='explore')finaleOverlay.hidden=true;keys.clear();document.body.classList.toggle('exploring',next==='explore');document.body.classList.toggle('interface-open',next==='panel');$('inventory-button').setAttribute('aria-expanded','false');inputMode?.setMode(next);$('crosshair').hidden=next!=='explore';$('interact').hidden=next!=='explore';audio.update();}
+function setMode(next){mode=next;if(next!=='explore')finaleOverlay.hidden=true;keys.clear();document.body.classList.toggle('exploring',next==='explore');document.body.classList.toggle('interface-open',next==='panel');$('inventory-button').setAttribute('aria-expanded','false');inputMode?.setMode(next);$('crosshair').hidden=next!=='explore';$('interact').hidden=next!=='explore';audio.update();}
 function syncInput({active,cursor}){controlHover=!active;document.body.classList.toggle('cursor-mode',mode==='explore'&&cursor);$('quick-controls').inert=mode==='explore'&&!cursor||mode!=='explore'&&mode!=='panel';keys.clear();cursorAim=null;if(!active){navigation=[];navTarget=null;}}
 function closePanel(){inspector?.dispose();inspector=null;panelRefresh=null;photoController=null;$('panel').classList.remove('puzzle-panel','optics-panel','inventory-panel');$('panel').hidden=true;setMode('explore');$('world').focus();}
 function openPanel(title,kicker='MEMORY / 物件操作'){
@@ -89,7 +78,7 @@ function dispatch(a,{silent=false}={}){
   const result=applyAction(state,a);if(!result.ok){toast(result.message);audio.play('retry');return result;}state=result.state;world.sync();updateHUD();audio.update();if(!silent)toast(result.message);if(a.type==='TRIGGER'){document.body.classList.add('eyes-surge');clearTimeout(eyeTimer);eyeTimer=setTimeout(()=>document.body.classList.remove('eyes-surge'),EYE_SURGE_MS);document.body.classList.add('flash');setTimeout(()=>document.body.classList.remove('flash'),850);audio.tone(90);}
   if(result.completedNow)complete();else{persist();if(result.shadowSolvedNow!==null&&result.shadowSolvedNow!==undefined){held=null;selected=null;modal('影子與記憶重合了',`<p>${['月亮燈','兔子玩偶','花瓶'][result.shadowSolvedNow]}回到了原本的位置。</p>`,[['繼續探索',resume]],'ALIGNED / 已保存');}}return result;
 }
-function nextLevel(){audio.stopVoice();resetFinale();const result=applyAction(state,{type:'NEXT'});if(!result.ok)return toast(result.message);setMode('modal');$('transition').classList.add('active');$('modal').hidden=true;setTimeout(()=>{state=result.state;held=null;selected=null;nearby=null;focusEntity=null;world.build();updateHUD();audio.update();persist();$('transition').classList.remove('active');modal(LEVELS[state.level].name,`<p>${esc(LEVELS[state.level].objective)}</p>`,[['繼續探索',resume]],LEVELS[state.level].tag);},700);}
+function nextLevel(){audio.stopVoice();resetFinale();const result=applyAction(state,{type:'NEXT'});if(!result.ok)return toast(result.message);setMode('modal');$('transition').classList.add('active');$('modal').hidden=true;setTimeout(()=>{state=result.state;held=null;selected=null;nearby=null;focusEntity=null;world.build();updateHUD();audio.update();persist();$('transition').classList.remove('active');modal(LEVELS[state.level].name,`<p>${esc('一段熟悉又陌生的記憶，在門後展開。')}</p>`,[['繼續探索',resume]],LEVELS[state.level].tag);},700);}
 function showTitle(){audio.stopVoice();resetFinale();saved=loadGame(storage);state=newGame();held=null;selected=null;nearby=null;focusEntity=null;world.build();updateHUD();$('modal').hidden=true;$('title-screen').hidden=false;['hud','memory-hud','control-bar'].forEach(id=>$(id).hidden=true);$('continue-game').hidden=!saved.state;setMode('title');}
 function ending(page){const pages=[
   ['清晨','你在現實中醒來。\n\n窗外，不再是停留不動的黃昏。\n手機裡有幾封未讀訊息。\n\n這一次，你沒有再把它翻面。'],
@@ -102,7 +91,7 @@ function start(continuing=false){
 }
 function begin(continuing){resetFinale();state=continuing&&saved.state?structuredClone(saved.state):newGame();audio.init();held=null;selected=null;nearby=null;focusEntity=null;world.build();updateHUD();$('title-screen').hidden=true;['hud','memory-hud','control-bar'].forEach(id=>$(id).hidden=false);if(state.completed[state.level]){if(state.levels[state.level].exitOpened&&state.level<5)nextLevel();else complete();return;}if(!continuing)persist();
   const body=document.createElement('div');body.innerHTML=`<p>你在陌生的房間睜開眼睛。窗外停留在黃昏，時鐘不再走動。紙條上寫著：</p><p class="quote">找到五個記憶碎片，<br>就能回到現實。</p><div class="tutorial-grid"><span><kbd>WASD</kbd> 移動，滑鼠直接環視</span><span><kbd>左鍵雙擊</kbd> 準星對準物件互動</span><span><kbd>R</kbd> 檢視 · 拖曳旋轉</span><span><kbd>G</kbd> 放下手持物件</span><span><kbd>Tab</kbd> 開關右側背包</span><span><kbd>H</kbd> 任務提示</span><span><kbd>Esc</kbd> 退出介面／暫停</span><span><kbd>N</kbd> 探索導覽</span></div><p class="muted">平常隱藏游標，直接移動滑鼠環視。對準附近物件按 E 或雙擊操作；按一下 Alt 顯示游標，再按一下恢復。背包與解謎會自動顯示游標。</p>`;
-  modal(continuing?'記憶還在這裡':'你醒來了',continuing?`<p>${esc(LEVELS[state.level].objective)}</p>`:body,[[continuing?'繼續探索':'走進房間',resume]],continuing?LEVELS[state.level].tag:'PROLOGUE / 序章');
+  modal(continuing?'記憶還在這裡':'你醒來了',continuing?`<p>${esc('一段熟悉又陌生的記憶，在門後展開。')}</p>`:body,[[continuing?'繼續探索':'走進房間',resume]],continuing?LEVELS[state.level].tag:'PROLOGUE / 序章');
 }
 function preview(body,kind,onRotate){
   const p=createInspector(body,kind),canvas=p.canvas;inspector=p;let last=null;
@@ -127,9 +116,9 @@ function showInventory(){
   body.append(status,text('p','Tab / Esc 收起 · 關閉後按 R 檢視','inventory-help'));refreshSelection();
 }
 function showHints(){
- const body=openPanel('留給自己的提示','HINT / H'),goal=currentGoal(state);add(body,text('p',goal.copy));
- let tier=Math.max(1,state.levels[state.level].guidance.tier);const hint=text('p',goal.hints[tier-1],'hint-copy');body.append(hint);
- const more=btn('多想起一點',()=>{tier=Math.min(5,tier+1);hint.textContent=goal.hints[tier-1];more.disabled=tier===5;});body.append(more);add(body,text('p','側邊路標會依目前進展更新；沒有強制倒數。','panel-note'));
+ const body=openPanel('留給自己的提示','HINT / H'),goal=currentGoal(state);
+ let tier=1;const hint=text('p',goal.hints[tier-1],'hint-copy');body.append(hint);
+ const more=btn('多想起一點',()=>{tier=Math.min(5,tier+1);hint.textContent=goal.hints[tier-1];more.disabled=tier===5;});body.append(more);add(body,text('p','線索留在房間裡；你可以隨時收起這段回憶，再看看周圍。','panel-note'));
 }
 
 function showNavigation(){const body=openPanel('環顧這個地方','EXPLORE / 輔助探索');$('panel').classList.add('optics-panel');body.classList.add('navigation-body');add(body,text('p','選擇目前可見的物件，沿通路走近，再以準星雙擊或 E 操作。WASD 可取消導覽。','panel-note'));
@@ -203,7 +192,6 @@ function frame(now){requestAnimationFrame(frame);if(document.hidden||renderFaile
   }else $('interact').hidden=true;
   if(mode==='projection'&&pageFocused){if(!(audio.pending==='projection'&&!audio.ready))projectionTime+=dt;const total=Math.max(20,VOICE_CLIPS.projection.duration+.8),page=Math.min(3,Math.floor(projectionTime/total*4));if(page!==projectionPage){projectionPage=page;const el=$('projection-copy');if(el)el.textContent=PROJECTION[page];}if(projectionTime>=total){$('modal').hidden=true;dispatch({type:'PROJECTION_END'});}}
   if(mode==='door'&&pageFocused){doorTime+=dt;world.setExitProgress(Math.min(1,doorTime/.9));if(doorTime>=.9){if(state.level===5)ending(0);else nextLevel();}}
-  updateGuidance(dt);
   if(state.level===5)updateFinale(dt);else finaleOverlay.hidden=true;
   world.tick(now*.001);if(mode==='title'){world.camera.position.set(1.5+Math.sin(now*.00008)*.15,2.1,5.5);world.camera.lookAt(-1,1,-1.4);}if(now-lastRender>33){world.render();inspector?.render();lastRender=now;}}catch(error){renderProblem(error);}
 }

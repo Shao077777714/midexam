@@ -65,3 +65,15 @@ test('new identity-referenced photos are deployed with original PNG hashes and u
  for(let level=0;level<5;level++){const s=checkpoint(level),w=createWorld(null,()=>s,()=>{},{headless:true}),e=w.entities.find(e=>e.id==='memory-photo');assert.ok(e.group.userData.mount);used.add(e.group.userData.memoryPhoto);}
  assert.equal(used.size,3);for(const echo of FINAL_ECHOES)assert.ok(FAMILY_PHOTOS[echo.photo]);assert.equal(movementSpeed(),2.7);assert.equal(movementSpeed(true),3.2);
 });
+
+
+test('optional hints suggest observation without publishing codes, exact orders or item locations',()=>{
+ const samples=[];
+ for(let level=0;level<6;level++){const s=checkpoint(level);samples.push(s);const triggered=structuredClone(s);triggered.levels[level].triggered=true;samples.push(triggered);}
+ const corridor=checkpoint(1);corridor.levels[1].triggered=true;
+ for(const collected of [[],['key'],['key','drawing'],['key','drawing','letter']]){const s=structuredClone(corridor);s.levels[1].collected=collected;samples.push(s);}
+ const fifth=checkpoint(4);fifth.levels[4].triggered=true;fifth.levels[4].installed=[true,true,true];samples.push(fifth);
+ for(const s of samples)for(const hint of currentGoal(s).hints){
+  assert.doesNotMatch(hint,/8|10|八點|十分|三月|→|左側|中央左|右側|第[一二三四五六七八九1-9]格|檔案匣|答錄機|木櫃|光圈|床邊抽屜/);
+ }
+});

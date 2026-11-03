@@ -2,32 +2,49 @@ import {SHADOW_TARGETS,shadowAligned} from './engine.mjs';
 import {RECORDINGS,PARTS,circuitStatus} from './puzzles.mjs';
 export {initialGuidance,hintTier,tickGuidance} from './guidance-time.mjs';
 const goal=(id,copy,hints,progress=0)=>({id,copy,hints,progress});
-const doorHints=['這一段記憶已經完整，出口現在可以打開。','返回場景，尋找有門框與把手的出口。','可以按N導覽到出口前，仍需你親自開門。','靠近門，讓準星對著門板，再按E或雙擊。','成功視窗不會帶你換關；回到場景親手開門，才會離開。'];
+const clues={
+ exit:['房間似乎比剛才安靜了一些。','來時的地方，現在看起來有些不同。','有些改變，要走近才看得見。','試著回望這段記憶的邊界。','也許，下一步已經不在這個房間裡。'],
+ trigger:['這個地方留下了一些與你有關的痕跡。','熟悉的日常裡，似乎有一處不太平靜。','有些東西不像擺設，更像在等待回應。','留意那些被留下、卻沒有被好好看過的痕跡。','試著把注意力放在那份尚未被接住的訊息。'],
+ shadow:['有些輪廓，比房間裡的物品更像一段記憶。','光照得到的地方，和你看見的形狀未必相同。','站在另一個位置，再看看同一件東西。','熟悉的形狀換個方向，可能就不再熟悉。','留意哪些線條彼此呼應，哪些仍然錯開。'],
+ key:['走廊裡，時間似乎停在不同的地方。','留下的訊息未必只藏在話語裡。','有些細節可以在別處找到回聲。','把兩處關於時間的痕跡放在一起想想。','它們曾經指向同一個被錯過的時刻。'],
+ drawing:['有些痕跡被日常的東西擋住了。','孩子看見的家，和大人記得的未必一樣。','不要只看與視線一樣高的地方。','熟悉的通道旁，也可能留著沒有收好的回憶。','換一個角度看看那些不太容易靠近的空隙。'],
+ letter:['有些話留下來了，卻一直沒有離開這裡。','小小的圖案也有自己的次序。','不同物件上留下的形狀，也許彼此認得。','試著從一段完整的畫面裡尋找關聯。','線索就在已看過的回憶裡，不必急著猜。'],
+ slots:['這裡的空缺，似乎各自等待著什麼。','不同的記憶，留下的形狀也不同。','想想每件東西曾經代表過什麼。','圖像和物品之間，可能有比外觀更深的聯繫。','先試著理解空缺，再決定讓什麼回去。'],
+ photos:['生活的角落裡，還留著一些不完整的畫面。','看似不起眼的東西，也可能保存了記憶。','留意能打開或挪動的日常物件。','沒有看見的地方，不一定是空的。','停下來看看已經經過的角落，也許還漏了什麼。'],
+ assemble:['分開的畫面，仍然來自同一個瞬間。','顏色、光線與輪廓，會透露它們曾經的關係。','試著讓畫面自己說話，而不是依賴代號。','有些線條，換個方向才接得起來。','一張照片能留下的，可能不只有眼前這一面。'],
+ recordings:['有些聲音，被藏在了日常裡。','不同的話語，留下了各自的時間痕跡。','先聽聽它們說了什麼，再想彼此的關係。','回憶常常不是依你找到它的順序發生。','讓那些被打斷的日子，再次連成一段經歷。'],
+ lamps:['有些光沒有熄滅，只是還缺少一部分。','同樣是燈，彼此缺少的東西可能不同。','日常物件裡，也可能留著重新亮起的機會。','留意手中之物與空缺的形狀。','光的名字，似乎也保存了一段人生。'],
+ circuit:['光需要一條沒有中斷的路。','看似接近的線條，未必真的相通。','留意每個相鄰的邊緣，而不只是整體圖案。','從有光的一端慢慢看，看看它在哪裡停下。','一處轉折，可能影響不只一條路。'],
+ 'light-order':['三盞光像是同一段人生的不同時刻。','它們的名字，比外形更值得留意。','有些事情，無法跳過之前的經歷。','想想自己是從哪裡走到這裡的。','如果把這一生看成一段旅程，光會怎麼延續？'],
+ projection:['那些零散的片段，似乎已經準備好重新相遇。','房間裡還有一個一直沉默的存在。','光匯聚的地方，也許能留下完整的畫面。','不必再急著尋找新的東西。','這一次，試著把一段回憶看完。'],
+ mail:['有些話，終究需要被送達。','微弱的光，在黑暗裡留下了一條路。','走過那些聲音，聽聽自己曾經錯過什麼。','一直留在身邊的東西，也許還有未完成的意義。','想一想，那份沒有離開過的心意可以去向哪裡。']
+};
+const doorHints=clues.exit;
 export function currentGoal(s){
  const i=s.level,l=s.levels[i],prefix=`${i}:`;
  if(s.completed[i])return goal(prefix+'exit',i===5?'信已寄出，親自打開最後的門。':'記憶已找回，親自打開出口的門前往下一關。',doorHints,1000);
- if(!l.triggered)return goal(prefix+'trigger', ['查看床邊抽屜裡的回診提醒。','查看長椅上的手機，聽見未接的聲音。','靠近牆上的家庭照片。','閱讀桌上的成癮諮詢紀錄。','閱讀桌上的求助信。'][i],['先查看房間裡與自己有關的物件。','讓準星對準附近的物件，按E互動。','按N可查看可探索物件，導覽仍須自己互動。','指定的紙張或照片會讓世界改變。',`本關先操作${['床邊抽屜，再拿回診提醒','長椅上手機','牆上的家庭照片','成癮諮詢紀錄','寫給自己的求助信'][i]}。`]);
- if(i===0){const count=l.shadow.filter((v,n)=>shadowAligned(v,SHADOW_TARGETS[n])).length;return goal(prefix+'shadow:'+count,`讓三件物品與牆上影子重合（${count}/3）。`,['觀察三個光圈，以及牆上的輪廓。','月亮、兔子和花瓶都可以互動，已對齊者會固定。','除了位置，旋轉角度也會改變影子。','月亮屬於左側，兔子屬於中央，花瓶屬於右側。','在物件面板慢慢調位置與方向；若被你擋住，先退開讓出推動路徑。'],10+count*10);}
+ if(!l.triggered)return goal(prefix+'trigger', ['查看床邊抽屜裡的回診提醒。','查看長椅上的手機，聽見未接的聲音。','靠近牆上的家庭照片。','閱讀桌上的成癮諮詢紀錄。','閱讀桌上的求助信。'][i],clues['trigger']);
+ if(i===0){const count=l.shadow.filter((v,n)=>shadowAligned(v,SHADOW_TARGETS[n])).length;return goal(prefix+'shadow:'+count,`讓三件物品與牆上影子重合（${count}/3）。`,clues['shadow'],10+count*10);}
  if(i===1){
   // Count actual milestones independently of which clue the player pursues first.
   const progress=10+5*Number(l.searched.includes('clock'))+5*Number(l.chair)+5*Number(l.searched.includes('letterbox'))+10*['key','drawing','letter'].filter(id=>l.collected.includes(id)).length+10*Object.values(l.slots).length;
-  if(!l.collected.includes('key'))return goal(prefix+'key:'+l.searched.includes('clock'),'依手機通知調整座鐘，找回舊家鑰匙。',['手機通知記下了孩子第一通來電。','長椅旁座鐘的上蓋尚未鬆開。','先讀手機通知，再分別移動時針和分針。','來電是在早上八點十分。','把時針設8、分針設10，試著開蓋，再拿鑰匙。'],progress);
-  if(!l.collected.includes('drawing'))return goal(prefix+'drawing:'+l.chair,'查看門後，找回孩子的畫。',['孩子曾把回家的地方畫下來。','走廊門後有一張椅子。','椅子擋住了紙張，先互動移開。','留出椅子的移動空間，準星看向後方地面。','移開擋住門後的椅子，再拿取孩子的畫；背包選取後R可檢視。'],progress);
-  if(!l.collected.includes('letter'))return goal(prefix+'letter:'+l.searched.includes('letterbox'),'依孩子畫裡的圖案，解開信匣並拿取信。',['舊鑰匙與孩子的畫都和信匣有關。','從背包選孩子的畫，收起後按R檢視。','比較畫裡由左到右的三個形狀。','依序是樹、房子和月亮。','將信匣轉盤設為樹→房子→月亮，再用鑰匙開匣，拿走未寄出的信。'],progress);
-  const count=Object.values(l.slots).length;return goal(prefix+'slots:'+count,`把三件回憶放入對應凹槽（${count}/3）。`,['走廊盡頭有三個不同圖案的凹槽。','房子、家庭及信封，各自對應一件物品。','在凹槽操作面板中選擇相符的道具。','鑰匙配房子，孩子的畫配家庭回憶，信配信封。','三個凹槽都放好才會解鎖出口，已放置物品仍可在背包檢視。'],progress);
+  if(!l.collected.includes('key'))return goal(prefix+'key:'+l.searched.includes('clock'),'依手機通知調整座鐘，找回舊家鑰匙。',clues['key'],progress);
+  if(!l.collected.includes('drawing'))return goal(prefix+'drawing:'+l.chair,'查看門後，找回孩子的畫。',clues['drawing'],progress);
+  if(!l.collected.includes('letter'))return goal(prefix+'letter:'+l.searched.includes('letterbox'),'依孩子畫裡的圖案，解開信匣並拿取信。',clues['letter'],progress);
+  const count=Object.values(l.slots).length;return goal(prefix+'slots:'+count,`把三件回憶放入對應凹槽（${count}/3）。`,clues['slots'],progress);
  }
  if(i===2){const count=l.collected.filter(id=>/^p[0-8]$/.test(id)).length,correct=l.photos.filter((p,n)=>p?.id===`p${n}`&&p.angle===0).length;
-  if(count<9)return goal(prefix+'photos:'+count,`探索日常物件，找齊九片照片（${count}/9）。`,['桌下、椅背和相框附近都留下了碎片。','抽屜以外，收音機、書本和軟墊也能打開。','檢查餐具櫃與電視的夾層。','電視打開後，前方托架會清楚展示照片。','按N逐一檢查尚未打開的藏點；先開機關，再拿取出現的照片。'],10+count*2);
-  return goal(prefix+'assemble:'+correct+':'+l.photoRead,'在相框拼回九片照片，再翻面查看。',['照片以真實圖案相接，不依碎片代號排序。','先點選一片，出現亮邊後才可旋轉。','可以拖到格位或交換，錯放也可取回。','找人物臉部、衣服、桌沿與背景相接的位置。','九片位置和角度全對後，查看完整照片並翻到背面，讀完才完成。'],50+correct);
+  if(count<9)return goal(prefix+'photos:'+count,`探索日常物件，找齊九片照片（${count}/9）。`,clues['photos'],10+count*2);
+  return goal(prefix+'assemble:'+correct+':'+l.photoRead,'在相框拼回九片照片，再翻面查看。',clues['assemble'],50+correct);
  }
  if(i===3){const count=RECORDINGS.filter(t=>l.collected.includes(t.id)).length;let order=0;while(l.recordOrder[order]===order)order++;
-  return goal(prefix+'recordings:'+count+':'+order,count<5?`在五處藏點找回錄音（${count}/5）。`:'按日期排列五段錄音，再接通記憶總機。',['五段錄音分散在家具與裝置裡。','檔案匣、答錄機、木櫃、孩子留言匣與角落矮櫃都可查看。','總機可逐段閱讀日期與逐字稿，靜音也能解。','依三月八日、十二日、十五日、十八日、二十日由早到晚排列。','錯序可點已排列的錄音取回；五段全對後，還要親自按接通記憶總機。'],10+count*6+order);
+  return goal(prefix+'recordings:'+count+':'+order,count<5?`在五處藏點找回錄音（${count}/5）。`:'按日期排列五段錄音，再接通記憶總機。',clues['recordings'],10+count*6+order);
  }
  if(i===4){
-  if(!l.installed.every(Boolean)){const count=l.installed.filter(Boolean).length,found=PARTS.filter(id=>l.collected.includes(id)).length;return goal(prefix+'lamps:'+count+':'+found,`尋找零件，修好三盞燈（${count}/3）。`,['三盞燈缺少不同的零件。','舊燈具匣、摺疊布箱與收音機可以打開。','燈泡、燈罩及電池各有相符的位置。','拿到零件後，靠近對應的過去、現在、未來之燈安裝。','先找齊三件零件並裝好，再檢查配電箱，不必把記憶碎片投入裝置。'],10+count*10+found*2);}
-  const powered=circuitStatus(l).lamps.filter(Boolean).length;if(powered<3)return goal(prefix+'circuit:'+powered,`修復配電箱，接通三盞燈（${powered}/3）。`,['電源從左側流入，目標是右側三個接口。','單擊只旋轉；按住拖到另一格才會交換。','中央左側的分岔要同時向上、右、下供電。','上、下支路先轉彎，再各自向右通往燈具。','檢查每個相鄰接口是否對上；初始第1與2格、第6與7格可拖移交換，再調角度。'],60+powered);
-  if(l.lampOrder.length<3)return goal(prefix+'light-order:'+l.lampOrder.length,'依時間先後點亮過去、現在、未來。',['電路已接通，現在回到房間操作燈。','燈名暗示時間的方向。','錯序會熄燈，可安全重來。','先過去，再現在，最後未來。','三盞依過去→現在→未來亮起後，前往中央的記憶投影裝置。'],80+l.lampOrder.length);
-  return goal(prefix+'projection','啟動記憶投影裝置，完整看完回憶。',['三盞燈已經亮了。','中央裝置等待你啟動。','靠近記憶投影裝置，按E。','在面板按啟動記憶投影。','完整播放結束後，回到房間親自打開出口。'],90);
+  if(!l.installed.every(Boolean)){const count=l.installed.filter(Boolean).length,found=PARTS.filter(id=>l.collected.includes(id)).length;return goal(prefix+'lamps:'+count+':'+found,`尋找零件，修好三盞燈（${count}/3）。`,clues['lamps'],10+count*10+found*2);}
+  const powered=circuitStatus(l).lamps.filter(Boolean).length;if(powered<3)return goal(prefix+'circuit:'+powered,`修復配電箱，接通三盞燈（${powered}/3）。`,clues['circuit'],60+powered);
+  if(l.lampOrder.length<3)return goal(prefix+'light-order:'+l.lampOrder.length,'依時間先後點亮過去、現在、未來。',clues['light-order'],80+l.lampOrder.length);
+  return goal(prefix+'projection','啟動記憶投影裝置，完整看完回憶。',clues['projection'],90);
  }
- return goal(prefix+'mail:'+l.echoesSeen.length,'沿紅光走過回憶，將第二關的信投入信箱。',['不需要再找新的道具。','沿微弱紅色地面標記往前走。','紅字與家庭照片會隨行走分段浮現。','第二關未寄出的信一直保留在背包。','靠近走道盡頭的信箱，投入信後，再親自打開後方最後的門。'],10+l.echoesSeen.length*2);
+ return goal(prefix+'mail:'+l.echoesSeen.length,'沿紅光走過回憶，將第二關的信投入信箱。',clues['mail'],10+l.echoesSeen.length*2);
 }

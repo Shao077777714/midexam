@@ -213,9 +213,9 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
         const target=SHADOW_TARGETS[n];const circle=mesh(new T.RingGeometry(.47,.5,40),new T.MeshBasicMaterial({color:'#b99e79',side:T.DoubleSide}),root,[target.x,.013,target.z]);circle.rotation.x=-Math.PI/2;
         const ghost=model(kind);ghost.scale.setScalar(.85);ghost.position.set(target.x,1.4,target.z);ghost.rotation.y=target.angle*Math.PI/180;restOn(ghost,1.4);ghost.updateMatrixWorld(true);
         // Project the target silhouette onto the very wall receiving the real spotlight shadow.
-        const L=new T.Vector3(0,2.6,4.8),planeZ=-7.04;
+        const L=new T.Vector3(0,2.6,4.8),receiver=n===1?door:root,planeZ=n===1?door.position.z+.07:-7.04;
         ghost.traverse(o=>{if(!o.isMesh)return;const geo=o.geometry.clone();geo.applyMatrix4(o.matrixWorld);const arr=geo.attributes.position;
-          for(let k=0;k<arr.count;k++){const p=new T.Vector3().fromBufferAttribute(arr,k);const t=(planeZ-L.z)/(p.z-L.z);arr.setXYZ(k,L.x+(p.x-L.x)*t,L.y+(p.y-L.y)*t,planeZ+.012);}geo.computeVertexNormals();const silhouette=mesh(geo,new T.MeshBasicMaterial({color:'#716b84',transparent:true,opacity:.23,side:T.DoubleSide,depthWrite:false}),root);silhouette.castShadow=false;ghosts.push(silhouette);
+          for(let k=0;k<arr.count;k++){const p=new T.Vector3().fromBufferAttribute(arr,k);const t=(planeZ-L.z)/(p.z-L.z);arr.setXYZ(k,L.x+(p.x-L.x)*t,L.y+(p.y-L.y)*t,planeZ+.012);}if(receiver===door)geo.translate(-door.position.x,-door.position.y,-door.position.z);geo.computeVertexNormals();geo.computeBoundingBox();geo.computeBoundingSphere();const silhouette=mesh(geo,new T.MeshBasicMaterial({color:'#716b84',transparent:true,opacity:.32,side:T.DoubleSide,depthWrite:false}),receiver);silhouette.name=`shadow-target-${kind}`;silhouette.userData.shadowTarget=kind;silhouette.userData.nonOccluding=true;silhouette.castShadow=false;silhouette.receiveShadow=false;ghosts.push(silhouette);
         });
       });
       sign(root,'☾',[-4.6,3.15,-7.05],.7,.5);

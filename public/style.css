@@ -459,24 +459,7 @@ button, input, .eyebrow, .title-copy h1 span { font-family: var(--memory-font); 
 .inventory-panel .inventory-selection { font-size: 14px; }
 .inventory-panel .inventory-help { font-size: 12px; }
 .recording-index-item { align-items: center; }
-#objective-panel { position: fixed; z-index: 8; top: 190px; left: 24px; width: 236px; max-height: calc(100dvh - 440px); overflow-y: auto; padding: 16px; background: #f6eee4f2; border: 1px solid #ab9273; border-radius: 20px 4px 20px 4px; box-shadow: 0 8px 28px #0003; color: #283d35; pointer-events: none; text-align: center; }
-#objective-panel .eyebrow { font-size: 11px; margin: 0 0 8px; }
-#objective-panel h2 { font: 600 23px/1.7 var(--memory-font); margin: 0 0 6px; }
-#objective-panel h3 { font-size: 16px; line-height: 1.7; margin: 0 0 6px; }
-#objective-panel p:not(.eyebrow) { font-size: 18px; line-height: 1.7; margin: 6px 0; }
-.progressive-hint { border-top: 1px solid #a68f7855; margin-top: 12px; padding-top: 10px; }
-body.weird #objective-panel { background: #100c10f5; border-color: #92505d; color: #ffb9b0; box-shadow: 0 0 24px #7b233126; }
-body.weird #objective-panel .progressive-hint { border-color: #92505d66; }
-body.void-scene #objective-panel { background: #080608f2; }
-.panel:not(.inventory-panel) { left: calc(270px + (100vw - 286px)/2); max-width: calc(100vw - 302px); }
-.panel.optics-panel, .panel.puzzle-panel { width: min(1050px,calc(100vw - 302px)); }
 .family-memory-preview { display: block; width: min(360px,42vh); aspect-ratio: 1; object-fit: cover; margin: auto; border: 7px solid #bbaa94; }
-.finale-photo { left: calc(270px + 3vw); top: 48%; }
-@media(max-height:800px) { #objective-panel { top: 176px; padding: 12px; max-height: calc(100dvh - 410px); } #objective-panel h2 { font-size: 21px; } .modal h2 { font-size: 30px; } }
-@media(max-width:1000px) { #objective-panel { width: 200px; left: 12px; } .panel:not(.inventory-panel) { left: calc(222px + (100vw - 238px)/2); max-width: calc(100vw - 254px); } }
-
-body.cursor-mode #objective-panel, body.interface-open #objective-panel { pointer-events: auto; }
-
 /* One stable memory composition per event; each new walk chooses another sequence. */
 .finale-words { top: var(--echo-top,16%); }
 .finale-photo { top: var(--echo-photo-top,52%); transform: rotate(var(--echo-tilt,-7deg)); }
