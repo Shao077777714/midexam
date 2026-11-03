@@ -86,22 +86,3 @@ export function buildWindowEyes(root,bounds,textures={}){
   sky.frustumCulled=false;sky.renderOrder=-100;group.add(sky);
   return {group,sky,follow(camera){group.position.copy(camera.position);group.updateMatrixWorld(true);}};
 }
-
-export function buildFlood(root,bounds,level){
-  const group=new T.Group();group.userData.nonOccluding=true;group.userData.flood=true;root.add(group);group.visible=false;
-  const width=bounds.maxX-bounds.minX-.22,depth=bounds.maxZ-bounds.minZ-.22,height=level===1?.34:.43;
-  const geo=new T.PlaneGeometry(width,depth,28,48);geo.rotateX(-Math.PI/2);
-  const water=new T.Mesh(geo,new T.MeshPhysicalMaterial({color:'#82aaa6',emissive:'#315f65',emissiveIntensity:.42,metalness:.08,roughness:.12,transparent:true,opacity:.7,clearcoat:1,clearcoatRoughness:.09,depthWrite:false,side:T.DoubleSide}));
-  water.position.set(0,height,(bounds.minZ+bounds.maxZ)/2);water.receiveShadow=true;group.add(water);
-  // A visible tide line and thin highlights make the rise readable without hiding the clues.
-  for(const x of [bounds.minX+.11,bounds.maxX-.11])part(group,new T.BoxGeometry(.018,.035,depth),'#9eafa0',[x,height,(bounds.minZ+bounds.maxZ)/2],{transparent:true,opacity:.7});
-  for(let z=bounds.minZ+2;z<bounds.maxZ;z+=4)for(let line=0;line<3;line++){
-    const points=Array.from({length:12},(_,n)=>new T.Vector3(-.72+n*.13,height+.014,z+line*.065+Math.sin(n*.9+line)*.035));
-    const gleam=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(points),16,.009,4,false),new T.MeshBasicMaterial({color:'#d4dfc8',transparent:true,opacity:.3,depthWrite:false}));group.add(gleam);
-  }
-  const highlights=[];for(let i=0;i<16;i++){
-    const ring=new T.Mesh(new T.RingGeometry(.25+i%3*.12,.26+i%3*.12,40),new T.MeshBasicMaterial({color:'#c1cfc3',transparent:true,opacity:.2,side:T.DoubleSide,depthWrite:false}));
-    ring.rotation.x=-Math.PI/2;ring.position.set(Math.sin(i*4.3)*(width/2-.5),height+.013,bounds.minZ+.5+(i*.7%1)*(depth-1));group.add(ring);highlights.push(ring);
-  }
-  return {group,water,height,tick(time,reduced=false){if(!group.visible)return;const p=geo.attributes.position;for(let i=0;i<p.count;i++)p.setY(i,reduced?0:Math.sin(p.getX(i)*2.1+time*.8)*.013+Math.cos(p.getZ(i)*1.4-time*.5)*.009);p.needsUpdate=true;if(!reduced)highlights.forEach((r,i)=>r.scale.setScalar(1+Math.sin(time*.5+i)*.18));}};
-}

@@ -102,6 +102,96 @@
         "path": "public/assets/audio/corridor/unanswered_call.wav",
         "purpose": "第二關無人接聽的電話線索。",
         "status": "available"
+      },
+      {
+        "path": "public/assets/audio/ambience/suspense-dream-v2.wav",
+        "purpose": "新版24秒恐怖懸疑循環音景：dream",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/ambience/suspense-weird-v2.wav",
+        "purpose": "新版24秒恐怖懸疑循環音景：weird",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/ambience/suspense-void-v2.wav",
+        "purpose": "新版24秒恐怖懸疑循環音景：void",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/record-0.mp3",
+        "purpose": "外部生成中文爸爸旁白：record-0",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/record-1.mp3",
+        "purpose": "外部生成中文爸爸旁白：record-1",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/record-2.mp3",
+        "purpose": "外部生成中文爸爸旁白：record-2",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/record-3.mp3",
+        "purpose": "外部生成中文爸爸旁白：record-3",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/record-4.mp3",
+        "purpose": "外部生成中文爸爸旁白：record-4",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/record-all.mp3",
+        "purpose": "外部生成中文爸爸旁白：record-all",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/projection.mp3",
+        "purpose": "外部生成中文爸爸旁白：projection",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/ending-0.mp3",
+        "purpose": "外部生成中文爸爸旁白：ending-0",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/ending-1.mp3",
+        "purpose": "外部生成中文爸爸旁白：ending-1",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/ending-2.mp3",
+        "purpose": "外部生成中文爸爸旁白：ending-2",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/memory-0.mp3",
+        "purpose": "外部生成中文爸爸旁白：memory-0",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/memory-1.mp3",
+        "purpose": "外部生成中文爸爸旁白：memory-1",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/memory-2.mp3",
+        "purpose": "外部生成中文爸爸旁白：memory-2",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/memory-3.mp3",
+        "purpose": "外部生成中文爸爸旁白：memory-3",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/memory-4.mp3",
+        "purpose": "外部生成中文爸爸旁白：memory-4",
+        "status": "available"
       }
     ]
   },

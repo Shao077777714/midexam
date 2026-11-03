@@ -69,8 +69,8 @@ test('manual and assisted speeds are fixed independently of the water visual',()
   assert.equal(movementSpeed(),2.7);assert.equal(movementSpeed(true),3.2);
   assert.equal(movementSpeed(false),2.7);assert.ok(EYE_SURGE_MS<=200);
 });
-test('wading follows the visible water and returns to normal in dry scenes',()=>{
-  for(let level=0;level<5;level++){const {s,w}=worldFixture(level,false);assert.equal(w.wadingAt(0,0),false);s.levels[level].triggered=true;w.sync();assert.equal(w.wadingAt(0,0),[1,3,4].includes(level));assert.equal(w.wadingAt(100,100),false);}
+test('all existing room states are dry after the flood system is removed',()=>{
+ for(let level=0;level<5;level++){const {s,w}=worldFixture(level,false);for(const triggered of [false,true]){s.levels[level].triggered=triggered;w.sync();assert.equal('flood' in w,false);assert.equal('wadingAt' in w,false);let wet=false;w.scene.traverse(o=>{if(o.userData.flood)wet=true;});assert.equal(wet,false);}}
 });
 test('new anomalies stay hidden before triggering, with grounded instanced dolls and fixed counts',()=>{
   for(let level=0;level<5;level++){const {s,w}=worldFixture(level,false);assert.equal(w.phenomena.group.visible,false);assert.ok(w.phenomena.dollCount>=8);assert.ok(w.phenomena.dolls.every(b=>Math.abs(b.min.y-.012)<.004));assert.ok(w.phenomena.blocks.every(b=>!b.active));

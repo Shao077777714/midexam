@@ -1,6 +1,14 @@
 # 音效素材
 
-此資料夾的 WAV 音效由本專案以程式合成製作，未使用外部錄音或第三方音源。檔案為 16 kHz、單聲道、16-bit PCM，適合在瀏覽器中以 Web Audio API 播放。
+原有 WAV 由本專案程式合成，16kHz單聲道16-bit PCM，保留原檔供回溯。本輪新增22.05kHz懸疑音景及外部生成的中文神經語音MP3，遊戲直接讀取本地音檔，不需玩家的語音服務帳號或金鑰。
+
+## 2026-11-03 新版聲音
+
+- `ambience/suspense-dream-v2.wav`、`suspense-weird-v2.wav`、`suspense-void-v2.wav`：各24秒原創合成音景，包含低頻拍動、金屬泛音與過濾雜訊；開頭與結尾淡至零避免爆音。由`../../../scripts/generate-soundscapes.py`產製，雜湊見`ambience/manifest-v2.json`。夢核低聲不安、怪核壓迫、黑暗走道亦有背景。
+- `voice-v2/`：15段中文爸爸／回憶旁白MP3，由外部[edge-tts](https://github.com/rany2/edge-tts)程式使用Microsoft Edge線上神經語音服務產製，聲線`zh-TW-YunJheNeural`、語速-7%、音高不變。這是AI合成聲音，不是真人錄音，也不是複製ChatGPT助理的聲音。
+- 完整文字與聲線設定見`voice-v2/scripts.json`；每段實際長度、來源、位元組及SHA-256見`voice-v2/manifest.json`。五段錄音、完整連播、完整投影、五關故事及三段結局皆有音檔。單段完整播放；投影依26.424秒音檔長度延長演出，停止舊Web Speech逐句中斷。
+- 生成工具：`scripts/prepare-voice-scripts.mjs`、`scripts/generate-voices.py`，開發時依`scripts/requirements-voice.txt`安裝。重新生成才會連線外部服務；正式遊戲僅載入專案靜態音檔。
+- 聲音控制：三條背景固定循環並交叉淡入淡出，旁白時背景降為24%；暫停／背景頁停止播放時鐘，恢復續播；靜音同時關閉語音、機關聲與背景。檔案載入失敗保留字幕，不退回瀏覽器朗讀。聲音自然度與情緒是否符合期望需另作主觀試聽。
 
 ## 檔案
 

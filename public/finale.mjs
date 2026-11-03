@@ -1,3 +1,4 @@
+import {createFinaleLayouts} from './finale-layout.mjs';
 export const FAMILY_PHOTOS={birthday:{url:'assets/dreamcore/family-birthday-v4.png',caption:'生日那天，我答應會一直陪著她。'},park:{url:'assets/dreamcore/family-park-v4.png',caption:'放學之後，我曾經牽著她一起回家。'},bedtime:{url:'assets/dreamcore/family-bedtime-v4.png',caption:'睡前的故事，曾經是我們每天的約定。'}};
 // Distance checkpoints are shared by the hall, save migration and presentation.
 export const FINAL_HALL={startZ:7,mailboxZ:-45,minZ:-48,maxZ:9,halfWidth:2.4};
@@ -10,9 +11,9 @@ export const FINAL_ECHOES=[
 ];
 export const echoCheckpoint=seen=>seen.length?FINAL_ECHOES[seen.at(-1)].distance:0;
 export const nextEcho=(distance,seen)=>seen.length<FINAL_ECHOES.length&&distance>=FINAL_ECHOES[seen.length].distance?seen.length:null;
-export function createFinalePlayback(){
-  let active=null,remaining=0;
-  return {reset(){active=null;remaining=0;},step({distance,seen,dt,running}){
+export function createFinalePlayback({random=Math.random}={}){
+  let active=null,remaining=0,layouts=createFinaleLayouts(random);
+  return {arrangement(index){return layouts[index];},reset(){active=null;remaining=0;layouts=createFinaleLayouts(random,layouts[0].id);},step({distance,seen,dt,running}){
     if(!running)return {active,remaining,trigger:null};
     remaining=Math.max(0,remaining-Math.max(0,Math.min(dt,1)));if(!remaining)active=null;
     const trigger=active===null?nextEcho(distance,seen):null;

@@ -3,6 +3,8 @@
 <button id="shadow">建立第一關物件檢查點</button>
 <button id="shadow-done">建立第一關已解謎未開門檢查點</button>
 <button id="dinner">建立第三關家庭照片檢查點</button>
+<button id="projector">建立第五關三燈接通檢查點</button>
+<button id="recordings">建立第四關五錄音檢查點</button>
 <button id="board">建立第四關總機檢查點</button>
 <button id="sky">建立第四關怪核天空檢查點</button>
 <button id="seed">建立第五關物品欄檢查點</button>
@@ -22,10 +24,12 @@ function seed(target){
   act({type:'TRIGGER'});act({type:'CLOCK_SET',hour:8,minute:10});act({type:'SEARCH',id:'clock'});act({type:'CHAIR'});for(const id of ['key','drawing'])act({type:'COLLECT',id});for(const [index,value]of [1,0,2].entries())act({type:'SEAL_SET',index,value});act({type:'SEARCH',id:'letterbox'});act({type:'COLLECT',id:'letter'});if(target==='bag'){launch();return;}for(const id of ['key','drawing','letter'])act({type:'SLOT',slot:id,id});next();
   if(target===2){launch();return;}act({type:'TRIGGER'});for(const type of ['DRAWER','CHAIR','FRAME'])act({type});for(const id of SEARCHES[2])act({type:'SEARCH',id});for(let i=0;i<9;i++){act({type:'COLLECT',id:`p${i}`});act({type:'PHOTO',id:`p${i}`,slot:i,angle:0});}act({type:'PHOTO_READ'});next();
   if(target===3||target==='sky'){if(target==='sky')act({type:'TRIGGER'});launch();return;}
-  act({type:'TRIGGER'});for(const id of Object.values(RECORD_HIDES))act({type:'SEARCH',id});for(const t of RECORDINGS)act({type:'COLLECT',id:t.id});for(let index=0;index<RECORDINGS.length;index++)act({type:'RECORD_ORDER',index});act({type:'ACTIVATE_BOARD'});next();
-  if(target===5){act({type:'TRIGGER'});for(const id of ['lamp-crate','linen-box','power-radio'])act({type:'SEARCH',id});for(const [index,id]of ['bulb','shade','battery'].entries()){act({type:'COLLECT',id});act({type:'INSTALL',index,id});}for(let slot=0;slot<9;slot++){const index=state.levels[4].circuit.indexOf(slot);if(index!==slot)act({type:'CIRCUIT_SWAP',index,slot});}for(let index=0;index<9;index++)while(state.levels[4].circuitAngles[index]!== (index===0?90:0))act({type:'CIRCUIT_ROTATE',index});for(let index=0;index<3;index++)act({type:'LAMP',index});act({type:'PROJECT'});act({type:'PROJECTION_END'});next();}
+  act({type:'TRIGGER'});for(const id of Object.values(RECORD_HIDES))act({type:'SEARCH',id});for(const t of RECORDINGS)act({type:'COLLECT',id:t.id});for(let index=0;index<RECORDINGS.length;index++)act({type:'RECORD_ORDER',index});if(target==='recordings'){launch();return;}act({type:'ACTIVATE_BOARD'});next();
+  if(target===5||target==='projector'){act({type:'TRIGGER'});for(const id of ['lamp-crate','linen-box','power-radio'])act({type:'SEARCH',id});for(const [index,id]of ['bulb','shade','battery'].entries()){act({type:'COLLECT',id});act({type:'INSTALL',index,id});}for(let slot=0;slot<9;slot++){const index=state.levels[4].circuit.indexOf(slot);if(index!==slot)act({type:'CIRCUIT_SWAP',index,slot});}for(let index=0;index<9;index++)while(state.levels[4].circuitAngles[index]!== (index===0?90:0))act({type:'CIRCUIT_ROTATE',index});for(let index=0;index<3;index++)act({type:'LAMP',index});if(target==='projector'){launch();return;}act({type:'PROJECT'});act({type:'PROJECTION_END'});next();}
   launch();
 }
+document.querySelector('#projector').onclick=()=>seed('projector');
+document.querySelector('#recordings').onclick=()=>seed('recordings');
 document.querySelector('#bag').onclick=()=>seed('bag');
 document.querySelector('#final').onclick=()=>seed(5);
 document.querySelector('#sky').onclick=()=>seed('sky');
