@@ -386,8 +386,6 @@ body.exploring.cursor-mode #world { cursor: auto; }
 .navigation-body { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px 12px; }
 .navigation-body > p { grid-column: 1/-1; margin: 2px 0 10px; }
 .navigation-body .nav-item { margin: 0; font-size: 15px; }
-.mirror-portrait { width: 150px; height: 250px; margin: auto; background-image: url('assets/dreamcore/protagonist-mirror-v1.png'); background-size: 200% 100%; background-position: left center; border: 6px solid #78695b; }
-.mirror-portrait.corrupted { background-position: right center; }
 .seal-dials { display: flex; gap: 14px; justify-content: center; margin: 32px 0; }
 .seal-dials button { font-size: 40px; width: 78px; height: 88px; }
 .clock-face { position: relative; width: 160px; height: 160px; margin: 20px auto; border-radius: 50%; border: 8px double #b39676; background: repeating-conic-gradient(from -1deg,#beab8c 0deg 2deg,transparent 2deg 30deg),#222b28; box-shadow: inset 0 0 0 12px #222b28; }
@@ -403,3 +401,42 @@ body.void-scene #control-bar { background: #000; border: 0; color: #a09a90; }
 .mechanism-body .recording-card { padding: 16px; }
 .recording-card h3 { margin: 4px 0 12px; font-size: 19px; }
 .recording-card p { margin: 10px 0; line-height: 1.7; }
+
+/* Collected clues stay legible even after their quest use is complete. */
+.panel.inventory-panel { width: min(460px,calc(100vw - 32px),calc(100dvh - 180px)); height: min(460px,calc(100vw - 32px),calc(100dvh - 180px)); aspect-ratio: auto; }
+.inventory-panel #panel-body { flex: 1 1 0; }
+.inventory-grid { flex: 1 1 0; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.inventory-card { padding: 8px; min-height: 126px; }
+.inventory-card .inventory-picture { flex: 0 0 66px; height: 66px; }
+.inventory-card strong { font-size: 18px; line-height: 1.7; }
+.inventory-card small { font-size: 12px; line-height: 1.5; opacity: .85; }
+.inventory-card.used { border-style: dashed; }
+.recording-workspace { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; align-items: start; }
+.recording-index { display: grid; gap: 7px; }
+.recording-index-item { display: flex; flex-direction: column; text-align: left; gap: 2px; padding: 7px 14px; min-height: 58px; font-size: 16px; }
+.recording-index-item strong { font-size: 17px; }
+.recording-index-item span { font-size: 14px; }
+.recording-card .transcript { min-height: 86px; font-size: 18px; }
+.recording-card button { display: block; width: 100%; margin: 10px 0 0; }
+.circuit-cell { cursor: grab; touch-action: none; }
+.circuit-cell.dragging { opacity: .45; }
+.circuit-cell.drop-target { outline: 3px solid #ffe0a3; outline-offset: -3px; background: #5b4a36; }
+#finale-memory { position: fixed; inset: 0; z-index: 9; pointer-events: none; }
+#finale-memory[hidden] { display: none; }
+.finale-words { position: absolute; top: 16%; left: 26%; right: 12%; color: #ff9c9f; text-align: center; text-shadow: 0 2px 12px #000,0 0 22px #a91935; }
+.finale-words .eyebrow { color: #ca8b90; font-size: 13px; letter-spacing: .3em; }
+.finale-quote { font-size: clamp(26px,3vw,42px); line-height: 1.7; margin: 12px 0; }
+.finale-detail { font-size: 18px; line-height: 1.7; margin: 12px 0; }
+.finale-photo { position: absolute; left: 6%; top: 25%; width: 180px; height: 180px; background: url('assets/dreamcore/family-aged-v2.png') center/cover; border: 10px solid #bcb2a5; border-bottom-width: 30px; transform: rotate(-7deg); opacity: .5; filter: sepia(.4) brightness(.75); box-shadow: 0 0 45px #8f263f33; }
+.finale-eye { position: absolute; width: 190px; height: 170px; background: url('assets/dreamcore/organic-eye-v2.png') center/contain no-repeat; opacity: 0; }
+.with-eyes .finale-eye { opacity: .33; }
+.finale-eye.first { left: 1%; bottom: 7%; transform: rotate(-18deg); }
+.finale-eye.second { right: 1%; top: 43%; transform: rotate(16deg) scale(.8); }
+body.low-effects .finale-eye { display: none; }
+@media(prefers-reduced-motion:reduce) { .finale-eye { display: none; } .finale-photo { transform: none; } }
+
+.recording-index-item { background: #24161d; color: #ffb9b0; border: 1px solid #87515a; border-radius: 5px; }
+.recording-index-item:hover { background: #39232d; border-color: #f4b6a6; }
+
+body.void-scene.cursor-mode #hud, body.void-scene.interface-open #hud { display: flex !important; justify-content: flex-end; }
+body.void-scene #hud .chapter { display: none; }

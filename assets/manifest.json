@@ -43,8 +43,8 @@
       },
       {
         "path": "public/assets/dreamcore/protagonist-mirror-v1.png",
-        "purpose": "第四關同一男主角俊朗／憔悴兩態肖像圖集，Image Gen，左／右半 UV。",
-        "status": "available"
+        "purpose": "舊 v5 男性倒影素材歸檔；v6 已自遊戲移除，主角固定為家庭照片中的爸爸。",
+        "status": "archived-unused"
       }
     ],
     "audio": [

@@ -72,11 +72,9 @@ test('shadow placement cannot clip the bed, cabinet, or another movable pedestal
   assert.ok(SHADOW_TARGETS.every((v,i)=>shadowPlacementFree(i,v,SHADOW_TARGETS)));
 });
 
-test('rotating mirrors updates their physical bounds and prevents clipping the player',()=>{
-  const {state,world}=fixture(3),e=world.entities.find(e=>e.id==='mirror0');
-  const initial=footprint(e.group);state.levels[3].mirrors[0]=45;world.sync();const rotated=footprint(e.group);
-  assert.ok(rotated.w>initial.w+.4);assert.ok(!walkable(-3,-2,world.bounds,world.blocks));
-  world.camera.position.set(-2.3,1.65,-2);assert.equal(world.canApply({type:'MIRROR',index:0,angle:90}),false);
+test('fourth room removes all mirror entities and exposes a larger solid exploration space',()=>{
+  const {world}=fixture(3);assert.ok(world.bounds.maxX-world.bounds.minX>=16);assert.ok(world.bounds.maxZ-world.bounds.minZ>=19);
+  assert.equal(world.entities.some(e=>e.id.startsWith('mirror')),false);const portraits=[];world.scene.traverse(o=>{if(o.userData.portrait)portraits.push(o);});assert.equal(portraits.length,0);
 });
 
 test('moving chairs and opening drawers updates collisions including the protruding tray',()=>{

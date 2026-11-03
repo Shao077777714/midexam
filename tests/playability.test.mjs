@@ -47,9 +47,9 @@ test('wall eyes vary in size, height and roll while staying mounted and clear of
   }
 });
 
-test('fourth room exposes exactly three cassette props and no obsolete map or connector pickups',()=>{
-  const state=newGame();state.level=3;state.levels[3].triggered=true;state.levels[3].searched=['work-panel','family-phone','mirror-recess'];
+test('fourth room exposes exactly five cassette props and no obsolete map or connector pickups',()=>{
+  const state=newGame();state.level=3;state.levels[3].triggered=true;state.levels[3].searched=['work-panel','family-phone','mirror-recess','child-message','desk-recess'];
   const w=createWorld(null,()=>state,()=>{},{headless:true});
-  assert.deepEqual(w.visibleEntities().filter(e=>e.id.startsWith('tape-')).map(e=>e.id).sort(),['tape-family','tape-self','tape-work']);
+  assert.deepEqual(w.visibleEntities().filter(e=>e.id.startsWith('tape-')).map(e=>e.id).sort(),['tape-child','tape-family','tape-promise','tape-self','tape-work']);
   assert.equal(w.entities.some(e=>/^(map|plug)[0-3]$/.test(e.id)),false);
 });
