@@ -7,7 +7,7 @@ export const PHOTO_CODES=['H','C','F','A','I','D','B','G','E'];
 export const PHOTO_TRAY=[4,0,7,2,8,5,1,6,3].map(i=>PHOTO_IDS[i]);
 export const PHOTO_HIDES={p4:'radio',p5:'book',p6:'cushion',p7:'cabinet',p8:'television'};
 export const RECORD_HIDES={work:'work-panel',family:'family-phone',self:'mirror-recess'};
-export const SEARCHES=[[],['clock'],Object.values(PHOTO_HIDES),Object.values(RECORD_HIDES),['lamp-crate','linen-box','power-radio']];
+export const SEARCHES=[[],['clock','letterbox'],Object.values(PHOTO_HIDES),Object.values(RECORD_HIDES),['lamp-crate','linen-box','power-radio'],[]];
 export const ITEMS={...NEW_ITEMS,key:'舊家鑰匙',drawing:'孩子的畫',letter:'未寄出的信',...Object.fromEntries(PHOTO_IDS.map((id,i)=>[id,`照片碎片 ${PHOTO_CODES[i]}`]))};
 export const SHADOW_TARGETS=[{x:-2.8,z:-2,angle:0},{x:0,z:-1.2,angle:90},{x:2.8,z:-2,angle:180}];
 export const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
@@ -52,20 +52,22 @@ export function opticsStatus(level){
 }
 export function shadowAligned(value,target){return Math.hypot(value.x-target.x,value.z-target.z)<0.32&&angleDistance(value.angle,target.angle)<12;}
 function levelState(){return {...puzzleState(),triggered:false,drawer:false,chair:false,frame:false,collected:[],slots:{},shadow:[{x:-3.7,z:1,angle:90},{x:0.6,z:1.4,angle:0},{x:3.4,z:0.8,angle:45}],searched:[],pieceAngles:[90,180,270,90,270,180,90,180,270],photos:Array(9).fill(null),photoRead:false,mirrors:[0,45,0],mirrorFilters:[0,0,0],torchAngle:0,flashlight:false,opticsUnlocked:false,records:[],sequence:[],projecting:false,projectionDone:false,mailed:false};}
-export function newGame(){return {version:4,level:0,unlocked:0,completed:[false,false,false,false,false],memories:[],inventory:[],letter:false,elapsed:0,levels:Array.from({length:5},levelState),persisted:false};}
+const corridorState=()=>({clockHour:0,clockMinute:0,seal:[0,0,0]});
+export function newGame(){const levels=Array.from({length:6},()=>({...levelState(),...corridorState()}));levels[5].triggered=true;return {version:5,level:0,unlocked:0,completed:Array(6).fill(false),memories:[],inventory:[],letter:false,elapsed:0,levels,persisted:false};}
 export function canComplete(s){const l=s.levels[s.level];if(!l.triggered)return false; switch(s.level){
 case 0:return l.shadow.every((v,i)=>shadowAligned(v,SHADOW_TARGETS[i]));
 case 1:return ['key','drawing','letter'].every(id=>l.slots[id]===id);
 case 2:return l.photos.every((v,i)=>v&&v.id===`p${i}`&&angleDistance(v.angle,0)<1)&&l.photoRead;
 case 3:return l.switchboardOn&&switchboardReady(l);
-case 4:return lampsReady(l)&&l.projectionDone&&l.mailed&&s.letter&&s.completed.slice(0,4).every(Boolean);
+case 4:return lampsReady(l)&&l.projectionDone&&s.completed.slice(0,4).every(Boolean);
+case 5:return l.mailed&&s.letter&&s.completed.slice(0,5).every(Boolean);
 default:return false;}}
 export function applyAction(current,a){
   const s=structuredClone(current),l=s.levels[s.level]; let message='';
   const fail=m=>({state:current,ok:false,message:m,completedNow:false});
   if(a.type==='NEXT'){
     if(!s.completed[s.level]||!s.persisted)return fail('請先完成本關並成功儲存進度。');
-    if(s.level===4)return fail('你已找到清醒之門。');
+    if(s.level===5)return fail('你已找到清醒之門。');
     s.level++;return {state:s,ok:true,message:'新的記憶正在浮現。',completedNow:false};
   }
   if(a.type==='ACK_SAVE'){s.persisted=true;return {state:s,ok:true,message:'進度已儲存',completedNow:false};}
@@ -89,15 +91,23 @@ export function applyAction(current,a){
       }
       case 'SEARCH':
         if(!SEARCHES[s.level].includes(a.id))return fail('這裡沒有可以打開的夾層。');
-
+        if(s.level===1&&a.id==='clock'&&(l.clockHour!==8||l.clockMinute!==10))return fail('座鐘的兩根指針還沒有停在那通來電的時間。');
+        if(s.level===1&&a.id==='letterbox'&&(!l.collected.includes('key')||!l.collected.includes('drawing')||l.seal.join(',')!=='1,0,2'))return fail('信匣需要舊鑰匙，以及孩子畫裡由左到右的三個圖案。');
         if(l.searched.includes(a.id))return fail('這個夾層已經打開了。');
         l.searched.push(a.id);message=a.id==='television'?'電視照片托架已展開，螢幕映出了碎片。':'夾層打開了。裡面似乎留下了什麼。';break;
+      case 'CLOCK_SET':
+        if(s.level!==1||l.searched.includes('clock')||!Number.isInteger(a.hour)||a.hour<0||a.hour>11||!Number.isInteger(a.minute)||a.minute<0||a.minute>59)return fail('無法調整這個座鐘。');
+        l.clockHour=a.hour;l.clockMinute=a.minute;message='指針移動了。';break;
+      case 'SEAL_SET':
+        if(s.level!==1||l.searched.includes('letterbox')||!Number.isInteger(a.index)||a.index<0||a.index>2||!Number.isInteger(a.value)||a.value<0||a.value>2)return fail('無法調整信匣。');
+        l.seal[a.index]=a.value;message='圖形轉盤移動了。';break;
       case 'COLLECT': {
         const allowed=s.level===1?['key','drawing','letter']:s.level===2?PHOTO_IDS:s.level===3?BOARD_ITEMS:s.level===4?PARTS:[];
         if(!allowed.includes(a.id)||l.collected.includes(a.id))return fail('這個物件無法重複拿取。');
         if(HIDES[a.id]&&!l.searched.includes(HIDES[a.id]))return fail('先打開對應的藏物夾層。');
         if(a.id==='p3'&&!l.drawer)return fail('先打開抽屜。');
         if(a.id==='key'&&!l.searched.includes('clock'))return fail('先掀開長椅旁座鐘的上蓋。');
+        if(s.level===1&&a.id==='letter'&&!l.searched.includes('letterbox'))return fail('先解開信匣，才能拿到裡面的信。');
         if(PHOTO_HIDES[a.id]&&!l.searched.includes(PHOTO_HIDES[a.id]))return fail('先打開藏著照片的夾層。');
         if((a.id==='drawing'||a.id==='p1')&&!l.chair)return fail('有家具擋住了物件。');
         if(a.id==='p2'&&!l.frame)return fail('查看相框後方，或許有東西。');
@@ -110,6 +120,7 @@ export function applyAction(current,a){
         l.slots[a.slot]=a.id;message='道具與凹槽吻合。';break;
       case 'SHADOW':
         if(s.level!==0||!Number.isInteger(a.index)||a.index<0||a.index>2||![a.x,a.z,a.angle].every(Number.isFinite))return fail('無效的物件位置。');
+        if(shadowAligned(l.shadow[a.index],SHADOW_TARGETS[a.index]))return fail('影子已經對齊，這件物品固定在記憶裡了。');
         {const candidate={x:clamp(a.x,-4.4,4.4),z:clamp(a.z,-3,2.5),angle:((a.angle%360)+360)%360};if(!shadowPlacementFree(a.index,candidate,l.shadow))return fail('這裡被家具或另一個底座擋住了，請換一個位置。');l.shadow[a.index]=candidate;}
         message=shadowAligned(l.shadow[a.index],SHADOW_TARGETS[a.index])?'影子與記憶重合了。':'觀察牆面輪廓，再調整位置與角度。';break;
       case 'PHOTO':
@@ -148,20 +159,22 @@ export function applyAction(current,a){
       case 'REMOVE_MEMORY':if(s.level!==4||l.projecting||l.projectionDone)return fail('投影已啟動。');l.sequence.pop();break;
       case 'PROJECT':if(s.level!==4||!lampsReady(l)||!s.completed.slice(0,4).every(Boolean)||l.projecting||l.projectionDone)return fail('先修復電路，依過去、現在、未來點亮三盞燈。');l.projecting=true;message='記憶正在重新連結……';break;
       case 'PROJECTION_END':if(s.level!==4||!l.projecting)return fail('投影尚未啟動。');l.projecting=false;l.projectionDone=true;message='現在，你可以寄出那封信了。';break;
-      case 'MAIL':if(s.level!==4||!s.letter||!l.projectionDone)return fail('記憶投影完成後，才能寄出第二關的信。');l.mailed=true;message='這一次，你終於願意面對。';break;
+      case 'MAIL':if(s.level!==5||!s.letter||!s.completed.slice(0,5).every(Boolean)||!s.levels[4].projectionDone)return fail('完成前五段記憶，才能在這裡寄出第二關的信。');l.mailed=true;message='這一次，你終於願意面對。';break;
       default:return fail('未知操作。');
     }
   }
   const completedNow=canComplete(s);
-  if(completedNow){s.completed[s.level]=true;s.unlocked=Math.min(4,s.level+1);s.memories=MEMORIES.filter((_,i)=>s.completed[i]);s.persisted=false;message=`找回記憶：${MEMORIES[s.level]}`;}
-  return {state:s,ok:true,message,completedNow};
+  if(completedNow){s.completed[s.level]=true;s.unlocked=Math.min(5,s.level+1);s.memories=MEMORIES.filter((_,i)=>s.completed[i]);s.persisted=false;message=s.level===5?'信已寄出。你終於醒來。':`找回記憶：${MEMORIES[s.level]}`;}
+  const shadowSolvedNow=a.type==='SHADOW'&&shadowAligned(l.shadow[a.index],SHADOW_TARGETS[a.index])?a.index:null;
+  return {state:s,ok:true,message,completedNow,shadowSolvedNow};
 }
 export function saveGame(storage,state){try{storage.setItem(SAVE_KEY,JSON.stringify(state));return {ok:true};}catch{return {ok:false,message:'無法儲存進度，請允許此網站儲存資料後重試。'};}}
 export function loadGame(storage){try{
   const raw=storage.getItem(SAVE_KEY);if(!raw)return {state:null,error:null};const s=JSON.parse(raw);
-  if(![1,2,3,4].includes(s.version)||!Number.isInteger(s.level)||s.level<0||s.level>4||!Number.isInteger(s.unlocked)||s.level>s.unlocked||s.unlocked>4||!Array.isArray(s.completed)||s.completed.length!==5||s.completed.some(v=>typeof v!=='boolean')||!Array.isArray(s.levels)||s.levels.length!==5||!Array.isArray(s.inventory)||s.inventory.some(id=>!(id in ITEMS))||typeof s.letter!=='boolean'||!Number.isFinite(s.elapsed)||s.elapsed<0)throw Error();
+  const size=s.version===5?6:5,max=size-1;
+  if(![1,2,3,4,5].includes(s.version)||!Number.isInteger(s.level)||s.level<0||s.level>max||!Number.isInteger(s.unlocked)||s.level>s.unlocked||s.unlocked>max||!Array.isArray(s.completed)||s.completed.length!==size||s.completed.some(v=>typeof v!=='boolean')||!Array.isArray(s.levels)||s.levels.length!==size||!Array.isArray(s.inventory)||s.inventory.some(id=>!(id in ITEMS))||typeof s.letter!=='boolean'||!Number.isFinite(s.elapsed)||s.elapsed<0)throw Error();
   let gap=false;for(const v of s.completed){if(!v)gap=true;else if(gap)throw Error();}
-  const count=s.completed.filter(Boolean).length;if(s.unlocked!==Math.min(4,count)||s.memories?.join(',')!==MEMORIES.slice(0,count).join(',')||(s.completed[1]&&!s.letter))throw Error();
+  const count=s.completed.filter(Boolean).length;if(s.unlocked!==Math.min(max,count)||s.memories?.join(',')!==MEMORIES.slice(0,count).join(',')||(s.completed[1]&&!s.letter))throw Error();
   const legacy=s.version===1;
   if(legacy){
     s.levels.forEach((l,i)=>{
@@ -182,6 +195,18 @@ export function loadGame(storage){try{
     });s.version=4;
   }
   if(s.levels.some(l=>!validPuzzle(l)))throw Error();
+  if(s.version===4){
+    for(const l of s.levels)Object.assign(l,corridorState());
+    const c=s.levels[1];if(c.searched.includes('clock')){c.clockHour=8;c.clockMinute=10;}if(c.collected.includes('letter')){c.seal=[1,0,2];if(!c.searched.includes('letterbox'))c.searched.push('letterbox');}
+    const l=s.levels[4],oldDone=s.completed[4];
+    if(l.projecting||l.projectionDone||oldDone){l.circuit=Array.from({length:9},(_,i)=>i);l.circuitAngles=[90,0,0,0,0,0,0,0,0];}
+    else{const angles=Array(9);l.circuit.forEach((id,cell)=>angles[id]=l.circuitAngles[cell]);l.circuit=Array.from({length:9},(_,i)=>i);l.circuitAngles=angles;l.lampOrder=[];}
+    const final={...levelState(),...corridorState(),triggered:true,mailed:oldDone&&l.mailed};s.levels.push(final);s.completed.push(final.mailed);
+    if(final.mailed)s.level=5;
+    if(l.projectionDone&&lampsReady(l))s.completed[4]=true;
+    s.unlocked=Math.min(5,s.completed.filter(Boolean).length);s.memories=MEMORIES.filter((_,i)=>s.completed[i]);s.version=5;
+  }
+  if(s.levels.some(l=>!Number.isInteger(l.clockHour)||l.clockHour<0||l.clockHour>11||!Number.isInteger(l.clockMinute)||l.clockMinute<0||l.clockMinute>59||!Array.isArray(l.seal)||l.seal.length!==3||l.seal.some(v=>!Number.isInteger(v)||v<0||v>2)))throw Error();
   // Projection playback is transient: a reload must allow replay, never strand the player.
   s.levels.forEach(l=>l.projecting=false);
   s.persisted=true;return {state:s,error:null};

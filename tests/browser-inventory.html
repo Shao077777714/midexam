@@ -2,7 +2,9 @@
 <h1>物品欄顯示測試</h1><p>只可在隔離的本機測試來源使用。這是物品欄檢查點，不代表正常流程五關通關驗收。</p>
 <button id="shadow">建立第一關物件檢查點</button>
 <button id="board">建立第四關總機檢查點</button>
+<button id="sky">建立第四關怪核天空檢查點</button>
 <button id="seed">建立第五關物品欄檢查點</button>
+<button id="final">建立第六關投信檢查點</button>
 <button id="corridor">建立第二關雙擊拿取檢查點</button>
 <script type="module">
 import {RECORDINGS} from './puzzles.mjs';
@@ -14,12 +16,15 @@ function seed(target){
   const next=()=>{act({type:'ACK_SAVE'});act({type:'NEXT'});};
   act({type:'TRIGGER'});if(target===0){launch();return;}for(let i=0;i<3;i++)act({type:'SHADOW',index:i,...SHADOW_TARGETS[i]});next();
   if(target===1){launch();return;}
-  act({type:'TRIGGER'});act({type:'SEARCH',id:'clock'});act({type:'CHAIR'});for(const id of ['key','drawing','letter']){act({type:'COLLECT',id});act({type:'SLOT',slot:id,id});}next();
+  act({type:'TRIGGER'});act({type:'CLOCK_SET',hour:8,minute:10});act({type:'SEARCH',id:'clock'});act({type:'CHAIR'});for(const id of ['key','drawing'])act({type:'COLLECT',id});for(const [index,value]of [1,0,2].entries())act({type:'SEAL_SET',index,value});act({type:'SEARCH',id:'letterbox'});act({type:'COLLECT',id:'letter'});for(const id of ['key','drawing','letter'])act({type:'SLOT',slot:id,id});next();
   act({type:'TRIGGER'});for(const type of ['DRAWER','CHAIR','FRAME'])act({type});for(const id of SEARCHES[2])act({type:'SEARCH',id});for(let i=0;i<9;i++){act({type:'COLLECT',id:`p${i}`});act({type:'PHOTO',id:`p${i}`,slot:i,angle:0});}act({type:'PHOTO_READ'});next();
-  if(target===3){launch();return;}
+  if(target===3||target==='sky'){if(target==='sky')act({type:'TRIGGER'});launch();return;}
   act({type:'TRIGGER'});for(const id of ['work-panel','family-phone','mirror-recess'])act({type:'SEARCH',id});for(const t of RECORDINGS)act({type:'COLLECT',id:t.id});for(let index=0;index<3;index++)act({type:'RECORD_ORDER',index});act({type:'ACTIVATE_BOARD'});next();
+  if(target===5){act({type:'TRIGGER'});for(const id of ['lamp-crate','linen-box','power-radio'])act({type:'SEARCH',id});for(const [index,id]of ['bulb','shade','battery'].entries()){act({type:'COLLECT',id});act({type:'INSTALL',index,id});}for(let index=0;index<9;index++)while(state.levels[4].circuitAngles[index]!== (index===0?90:0))act({type:'CIRCUIT_ROTATE',index});for(let index=0;index<3;index++)act({type:'LAMP',index});act({type:'PROJECT'});act({type:'PROJECTION_END'});next();}
   launch();
 }
+document.querySelector('#final').onclick=()=>seed(5);
+document.querySelector('#sky').onclick=()=>seed('sky');
 document.querySelector('#board').onclick=()=>seed(3);
 document.querySelector('#shadow').onclick=()=>seed(0);
 document.querySelector('#seed').onclick=()=>seed(4);

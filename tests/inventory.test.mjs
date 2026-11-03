@@ -23,7 +23,7 @@ test('used corridor items hide but the archived letter returns only when needed 
   state.levels[1].slots={key:'key',letter:'letter'};assert.deepEqual(inventoryEntries(state).map(e=>e.id),['drawing']);
   const before=JSON.stringify(state.inventory);state.level=2;assert.deepEqual(inventoryEntries(state),[]);state.level=3;assert.deepEqual(inventoryEntries(state),[]);
   state.level=4;state.memories=MEMORIES.slice(0,4);state.levels[4].sequence=[0,1];assert.deepEqual(inventoryEntries(state).map(e=>e.id),['letter']);
-  state.levels[4].mailed=true;state.levels[4].projectionDone=true;assert.deepEqual(inventoryEntries(state),[]);assert.equal(JSON.stringify(state.inventory),before);
+  state.level=5;assert.deepEqual(inventoryEntries(state).map(e=>e.id),['letter']);state.levels[5].mailed=true;assert.deepEqual(inventoryEntries(state),[]);assert.equal(JSON.stringify(state.inventory),before);
 });
 test('placed photo pieces hide, but taking back a wrong placement makes them available again',()=>{
   let state=newGame();state.level=2;state.levels[2].triggered=true;state.inventory=['letter','p0','p1'];

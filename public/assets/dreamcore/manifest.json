@@ -96,6 +96,19 @@
         255
       ],
       "verificationScope": "Codex IAB sample display; complete Chrome/Edge matrix pending."
+    },
+    {
+      "file": "protagonist-mirror-v1.png",
+      "url": "/assets/dreamcore/protagonist-mirror-v1.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2309631,
+      "sha256": "5d9369e1c88d4c2cb9f947fc1f2caea6346683e86eabdabd5e6504112d8a7bf2",
+      "type": "paired-protagonist-portrait",
+      "prompts": "PROMPTS-v3.json",
+      "generatedOn": "2026-11-03",
+      "inGameVerified": true,
+      "verificationScope": "Codex IAB dream/weird portrait sample; formal Chrome/Edge matrix pending."
     }
   ]
 }

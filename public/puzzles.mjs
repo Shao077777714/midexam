@@ -20,7 +20,7 @@ export const HIDES={
 };
 export const SOCKETS=[2,0,1];
 export const CIRCUIT_PORTS=[[0,1],[1,3],[1,3],[0,1,2,3],[1,3],[1,3],[0,1],[1,3],[1,3]];
-export function puzzleState(){return {recordOrder:[],diagram:Array(4).fill(null),diagramAngles:[90,270,180,90],wires:[null,null,null],signals:[1,1,1],switchboardOn:false,installed:[false,false,false],circuit:[1,0,2,3,4,6,5,7,8],circuitAngles:[90,90,90,0,90,90,0,90,90],lampOrder:[]};}
+export function puzzleState(){return {recordOrder:[],diagram:Array(4).fill(null),diagramAngles:[90,270,180,90],wires:[null,null,null],signals:[1,1,1],switchboardOn:false,installed:[false,false,false],circuit:[0,1,2,3,4,5,6,7,8],circuitAngles:[0,90,90,0,90,90,0,90,90],lampOrder:[]};}
 export function diagramReady(l){return l.diagram.every((v,i)=>v===i&&l.diagramAngles[i]===0);}
 export function switchboardStatus(l){return {order:l.recordOrder.join(',')==='0,1,2',diagram:diagramReady(l),wires:l.wires.map((v,i)=>v===SOCKETS[i]),signals:l.signals.map((v,i)=>v===RECORDINGS[i].beats)};}
 export function switchboardReady(l){return RECORDINGS.every(t=>l.collected.includes(t.id))&&l.recordOrder.join(',')==='0,1,2';}
@@ -78,6 +78,7 @@ export function puzzleAction(s,a){
     l.installed[a.index]=true;return done(`${LAMP_NAMES[a.index]}的燈已修好。`);
   }
   if(['CIRCUIT_ROTATE','CIRCUIT_SWAP'].includes(a.type)){
+    if(a.type==='CIRCUIT_SWAP')return fail('導電片固定在格位中，只能旋轉。');
     if(l.projecting||l.projectionDone)return fail('投影已啟動，電路保持固定。');
     if(!index(a.index,9))return fail('無效的導電片。');
     if(a.type==='CIRCUIT_ROTATE')l.circuitAngles[a.index]=(l.circuitAngles[a.index]+90)%360;

@@ -40,6 +40,11 @@
         "path": "public/assets/dreamcore/organic-eye-v2.png",
         "purpose": "怪核場景眼睛與周邊注視效果。",
         "status": "available"
+      },
+      {
+        "path": "public/assets/dreamcore/protagonist-mirror-v1.png",
+        "purpose": "第四關同一男主角俊朗／憔悴兩態肖像圖集，Image Gen，左／右半 UV。",
+        "status": "available"
       }
     ],
     "audio": [

@@ -22,7 +22,7 @@ test('all five world triggers can activate once without claiming to be inventory
     const trigger=world.entities.find(e=>e.id==='trigger');
     assert.ok(trigger);assert.equal(trigger.pickupAction,undefined);
     doubleClickAction(trigger)();world.sync();assert.equal(state.levels[level].triggered,true);
-    assert.equal(doubleClickAction(trigger),null);assert.deepEqual(state.inventory,[]);
+    assert.equal(doubleClickAction(trigger),level===1?trigger.readAction:null);assert.deepEqual(state.inventory,[]);
   }
 });
 
@@ -36,7 +36,7 @@ test('only available shadow props and new cassette pickups promise pickup',()=>{
 
 test('pickup rays require the visible object surface within reach and stop at opaque obstacles',()=>{
   const {world}=fixture(1),letter=world.entities.find(e=>e.id==='letter');
-  const aim=()=>{world.camera.lookAt(new T.Box3().setFromObject(letter.group).getCenter(new T.Vector3()));world.camera.updateMatrixWorld(true);world.scene.updateMatrixWorld(true);};
+  const aim=()=>{world.camera.lookAt(world.focusPoint(letter)||new T.Box3().setFromObject(letter.group).getCenter(new T.Vector3()));world.camera.updateMatrixWorld(true);world.scene.updateMatrixWorld(true);};
   world.camera.position.set(1.7,1.65,-9.2);aim();assert.equal(world.target()?.id,'letter');assert.equal(typeof world.target().pickupAction,'function');
   const wall=new T.Mesh(new T.BoxGeometry(1,2,.1),new T.MeshBasicMaterial());wall.position.set(1.7,1.3,-9.8);letter.group.parent.add(wall);aim();assert.equal(world.target(),null);
   wall.visible=false;aim();assert.equal(world.target()?.id,'letter');

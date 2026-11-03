@@ -39,7 +39,7 @@ export function buildEyes(root,bounds,textures={}) {
   const group=new T.Group(),pupils=[];root.add(group);group.visible=false;
   const locations=[];
   const width=bounds.maxX-bounds.minX,depth=bounds.maxZ-bounds.minZ;
-  // Equal cells on each solid wall, with the same two heights and eye size.
+  // Stratified placement covers each wall while stable jitter avoids a wallpaper grid.
   for(const axis of ['x','z'])for(const normal of [-1,1]){
     if(axis==='x'&&normal===1)continue; // The left wall is glazed; use its solid base below.
     const span=axis==='x'?depth:width,count=Math.max(3,Math.ceil(span/1.9));
@@ -47,7 +47,8 @@ export function buildEyes(root,bounds,textures={}) {
     for(const y of [1.65,3.65])for(let c=0;c<count;c++){
       const along=(axis==='x'?bounds.minZ:bounds.minX)+(c+.5)*span/count;
       if(axis==='z'&&normal===1&&Math.abs(along)<1.1)continue; // Keep the exit clear.
-      locations.push({axis,surface,normal,pos:axis==='x'?[surface,y,along]:[along,y,surface],small:false});
+      const n=locations.length,offset=Math.sin(n*8.17)*.18,height=y+Math.sin(n*4.39)*.34;
+      locations.push({axis,surface,normal,pos:axis==='x'?[surface,height,along+offset]:[along+offset,height,surface],small:false});
     }
   }
   const count=Math.ceil(depth/3.5);
@@ -66,7 +67,7 @@ export function buildEyes(root,bounds,textures={}) {
     const disk=part(iris,new T.CylinderGeometry(.14,.14,.008,32),'#403e26',[0,0,0],{roughness:.35});disk.rotation.x=Math.PI/2;
     const pupil=part(iris,new T.SphereGeometry(.105,20,12),'#111b1b',[0,0,.024],{roughness:.15});pupil.scale.z=.35;
     const glint=part(iris,new T.SphereGeometry(.023,10,6),'#dce5d3',[-.04,.05,.063]);glint.castShadow=false;
-    eye.scale.setScalar(small?.27:.62);mountOn(eye,axis,surface,normal);pupils.push({eye,iris});
+    eye.scale.setScalar(small?.24+.025*(i%3):.43+.34*((i*7%13)/12));eye.rotateZ(Math.sin(i*2.37)*.55);mountOn(eye,axis,surface,normal);pupils.push({eye,iris});
   });
   return {group,pupils,tick(camera,time,reducedMotion=false){
     if(!group.visible)return;
@@ -75,19 +76,15 @@ export function buildEyes(root,bounds,textures={}) {
 }
 
 
-// Permanent, unlit eyes on supported facades outside the window. They do not blink
-// or share the short-lived screen overlay. Walls and opaque backing still occlude them.
+// Camera-centered eye sky, independent of the short-lived screen overlay.
+// Indoor walls still occlude it; the background itself is never a near-window facade.
 export function buildWindowEyes(root,bounds,textures={}){
-  const group=new T.Group();group.userData.exterior=true;group.visible=false;root.add(group);
-  const count=Math.ceil((bounds.maxZ-bounds.minZ)/6)+2;
-  for(let i=0;i<count;i++){
-    const facade=new T.Group();facade.position.set(bounds.minX-10,0,bounds.minZ-3+i*6);facade.rotation.y=Math.PI/2;group.add(facade);
-    part(facade,new T.BoxGeometry(6,4.6,.18),'#191b19',[0,3.6,0]);
-    for(const x of [-2.4,2.4])part(facade,new T.BoxGeometry(.18,1.3,.22),'#525449',[x,.65,0]);
-    const eye=new T.Mesh(new T.PlaneGeometry(5.5,4.4),new T.MeshBasicMaterial({map:textures.organic||textures.eyes||null,color:'#e3d0c6',transparent:true,alphaTest:.1,depthWrite:true,fog:false}));
-    eye.position.set(0,3.6,.1);eye.frustumCulled=false;facade.add(eye);
-  }
-  return {group};
+  const group=new T.Group();group.userData.nonOccluding=true;group.userData.cameraCentered=true;group.visible=false;root.add(group);
+  // An opaque, unlit six-sided sky encloses the camera, never a wall outside a window.
+  // Its farthest corner is 260m, safely inside the 350m far plane from every direction.
+  const sky=new T.Mesh(new T.BoxGeometry(300,300,300),new T.MeshBasicMaterial({map:textures.eyes||null,color:'#ffffff',side:T.BackSide,depthWrite:false,fog:false,toneMapped:false}));
+  sky.frustumCulled=false;sky.renderOrder=-100;group.add(sky);
+  return {group,sky,follow(camera){group.position.copy(camera.position);group.updateMatrixWorld(true);}};
 }
 
 export function buildFlood(root,bounds,level){

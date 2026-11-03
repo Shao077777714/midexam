@@ -8,7 +8,7 @@ export function turnView(rotation,dx,dy){
 
 // Trigger, reading and pickup eligibility remain independent of the name-only label.
 export function doubleClickAction(target){
-  if(target?.triggerAction)return target.canTrigger?.()===false?null:target.triggerAction;
+  if(target?.triggerAction)return target.canTrigger?.()===false?(target.readAction&&target.canRead?.()!==false?target.readAction:null):target.triggerAction;
   if(target?.readAction)return target.canRead?.()===false?null:target.readAction;
   if(target?.pickupAction){if(target.canPickup?.()!==false)return target.pickupAction;return target.interactAction&&target.canInteract?.()!==false?target.interactAction:null;}
   return target?.action||null;
@@ -27,6 +27,13 @@ export function doubleClickPickup(event,{mode,canvas,world,aim='reticle'}){
   action();return true;
 }
 export function movementSpeed(inWater,navigation=false){return (navigation?3.2:2.7)*(inWater?WATER_SPEED_FACTOR:1);}
+
+// Alt is a toggle, independent of keyup and of modal lifetimes.
+export function createExploreInput({look,onChange=()=>{}}){
+  let mode='title',cursor=false;
+  const sync=()=>{const active=mode==='explore'&&!cursor;if(active)look.enter();else look.leave();onChange({active,cursor:!active});};
+  return {setMode(next){mode=next;cursor=false;sync();},toggle(){if(mode!=='explore')return false;cursor=!cursor;sync();return true;},blur(){cursor=false;look.leave();onChange({active:false,cursor:true});},get active(){return mode==='explore'&&!cursor;},get cursor(){return cursor;}};
+}
 
 // Keep free mouse look usable when a browser refuses Pointer Lock.
 export function createMouseLook({canvas,documentRef,onLook,onUnlock=()=>{},onDenied=()=>{},edgeTurn=false,dragToLook=false,onDragChange=()=>{}}){

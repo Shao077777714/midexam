@@ -38,9 +38,10 @@ test('lamp, circuit and projector DOM controls gate projection until the actual 
     const f=fixture(4);f.ui.projector();assert.equal(f.button('啟動記憶投影').disabled,true);f.prepare(['lamp-crate','linen-box','power-radio'],PARTS);
     for(const [i,name]of ['鎢絲燈泡','百褶燈罩','銅殼電池'].entries()){f.ui.lamp(i);f.click('裝上'+name);}
     f.ui.lamp(0);f.click('點亮過去的燈');assert.equal(f.results.at(-1).ok,false);
-    f.ui.circuit();assert.equal(f.button('↻ 旋轉選取導電片').disabled,true);f.click('導電片 1');f.click('導電片 2');f.click('導電片 6');f.click('導電片 7');
-    // After the two swaps, rotate all vertical straight tracks and the lower elbow.
-    for(const [cell,count]of [[2,3],[3,3],[5,3],[7,3],[8,3],[9,3]]){f.click('導電片 '+cell);for(let n=0;n<count;n++)f.click('↻ 旋轉選取導電片');f.click('取消選取');}
+    f.ui.circuit();assert.equal(f.button('取消選取'),undefined);
+    const before=[...f.state.levels[4].circuit];
+    for(const [cell,count]of [[1,1],[2,3],[3,3],[5,3],[6,3],[8,3],[9,3]])for(let n=0;n<count;n++)f.click('導電片 '+cell);
+    assert.deepEqual(f.state.levels[4].circuit,before);
     assert.match(f.copies(),/已通電接口 3 \/ 3/);
     for(const [i,name]of ['過去','現在','未來'].entries()){f.ui.lamp(i);f.click('點亮'+name+'的燈');}
     f.ui.projector();assert.equal(f.button('啟動記憶投影').disabled,false);f.click('啟動記憶投影');assert.equal(f.projection,1);assert.equal(f.state.levels[4].projecting,true);assert.equal(f.state.completed[4],false);assert.equal(applyAction(f.state,{type:'MAIL'}).ok,false);
