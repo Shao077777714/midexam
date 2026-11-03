@@ -7,7 +7,7 @@ import {buildPhenomena} from './phenomena.mjs';
 import {buildExterior,buildEyes,buildWindowEyes,buildFlood} from './atmosphere.mjs';
 import {disposeObjects,watchContext} from './rendering.mjs';
 const loader=new T.TextureLoader(),textures={};
-if(typeof document!=='undefined')for(const [k,f] of Object.entries({grass:'grass-dreamcore-v1.png',siding:'siding-tintable-v1.png',road:'asphalt-dreamcore-v1.png',eyes:'sky-eyes-nightmare-v1.png',family:'family-aged-v2.png',corrupt:'family-distorted-v2.png',organic:'organic-eye-v2.png'})){
+if(typeof document!=='undefined')for(const [k,f] of Object.entries({grass:'grass-dreamcore-v1.png',siding:'siding-tintable-v1.png',road:'asphalt-dreamcore-v1.png',eyes:'sky-eyes-nightmare-v1.png',family:'family-aged-v2.png',corrupt:'family-distorted-v2.png',organic:'organic-eye-v2.png',protagonist:'protagonist-mirror-v1.png'})){
   const tex=loader.load(`assets/dreamcore/${f}`);tex.colorSpace=T.SRGBColorSpace;
   if(['grass','siding','road'].includes(k)){tex.wrapS=tex.wrapT=T.RepeatWrapping;tex.repeat.set(k==='grass'?8:3,k==='grass'?8:3);}
   textures[k]=tex;
@@ -39,8 +39,8 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   const nearbyLight=new T.PointLight('#c2d8d4',0,3.1,2);scene.add(nearbyLight);
   const ray=new T.Raycaster();
   const entity=(id,name,group,action,visible=()=>true)=>{group.userData.entity=id;group.traverse(m=>{m.userData.entity=id;});const e={id,name,group,action,visible};
-    if(id==='trigger'){e.triggerAction=action;e.canTrigger=()=>{const s=getState();return !s.completed[s.level]&&!s.levels[s.level].triggered;};}
-    if(/^shadow[0-2]$/.test(id)){const index=Number(id.slice(-1));e.pickupAction=()=>onActivate({type:'TAKE_SHADOW',index});e.interactAction=action;e.canInteract=()=>{const s=getState();return !s.completed[0]&&s.levels[0].triggered;};e.canPickup=()=>{const s=getState(),l=s.levels[s.level];return !s.completed[0]&&l.triggered&&!l.collected.includes(['moon','rabbit','vase'][index])&&!shadowAligned(l.shadow[index],SHADOW_TARGETS[index]);};}
+    if(id==='trigger'){e.triggerAction=action;e.canTrigger=()=>{const s=getState();return !s.completed[s.level]&&!s.levels[s.level].triggered;};if(getState().level===1){e.readAction=()=>onActivate({type:'PHONE_NOTE'});e.canRead=()=>getState().levels[1].triggered;}}
+    if(/^shadow[0-2]$/.test(id)){const index=Number(id.slice(-1));e.pickupAction=()=>onActivate({type:'TAKE_SHADOW',index});e.interactAction=action;e.canInteract=()=>{const s=getState();return !s.completed[0]&&s.levels[0].triggered&&!shadowAligned(s.levels[0].shadow[index],SHADOW_TARGETS[index]);};e.canPickup=()=>{const s=getState(),l=s.levels[s.level];return !s.completed[0]&&l.triggered&&!l.collected.includes(['moon','rabbit','vase'][index])&&!shadowAligned(l.shadow[index],SHADOW_TARGETS[index]);};}
     entities.push(e);return e;};
   const collision=(x,z,w,d)=>blocks.push({x,z,w,d});
   function track(object){const block=footprint(object);blocks.push(block);colliderSources.push({object,block});return block;}
@@ -84,7 +84,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   function searchStation(id,name,kind,x,z,{piece=null,record=null,scale=.85}={}){
     const cabinet=kind==='cabinet';if(!cabinet)table(x,z,1.35,.95);
     const surface=cabinet?0:1.075,g=supported(kind,[x,surface,z],scale);if(cabinet)g.rotation.y=-Math.PI/2;
-    const e=entity(`search-${id}`,name,g,()=>onActivate({type:'SEARCH',id}));
+    const e=entity(`search-${id}`,name,g,()=>onActivate({type:id==='clock'?'CLOCK_UI':'SEARCH',id}));
     const entry={id,g,kind};searchObjects.push(entry);track(g);
     if(id==='television'){
       const tray=new T.Group();root.add(tray);tray.position.set(x,1.19,z+.47);box(tray,[.66,.045,.48],[0,0,0],'#9c8f76');
@@ -101,6 +101,10 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
     return e;
   }
   function supplyStation(id,name,kind,x,z,ids){
+    if(kind==='cabinet'){
+      searchStation(id,name,kind,x,z,{scale:1});
+      ids.forEach((itemId,n)=>item(itemId,NEW_ITEMS[itemId],itemId,[x-.24,.855,z+n*.12],null,()=>getState().levels[getState().level].triggered&&getState().levels[getState().level].searched.includes(id),.5));return;
+    }
     searchStation(id,name,kind,x,z);
     const tray=new T.Group();root.add(tray);tray.position.set(x,0,z+.64);box(tray,[1.2,.07,.68],[0,1.045,0],'#9b8b74');
     for(const dx of [-.48,.48])box(tray,[.06,1.01,.06],[dx,.505,.18],'#8a7e69');track(tray);
@@ -160,7 +164,17 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   function photo(pos,scale=1){const g=model('photo');if(getState().level===0){const veil=mesh(new T.PlaneGeometry(.42,.42),new T.MeshBasicMaterial({color:'#d9d4cf',transparent:true,opacity:.91}),g,[.43,1.05,.086]);veil.castShadow=false;}g.scale.setScalar(scale);g.position.set(...pos);root.add(g);return g;}
   function build(){
     scene.remove(root);disposeObjects(root,Object.values(textures));root=new T.Group();scene.add(root);entities=[];blocks=[];shadowModels=[];ghosts=[];mirrorModels=[];curtain=[];plates=[];mirrorVeil=null;clockHand=null;shadowSupports=[];colliderSources=[];decor=[];sensors=[];searchObjects=[];
-    const s=getState(),i=s.level;photoCorrupted=s.levels[i].triggered;room(i);beamRoot=new T.Group();beamRoot.userData.nonOccluding=true;root.add(beamRoot);
+    const s=getState(),i=s.level;photoCorrupted=s.levels[i].triggered;
+    if(i===5){
+      bounds={minX:-4,maxX:4,minZ:-5,maxZ:6};camera.position.set(0,1.65,3);camera.rotation.set(-.08,0,0);
+      const mailbox=new T.Group();root.add(mailbox);mailbox.position.set(0,0,-1.4);
+      box(mailbox,[1.1,1.15,.6],[0,1.25,0],'#90747d');box(mailbox,[.72,.065,.04],[0,1.5,.325],'#191718');
+      box(mailbox,[1.16,.08,.66],[0,1.865,0],'#a58d8e');cylinder(mailbox,.09,.15,.64,[0,.34,0],'#6e7370');cylinder(mailbox,.29,.34,.08,[0,.04,0],'#4a504b');
+      track(mailbox);entity('mailbox','最後的信箱',mailbox,()=>onActivate({type:'MAIL_UI'}));
+      const light=new T.SpotLight('#d9d1bd',18,8,Math.PI/7,.8,1);light.position.set(0,3.6,1.2);light.target.position.set(0,1,-1.4);root.add(light,light.target);
+      box(root,[8,.1,11],[0,-.06,.5],'#000000');sync();return;
+    }
+    room(i);beamRoot=new T.Group();beamRoot.userData.nonOccluding=true;root.add(beamRoot);
     camera.position.set(i===1?0:0,1.65,i===1?5:5.9);camera.rotation.set(-.03,0,0);
     if(i===0){
       // A real modelled bedroom, with a bedside drawer, fabric, toys and three shadow stations.
@@ -187,7 +201,9 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
       const bench=table(-2.2,3,1.4,.75);item('trigger','不斷響起的手機','phone',[-2.2,1.075,3],()=>onActivate({type:'TRIGGER'}));drawer(-2.2,.8,'長椅旁抽屜');searchStation('clock','長椅旁的座鐘','clock',-2.25,-1.2);item('key','舊家鑰匙','key',[-2.25,1.54675,-1.2],null,()=>getState().levels[1].searched.includes('clock'),.6);
       const c=chair(2,-4);entity('chair','擋住門後的椅子',c,()=>onActivate({type:'CHAIR'}));c.userData.movable=true;
       item('drawing','孩子的畫','drawing',[2.45,.012,-4.3],null,()=>getState().levels[1].chair);
-      table(1.7,-10.5,1.5,1);item('letter','未寄出的信','letter',[1.7,1.075,-10.5]);
+      table(1.7,-10.5,1.5,1);const letterbox=supported('musicbox',[1.7,1.075,-10.5],1.3);entity('letterbox','三個圖形的信匣',letterbox,()=>onActivate({type:'SEAL_UI'}));track(letterbox);searchObjects.push({id:'letterbox',g:letterbox,kind:'musicbox'});
+      item('letter','未寄出的信','letter',[1.7,1.426,-10.5],null,()=>getState().levels[1].searched.includes('letterbox'),.55);
+      entity('phone-notices','手機的未接來電',bench,()=>onActivate({type:'PHONE_NOTE'}),()=>getState().levels[1].triggered);
       for(let n=0;n<4;n++){const z=1-n*3.5,doorSide=box(root,[.1,2.9,1.3],[3.25,1.45,z],n%2?'#c1cbbd':'#d1bcba');const plaque=sign(root,`0${n+1}`,[3.15,2.6,z],.4,.3);plaque.rotation.y=-Math.PI/2;mounted(plaque,'x',3.2,-1);const id=`echo-door-${n}`;entity(id,`第${n+1}扇門的聲音線索`,doorSide,()=>onActivate({type:'SOUND_CUE',index:n}),()=>getState().levels[1].triggered);plaque.userData.entity=id;plaque.traverse(m=>{m.userData.entity=id;});}
       ['key','drawing','letter'].forEach((id,n)=>{const g=sign(root,['房　子','家庭回憶','信　件'][n],[3.2,1.7,-10.6-n*1.55],.95,.8);g.rotation.y=-Math.PI/2;mounted(g,'x',bounds.maxX-.1,-1);entity(`slot-${id}`,['房子凹槽','家庭回憶凹槽','信件凹槽'][n],g,()=>onActivate({type:'SLOT_UI',slot:id}));});
     } else if(i===2){
@@ -206,11 +222,13 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
       table(4.5,3.1,1.7,1);item('trigger','成癮諮詢紀錄','consult',[4.5,1.075,3.1],()=>onActivate({type:'TRIGGER'}));
       MIRROR_POINTS.forEach(([x,z],n)=>{const g=new T.Group();root.add(g);g.position.set(x,0,z);box(g,[.12,2.2,2],[0,1.7,0],'#988575');box(g,[.13,2,1.8],[0,1.7,0],'#a6c1b8',{metalness:.93,roughness:.1});cylinder(g,.28,.34,.15,[0,.075,0],'#707b72');box(g,[.08,.9,.08],[0,.5,0],'#7c897a');for(let p=0;p<n+1;p++)box(g,[.15,.025,.06],[0,2.5-p*.09,.88],'#b7a978');entity(`mirror${n}`,`第${n+1}面立鏡`,g,()=>onActivate({type:'MIRROR_NOTE',index:n}));const filter=box(g,[.145,.26,.32],[0,1.7,.3],'#f1e6bb',{metalness:.25,roughness:.25,emissive:'#252925',emissiveIntensity:.3});filter.name='filter-glass';mirrorModels.push(g);track(g);});
       const central=box(root,[3,2.7,.12],[-3.2,2,-7.02],'#b9c5bd',{metalness:.98,roughness:.18});mounted(central,'z',bounds.minZ+.1,1);
-      const portrait=textures.family?.clone();if(portrait){portrait.repeat.set(.36,.7);portrait.offset.set(.62,.23);portrait.needsUpdate=true;}mesh(new T.PlaneGeometry(1.3,2.2),new T.MeshBasicMaterial({map:portrait||null}),root,[-3.2,2,bounds.minZ+.223]);mirrorVeil=box(root,[1.34,2.24,.015],[-3.2,2,bounds.minZ+.24],'#93a9a3',{transparent:true,opacity:.96});
+      const portraitMaterial=()=>{const portrait=textures.protagonist?.clone();if(portrait){portrait.repeat.set(.5,1);portrait.needsUpdate=true;}const m=new T.MeshBasicMaterial({map:portrait||null,color:'#ffffff',toneMapped:false});m.userData.protagonist=true;return m;};
+      mirrorVeil=mesh(new T.PlaneGeometry(1.3,2.2),portraitMaterial(),root,[-3.2,2,bounds.minZ+.223]);mirrorVeil.userData.portrait=true;
+      for(const g of mirrorModels)for(const side of [-1,1]){const p=mesh(new T.PlaneGeometry(1.5,1.95),portraitMaterial(),g,[side*.078,1.7,0]);p.rotation.y=side*Math.PI/2;p.userData.portrait=true;}
       drawer(3.9,-4,'隱藏抽屜');
       supplyStation('work-panel','工作檔案匣','book',4.5,-5.4,['tape-work']);
       supplyStation('family-phone','失聯的答錄機','radio',-4.5,-4.6,['tape-family']);
-      supplyStation('mirror-recess','鏡旁的合頁日記','book',2.2,5.2,['tape-self']);
+      supplyStation('mirror-recess','鏡旁的木櫃','cabinet',2.2,5.2,['tape-self']);
       table(0,3.8,2.25,1.15);const board=supported('switchboard',[0,1.075,3.8]);entity('switchboard','老式電話總機',board,()=>onActivate({type:'BOARD_UI'}),()=>getState().levels[3].triggered);track(board);const boardLight=new T.PointLight('#dec69c',1.8,3.5);boardLight.position.set(0,2.3,4.3);root.add(boardLight);
 
     } else {
@@ -228,7 +246,6 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
       const circuit=supported('circuitbox',[4.8,1.3,-6.9]);mounted(circuit,'z',bounds.minZ+.1,1);track(circuit);entity('circuitbox','配電箱',circuit,()=>onActivate({type:'CIRCUIT_UI'}));
       // Real cable runs are clipped to the opaque back wall; branches echo the circuit clue.
       for(const [size,pos] of [[[.045,2,.045],[1.2,1.5,-7.075]],[[3.7,.045,.045],[3,2.5,-7.075]],[[3.7,.045,.045],[3,1.5,-7.075]],[[3.7,.045,.045],[3,.5,-7.075]]])box(root,size,pos,'#b39561');
-      const mailbox=new T.Group();root.add(mailbox);mailbox.position.set(3,0,-5.9);box(mailbox,[1.1,1.3,.55],[0,1.2,0],'#b38e9c');box(mailbox,[.6,.06,.06],[0,1.5,.29],'#625d60');cylinder(mailbox,.12,.19,.55,[0,.275,0],'#8f9b8d');cylinder(mailbox,.3,.32,.06,[0,.03,0],'#a5ad9e');track(mailbox);entity('mailbox','出口旁的信箱',mailbox,()=>onActivate({type:'MAIL_UI'}));
       table(-4.5,-3.5,1.8,.9);const p=photo([-4.5,1.075,-3.5]);p.rotation.y=.2;restOn(p,1.075);const broken=box(root,[.12,2.7,2.5],[5.82,1.8,-3.5],'#a9c1b8',{metalness:.9,roughness:.1});mounted(broken,'x',bounds.maxX-.1,-1);
     }
     addDecorations(i);addUncannyFurniture(i);phenomena=buildPhenomena(root,bounds,i,blocks,textures);blocks.push(...phenomena.blocks);
@@ -240,18 +257,20 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
     sync();
   }
   function sync(){const s=getState(),l=s.levels[s.level],weird=l.triggered;
+    if(s.level===5){scene.background.set('#000000');scene.fog.color.set('#000000');scene.fog.near=1;scene.fog.far=9;hemi.intensity=sun.intensity=spot.intensity=nearbyLight.intensity=0;refreshColliders();renderer.shadowMap.needsUpdate=true;scene.updateMatrixWorld(true);return;}
     scene.background.set(weird?'#10191b':'#cbdee5');scene.fog.color.set(weird?'#263738':'#e7d9cf');scene.fog.near=weird?16:45;scene.fog.far=weird?90:180;
-    hemi.color.set(weird?'#a7c2bd':'#fae6d6');hemi.groundColor.set(weird?'#494354':'#a2ad90');hemi.intensity=weird?.48:1.65;sun.intensity=weird?.17:2.1;sun.color.set(weird?'#bbc6e0':'#fff0d7');spot.intensity=s.level===0?(weird?75:45):0;ghostEye.material.opacity=weird?.85:0;wallEyes.group.visible=weird;windowEyes.group.visible=weird;
+    hemi.color.set(weird?'#a7c2bd':'#fae6d6');hemi.groundColor.set(weird?'#494354':'#a2ad90');hemi.intensity=weird?.48:1.65;sun.intensity=weird?.17:2.1;sun.color.set(weird?'#bbc6e0':'#fff0d7');spot.intensity=s.level===0?(weird?75:45):0;ghostEye.visible=false;wallEyes.group.visible=weird;windowEyes.group.visible=weird;windowEyes.follow(camera);
     photoCorrupted=weird;setPhotoMood(root,weird);phenomena.setVisible(weird);nearbyLight.intensity=weird?.9:0;flood.group.visible=weird&&[1,3,4].includes(s.level);
     for(const {id,g,kind,tray,screen,light} of searchObjects){const open=l.searched.includes(id),lid=g.getObjectByName('lid'),hatch=g.getObjectByName('hatch');if(lid)lid.rotation[kind==='book'?'z':'x']=open?(kind==='book'?1.6:-1.65):0;if(hatch)hatch.rotation.y=open?-1.45:0;if(tray){const available=open&&!l.collected.includes('p8');tray.visible=open;const map=available?screen.userData.photoMaps[weird?'horror':'aged']:null;if(screen.material.map!==map){screen.material.map=map;screen.material.needsUpdate=true;}screen.material.color.set(available?'#fff':'#3c514c');light.intensity=available?4:0;}}
     door.material.color.set(s.completed[s.level]?'#ddcf9f':weird?'#5d766b':'#9bab99');door.material.emissive.set(s.completed[s.level]?'#665431':'#000000');
-    entities.forEach(e=>{e.group.visible=e.visible()&&(!e.id.startsWith('p')||!l.collected.includes(e.id))&&(!['key','drawing','letter',...BOARD_ITEMS,...PARTS].includes(e.id)||!l.collected.includes(e.id));if(['key','drawing','letter',...BOARD_ITEMS,...PARTS,...PHOTO_IDS,'mirror0','mirror1','mirror2','flashlight'].includes(e.id)&&!weird)e.group.visible=false;
+    entities.forEach(e=>{e.group.visible=e.visible()&&(!e.id.startsWith('p')||!l.collected.includes(e.id))&&(!['key','drawing','letter',...BOARD_ITEMS,...PARTS].includes(e.id)||!l.collected.includes(e.id));if(['key','drawing','letter',...BOARD_ITEMS,...PARTS,...PHOTO_IDS,'flashlight'].includes(e.id)&&!weird)e.group.visible=false;
       if(e.group.userData.front)e.group.userData.front.position.z=l.drawer?.7:.47;
       if(e.group.userData.movable){e.group.position.x=(s.level===1?2:1.6)+(l.chair?-1.25:0);e.group.userData.block.x=e.group.position.x;}
     });
     if(s.level===0){shadowModels.forEach((g,n)=>{const v=l.shadow[n];g.position.set(v.x,1.4,v.z);g.rotation.y=v.angle*Math.PI/180;restOn(g,1.4);shadowSupports[n].position.set(v.x,0,v.z);g.traverse(o=>{if(o.material?.emissive)o.material.emissive.set(shadowAligned(v,SHADOW_TARGETS[n])?'#163321':'#000000');});});ghosts.forEach(g=>g.visible=weird);}
     if(s.level===2&&s.completed[2])plates[2].visible=false;
-    if(s.level===3){if(mirrorVeil)mirrorVeil.material.opacity=l.switchboardOn?0:.9-l.collected.filter(id=>id.startsWith('tape-')).length*.2;mirrorModels.forEach((g,n)=>{g.rotation.y=-(l.mirrors[n]*Math.PI/180);g.getObjectByName('filter-glass').material.color.set(SPECTRA[l.mirrorFilters[n]].color);});}
+    if(s.level===1){const g=searchObjects.find(v=>v.id==='clock')?.g;if(g){g.getObjectByName('hour-hand').rotation.z=-(l.clockHour+l.clockMinute/60)*Math.PI/6;g.getObjectByName('minute-hand').rotation.z=-l.clockMinute*Math.PI/30;}}
+    if(s.level===3){root.traverse(g=>{if(g.userData.portrait&&g.material.map)g.material.map.offset.x=weird?.5:0;});mirrorModels.forEach((g,n)=>{g.rotation.y=-(l.mirrors[n]*Math.PI/180);g.getObjectByName('filter-glass').visible=false;});}
 
     if(s.level===3){const board=entities.find(e=>e.id==='switchboard')?.group;for(let n=0;n<3;n++){const light=board?.getObjectByName(`board-light${n}`);if(light)light.material.emissiveIntensity=l.switchboardOn?2:0;
       const marker=board?.getObjectByName(`signal-marker${n}`),angle=(l.signals[n]-1)*Math.PI/3;if(marker){marker.position.x=(n-1)*.56+Math.sin(angle)*.06;marker.position.z=.22+Math.cos(angle)*.06;marker.rotation.y=angle;}
@@ -261,12 +280,12 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
       if(l.projectionDone){hemi.intensity=2;sun.intensity=2.4;sun.color.set('#ffe6b9');scene.background.set('#e2e8de');scene.fog.color.set('#e9ded0');ghostEye.material.opacity=weird?.85:0;}}
     refreshColliders();renderer.shadowMap.needsUpdate=true;scene.updateMatrixWorld(true);
   }
-  function tick(time){nearbyLight.position.copy(camera.position);nearbyLight.position.y+=.1;const reduced=!effectsEnabled||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;flood.tick(time,reduced);wallEyes.tick(camera,time,reduced);if(!reduced)curtain.forEach((m,i)=>m.rotation.y=Math.PI/2+Math.sin(time*.5+i)*.012);if(clockHand)clockHand.rotation.z=getState().completed[0]?-time*.2:0;}
+  function tick(time){if(getState().level===5)return;windowEyes.follow(camera);nearbyLight.position.copy(camera.position);nearbyLight.position.y+=.1;const reduced=!effectsEnabled||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;flood.tick(time,reduced);wallEyes.tick(camera,time,reduced);if(!reduced)curtain.forEach((m,i)=>m.rotation.y=Math.PI/2+Math.sin(time*.5+i)*.012);if(clockHand)clockHand.rotation.z=getState().completed[0]?-time*.2:0;}
   function shown(o){for(let p=o;p;p=p.parent)if(!p.visible)return false;return true;}
   function solid(o){if(!o.isMesh)return false;for(let p=o;p;p=p.parent)if(p.userData.nonOccluding)return false;return true;}
   function rayObjects(){return root.children.filter(o=>!o.userData.exterior&&!o.userData.nonOccluding&&!o.isInstancedMesh&&o!==ghostEye);}
   function target(x=0,y=0){if(!Number.isFinite(x)||!Number.isFinite(y)||Math.abs(x)>1||Math.abs(y)>1)return null;ray.setFromCamera(new T.Vector2(x,y),camera);const hits=ray.intersectObjects(rayObjects(),true);for(const hit of hits){if(!shown(hit.object)||!solid(hit.object))continue;if(hit.distance>3.2)break;const e=entities.find(e=>e.id===hit.object.userData.entity&&e.group.visible);if(e)return e;if(hit.object.material?.transparent&&hit.object.material.opacity<.4)continue;if(!hit.object.userData.entity)return null;}return null;}
-  function visibleEntities(){return entities.filter(e=>e.group.visible&&e.id!=='exit'||e.id==='exit'&&getState().completed[getState().level]);}
+  function visibleEntities(){return entities.filter(e=>(e.group.visible&&e.id!=='exit'||e.id==='exit'&&getState().completed[getState().level])&&(!/^shadow[0-2]$/.test(e.id)||e.canInteract()));}
   function focusPoint(e,from=camera.position){
     if(!e.group.visible)return null;
     const b=new T.Box3().setFromObject(e.group),center=b.getCenter(new T.Vector3()),size=b.getSize(new T.Vector3());
@@ -291,7 +310,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
     if(action.type==='SHADOW'){
       obj=shadowSupports[action.index];if(!obj||![action.x,action.z].every(Number.isFinite))return false;
       const own=colliderSources.find(v=>v.object===obj)?.block,dx=action.x-obj.position.x,dz=action.z-obj.position.z,steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.08));
-      for(let k=1;k<=steps;k++)for(const block of blocks)if(block!==own&&circleHits(obj.position.x+dx*k/steps,obj.position.z+dz*k/steps,block,.49))return false;
+      for(let k=1;k<=steps;k++){const x=obj.position.x+dx*k/steps,z=obj.position.z+dz*k/steps;if(Math.hypot(x-from.x,z-from.z)<.79)return false;for(const block of blocks)if(block!==own&&circleHits(x,z,block,.49))return false;}
       change=()=>obj.position.set(action.x,0,action.z);
     }
     if(!obj)return true;const position=obj.position.clone(),rotation=obj.rotation.clone(),front=obj.userData.front?.position.clone(),hatch=obj.getObjectByName('hatch'),hatchRotation=hatch?.rotation.clone();change();const occupied=circleHits(from.x,from.z,footprint(obj),.3);obj.position.copy(position);obj.rotation.copy(rotation);if(front)obj.userData.front.position.copy(front);if(hatch)hatch.rotation.copy(hatchRotation);obj.updateWorldMatrix(true,true);return !occupied;
@@ -299,7 +318,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
   function approachable(e,from){if(!near(e,from))return false;if(e.id==='switchboard'&&(from.z<e.group.position.z+.95||Math.abs(from.x-e.group.position.x)>1.2))return false;if(e.id==='search-television'||e.id==='p8'){const tv=searchObjects.find(v=>v.id==='television');if(from.z<tv.g.position.z+.95||Math.abs(from.x-tv.g.position.x)>1)return false;}if(/^shadow[0-2]$/.test(e.id)){const target=SHADOW_TARGETS[Number(e.id.slice(-1))];return Math.abs(from.x-e.group.position.x)>.95&&Math.abs(from.x-target.x)>.95;}if(e.id==='chair')return canApply({type:'CHAIR'},from);if(e.id==='drawer')return canApply({type:'DRAWER'},from);if(e.id==='decor-cabinet')return canApply({type:'CABINET',open:true},from);if(e.id.startsWith('search-'))return canApply({type:'SEARCH',id:e.id.slice(7)},from);if(e.id.startsWith('mirror'))return Math.hypot(from.x-e.group.position.x,from.z-e.group.position.z)>1.5;return true;}
   build();
   if(!headless)addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
-  return {renderer,scene,camera,build,sync,tick,target,near,focusPoint,canApply,approachable,visibleEntities,get bounds(){return bounds},get blocks(){return blocks},get entities(){return entities},get decorations(){return decor},get colliderSources(){return colliderSources},get eyes(){return wallEyes},get windowEyes(){return windowEyes},get flood(){return flood},get phenomena(){return phenomena},wadingAt(x,z){return flood.group.visible&&x>bounds.minX+.11&&x<bounds.maxX-.11&&z>bounds.minZ+.11&&z<bounds.maxZ-.11;},setEffects(enabled){effectsEnabled=enabled;},render(){renderer.render(scene,camera);}};
+  return {renderer,scene,camera,build,sync,tick,target,near,focusPoint,canApply,approachable,visibleEntities,get bounds(){return bounds},get blocks(){return blocks},get entities(){return entities},get decorations(){return decor},get colliderSources(){return colliderSources},get eyes(){return wallEyes},get windowEyes(){return windowEyes},get flood(){return flood},get phenomena(){return phenomena},wadingAt(x,z){return getState().level!==5&&flood.group.visible&&x>bounds.minX+.11&&x<bounds.maxX-.11&&z>bounds.minZ+.11&&z<bounds.maxZ-.11;},setEffects(enabled){effectsEnabled=enabled;},render(){renderer.render(scene,camera);}};
 }
 // Reuse one preview canvas/context across all items instead of allocating one per interaction.
 export function createInspectorPool({makeCanvas=()=>document.createElement('canvas'),makeRenderer=canvas=>new T.WebGLRenderer({canvas,antialias:true,alpha:true}),makeModel=model,sharedTextures=()=>Object.values(textures),framed=false}={}){
@@ -311,11 +330,11 @@ export function createInspectorPool({makeCanvas=()=>document.createElement('canv
       if(renderer?.getContext().isContextLost())releaseRenderer();
       if(!renderer){const canvas=makeCanvas();renderer=makeRenderer(canvas);renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio||1,1.5));renderer.outputColorSpace=T.SRGBColorSpace;monitor=watchContext(canvas,renderer,{onLost(){canvas.style.visibility='hidden';},onRestored(){canvas.style.visibility='';}});}
       const r=renderer,canvas=r.domElement;canvas.className='object-preview';canvas.setAttribute('aria-label','可拖曳旋轉的 3D 物件');host.append(canvas);
-      const width=canvas.clientWidth||350;r.setSize(width,220,false);
+      const width=canvas.clientWidth||350,height=canvas.clientHeight||220;r.setSize(width,height,false);
       const scene=new T.Scene();scene.add(new T.HemisphereLight('#fff1e4','#9baf9c',2.2));const light=new T.DirectionalLight('#fff',2);light.position.set(3,5,4);scene.add(light);
       const g=makeModel(kind);scene.add(g);if(['letter','notice','consult','help','drawing','key',...PHOTO_IDS,'phone'].includes(kind))g.rotation.x=.7;
       const bounds=new T.Box3().setFromObject(g),center=bounds.getCenter(new T.Vector3());g.position.sub(center);
-      const camera=new T.PerspectiveCamera(40,width/220,.05,30),size=bounds.getSize(new T.Vector3());
+      const camera=new T.PerspectiveCamera(40,width/height,.05,30),size=bounds.getSize(new T.Vector3());
       const distance=framed?Math.max(size.y,size.x/camera.aspect)/(2*Math.tan(T.MathUtils.degToRad(20)))*1.35+size.z*.6:Math.max(size.x*2,size.y*2,2);
       camera.position.set(0,framed?distance*.14:.3,distance);camera.lookAt(0,0,0);
       let disposed=false;
