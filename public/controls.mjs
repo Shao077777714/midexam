@@ -1,4 +1,3 @@
-export const WATER_SPEED_FACTOR=.55;
 export const EYE_SURGE_MS=160;
 export const PITCH_LIMIT=85*Math.PI/180;
 export function turnView(rotation,dx,dy){
@@ -26,7 +25,7 @@ export function doubleClickPickup(event,{mode,canvas,world,aim='reticle'}){
   const action=doubleClickAction(world.target(point.x,point.y));if(!action)return false;
   action();return true;
 }
-export function movementSpeed(inWater,navigation=false){return (navigation?3.2:2.7)*(inWater?WATER_SPEED_FACTOR:1);}
+export function movementSpeed(navigation=false){return navigation?3.2:2.7;}
 
 // Alt is a toggle, independent of keyup and of modal lifetimes.
 export function createExploreInput({look,onChange=()=>{}}){

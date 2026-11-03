@@ -6,7 +6,7 @@ import {walkable,findPath} from '../public/navigation.mjs';
 const act=(s,a)=>{const r=applyAction(s,a);assert.equal(r.ok,true,r.message);return r.state;};
 const trigger=s=>act(s,{type:'TRIGGER'});
 function solve1(s){s=trigger(s);for(let i=0;i<3;i++)s=act(s,{type:'SHADOW',index:i,...SHADOW_TARGETS[i]});return s;}
-function next(s){return act(act(s,{type:'ACK_SAVE'}),{type:'NEXT'});}
+function next(s){s=act(s,{type:'ACK_SAVE'});s=act(s,{type:'OPEN_EXIT'});s=act(s,{type:'ACK_SAVE'});return act(s,{type:'NEXT'});}
 function solve2(s){s=corridorPrepared(trigger(s));for(const id of ['key','drawing','letter'])s=act(s,{type:'SLOT',slot:id,id});return s;}
 function solve3(s){s=trigger(s);for(const type of ['DRAWER','CHAIR','FRAME'])s=act(s,{type});for(const id of SEARCHES[2])s=act(s,{type:'SEARCH',id});for(let i=0;i<9;i++){s=act(s,{type:'COLLECT',id:`p${i}`});s=act(s,{type:'PHOTO',slot:i,id:`p${i}`,angle:0});}return act(s,{type:'PHOTO_READ'});}
 function solve4(s){return act(boardPrepared(s),{type:'ACTIVATE_BOARD'});}
