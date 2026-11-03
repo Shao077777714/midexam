@@ -45,6 +45,21 @@
         "path": "public/assets/dreamcore/protagonist-mirror-v1.png",
         "purpose": "舊 v5 男性倒影素材歸檔；v6 已自遊戲移除，主角固定為家庭照片中的爸爸。",
         "status": "archived-unused"
+      },
+      {
+        "path": "public/assets/dreamcore/family-birthday-v4.png",
+        "purpose": "與原照同一家人的生活回憶，套用各關相框與第六關：birthday",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/dreamcore/family-park-v4.png",
+        "purpose": "與原照同一家人的生活回憶，套用各關相框與第六關：park",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/dreamcore/family-bedtime-v4.png",
+        "purpose": "與原照同一家人的生活回憶，套用各關相框與第六關：bedtime",
+        "status": "available"
       }
     ],
     "audio": [

@@ -15,7 +15,7 @@ test('all five distinct recording hides are required; removing any one prevents 
 test('v5 partial three recordings remain available, finished fourth rooms keep all earned progress',()=>{
  for(const finished of [false,true]){
   const s=checkpoint(finished?4:3);s.version=5;const l=s.levels[3];l.triggered=true;l.collected=RECORDINGS.slice(0,3).map(t=>t.id);l.searched=['work-panel','family-phone','mirror-recess'];l.recordOrder=[0,1,2];l.switchboardOn=finished;s.inventory.push(...l.collected);for(const v of s.levels)delete v.echoesSeen;
-  const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,6);assert.deepEqual(r.state.completed,s.completed);assert.deepEqual(r.state.memories,s.memories);assert.equal(r.state.letter,true);
+  const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,7);assert.deepEqual(r.state.completed,s.completed);assert.deepEqual(r.state.memories,s.memories);assert.equal(r.state.letter,true);
   if(finished){assert.deepEqual(r.state.levels[3].recordOrder,[0,1,2,3,4]);assert.equal(r.state.levels[3].collected.length,5);}else{assert.deepEqual(r.state.levels[3].recordOrder,[0,1,2]);assert.equal(applyAction(r.state,{type:'ACTIVATE_BOARD'}).ok,false);assert.equal(inventoryEntries(r.state).length,3);}
  }
 });
