@@ -1,12 +1,13 @@
+import {surfaceMaterial,roundedBoxGeometry} from './surfaces.mjs';
 import {createPuzzleModel} from './puzzle-models.mjs';
 import * as T from './vendor/three.module.js';
 
-const material = (color, options={}) => new T.MeshStandardMaterial({color,roughness:.72,...options});
+const material = (color, options={}) => surfaceMaterial('plaster',color,{roughness:.72,...options});
 export function part(parent, geometry, color, pos=[0,0,0], options={}) {
   const m = new T.Mesh(geometry,material(color,options)); m.position.set(...pos);
   m.castShadow=true; m.receiveShadow=true; parent.add(m); return m;
 }
-const cube=(g,size,pos,color,options)=>part(g,new T.BoxGeometry(...size),color,pos,options);
+const cube=(g,size,pos,color,options)=>part(g,Math.min(...size)>.08?roundedBoxGeometry(...size):new T.BoxGeometry(...size),color,pos,options);
 const sphere=(g,r,pos,color,scale=[1,1,1],options)=>{const m=part(g,new T.SphereGeometry(r,24,16),color,pos,options);m.scale.set(...scale);return m;};
 const cyl=(g,r1,r2,h,pos,color,options)=>part(g,new T.CylinderGeometry(r1,r2,h,32),color,pos,options);
 const ring=(g,r,t,pos,color)=>part(g,new T.TorusGeometry(r,t,8,32),color,pos,{metalness:.65,roughness:.3});
@@ -58,7 +59,17 @@ function photoMaps(mesh,textures,n=null){
 export function createModel(kind, textures={}) {
   const puzzle=createPuzzleModel(kind);if(puzzle)return puzzle;
   const g=new T.Group();g.userData.kind=kind;
-  if(kind==='moon'){
+  if(kind==='projector'){
+    cube(g,[1.05,.48,.64],[0,.31,0],'#8d958c',{metalness:.45,roughness:.46});
+    for(const x of [-.38,.38])for(const z of [-.2,.2])cyl(g,.045,.055,.08,[x,.04,z],'#5c5c52');
+    for(const x of [-.3,.3]){const reel=cyl(g,.22,.22,.08,[x,.76,-.13],'#b2b1a0',{metalness:.65});reel.rotation.x=Math.PI/2;for(let n=0;n<5;n++){const a=n*Math.PI*2/5;const hole=cyl(g,.04,.04,.012,[x+Math.cos(a)*.12,.76+Math.sin(a)*.12,-.082],'#373e39');hole.rotation.x=Math.PI/2;}}
+    const barrel=cyl(g,.14,.18,.25,[0,.31,.41],'#5b625b',{metalness:.7});barrel.rotation.x=Math.PI/2;
+    const lens=cyl(g,.12,.12,.018,[0,.31,.545],'#b4c7c1',{metalness:.3,roughness:.12,emissive:'#b7d4c4',emissiveIntensity:.08});lens.rotation.x=Math.PI/2;lens.name='projector-lens';
+    const pilot=sphere(g,.025,[.37,.44,.327],'#d6b981',[1,1,.4],{emissive:'#ffd394',emissiveIntensity:.08});pilot.name='projector-pilot';
+    for(let n=0;n<8;n++)cube(g,[.028,.22,.014],[-.38+n*.045,.3,.328],'#454d46');
+    for(const x of [-1.15,1.15]){cube(g,[.52,.7,.45],[x,.35,-.08],'#766e60');for(const [r,y]of [[.15,.25],[.075,.52]]){const cone=cyl(g,r,r*.7,.025,[x,y,.16],'#343b35');cone.rotation.x=Math.PI/2;ring(g,r,.014,[x,y,.177],'#9b9684');}for(let n=0;n<7;n++)cube(g,[.46,.01,.012],[x,.08+n*.087,.197],'#8c8778');}
+    g.userData.playbackHardware=true;
+  }else if(kind==='moon'){
     cyl(g,.24,.28,.1,[0,.05,0],'#bba275',{metalness:.7});const moon=emblem('moon','#efd490');moon.scale.setScalar(1.65);moon.position.set(-.06,.65,0);g.add(moon);
     cyl(g,.025,.025,.32,[0,.25,0],'#a28f6d');
   }else if(kind==='rabbit'||kind==='wornDoll'){

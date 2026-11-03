@@ -476,3 +476,12 @@ body.void-scene #objective-panel { background: #080608f2; }
 @media(max-width:1000px) { #objective-panel { width: 200px; left: 12px; } .panel:not(.inventory-panel) { left: calc(222px + (100vw - 238px)/2); max-width: calc(100vw - 254px); } }
 
 body.cursor-mode #objective-panel, body.interface-open #objective-panel { pointer-events: auto; }
+
+/* One stable memory composition per event; each new walk chooses another sequence. */
+.finale-words { top: var(--echo-top,16%); }
+.finale-photo { top: var(--echo-photo-top,52%); transform: rotate(var(--echo-tilt,-7deg)); }
+.photo-right .finale-photo { left: auto; right: 6%; }
+.one-eye .finale-eye.second { display: none; }
+.eye-swap .finale-eye.first { left: auto; right: 2%; transform: rotate(12deg); }
+.eye-swap .finale-eye.second { right: auto; left: 2%; top: auto; bottom: 8%; }
+@media(prefers-reduced-motion:reduce) { .finale-photo { transform: none; } }

@@ -42,7 +42,7 @@ test('circuit rotates only one cell, allows explicit swaps, and projection unloc
  s=repaired(checkpoint(4));s=action(s,{type:'PROJECT'});s=action(s,{type:'PROJECTION_END'});assert.equal(s.completed[4],true);assert.equal(s.completed[5],false);assert.deepEqual(s.memories,MEMORIES);assert.equal(applyAction(s,{type:'MAIL'}).ok,false);s=action(s,{type:'ACK_SAVE'});s=action(s,{type:'OPEN_EXIT'});s=action(action(s,{type:'ACK_SAVE'}),{type:'NEXT'});assert.equal(s.level,5);s=action(s,{type:'MAIL'});assert.ok(s.completed.every(Boolean));assert.equal(s.memories.length,5);assert.equal(applyAction(s,{type:'MAIL'}).ok,false);assert.equal(loadGame({getItem:()=>JSON.stringify(s)}).state.completed[5],true);
 });
 test('sixth scene contains only a reachable supported mailbox, black background and no water',()=>{
- const s=checkpoint(5);s.levels[4].projectionDone=true;const w=createWorld(null,()=>s,()=>{},{headless:true});assert.deepEqual(w.entities.map(e=>e.id),['mailbox','exit']);assert.equal(w.scene.background.getHex(),0);assert.equal(w.wadingAt(0,0),false);
+ const s=checkpoint(5);s.levels[4].projectionDone=true;const w=createWorld(null,()=>s,()=>{},{headless:true});assert.deepEqual(w.entities.map(e=>e.id),['mailbox','exit']);assert.equal(w.scene.background.getHex(),0);assert.equal('flood' in w,false);
  const e=w.entities[0],b=new T.Box3().setFromObject(e.group);assert.ok(Math.abs(b.min.y)<.001);const path=findPath([0,7],[0,-45],w.bounds,w.blocks,p=>w.approachable(e,new T.Vector3(p[0],1.65,p[1])));assert.ok(path.length);w.tick(3600);assert.equal(w.entities.length,2);
  for(const alter of [x=>x.letter=false,x=>x.completed[4]=false]){const broken=structuredClone(s);alter(broken);assert.equal(applyAction(broken,{type:'MAIL'}).ok,false);}
 });
