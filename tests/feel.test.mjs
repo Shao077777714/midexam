@@ -65,8 +65,8 @@ test('drag look cancels on menus or lost buttons, with no jump or edge rotation 
   f.look.down({target:f.canvas,button:0,clientX:500,clientY:350});f.look.up({timeStamp:2500});assert.equal(f.look.canDoubleClick({timeStamp:2501}),true);
 });
 
-test('water applies exactly the same 55 percent factor to manual and assisted movement',()=>{
-  for(const assisted of [false,true])assert.equal(movementSpeed(true,assisted)/movementSpeed(false,assisted),.55);
+test('manual and assisted speeds are fixed independently of the water visual',()=>{
+  assert.equal(movementSpeed(),2.7);assert.equal(movementSpeed(true),3.2);
   assert.equal(movementSpeed(false),2.7);assert.ok(EYE_SURGE_MS<=200);
 });
 test('wading follows the visible water and returns to normal in dry scenes',()=>{
@@ -88,7 +88,7 @@ test('received light colors use the actual reflection segment and match displaye
   const s=mirrorState(),l=s.levels[3];l.mirrorFilters=[1,2,3];const status=opticsStatus(l);assert.deepEqual(status.segmentFilters,[0,1,2,3]);assert.deepEqual(status.received,[1,2,3]);l.mirrorFilters[1]=3;assert.equal(opticsStatus(l).ready,false);l.mirrors[0]=0;assert.equal(opticsStatus(l).trace.solved,false);
 });
 test('v2 mirror saves keep unlocked progress while unfinished mirrors receive the new controls',()=>{
-  for(const unlocked of [false,true]){const s=newGame();s.version=2;s.levels[3].opticsUnlocked=unlocked;for(const l of s.levels)delete l.mirrorFilters;const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,4);assert.equal(r.state.levels[3].opticsUnlocked,unlocked);assert.deepEqual(r.state.levels[3].mirrorFilters,unlocked?[1,2,3]:[0,0,0]);}
+  for(const unlocked of [false,true]){const s=newGame();s.version=2;s.levels=s.levels.slice(0,5);s.completed=s.completed.slice(0,5);s.levels[3].opticsUnlocked=unlocked;for(const l of s.levels)delete l.mirrorFilters;const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,7);assert.equal(r.state.levels[3].opticsUnlocked,unlocked);assert.deepEqual(r.state.levels[3].mirrorFilters,unlocked?[1,2,3]:[0,0,0]);}
 });
 test('invalid mirror filter input and malformed modern saves are rejected',()=>{
   const s=mirrorState();for(const filter of [-1,4,1.2,NaN])assert.equal(applyAction(s,{type:'MIRROR_FILTER',index:0,filter}).ok,false);

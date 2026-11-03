@@ -93,8 +93,9 @@ export function createModel(kind, textures={}) {
     const m=photoMaps(part(g,new T.PlaneGeometry(.53,.53),'#fff',[0,.024,0]),textures,n);m.rotation.x=-Math.PI/2;
   }else if(kind==='drawing'){
     cube(g,[.66,.012,.77],[0,.006,0],'#e7dfc0');const art=new T.Group();art.rotation.x=-Math.PI/2;art.position.set(0,.015,0);g.add(art);
-    const house=emblem('house','#bf8f84');house.scale.setScalar(.52);house.position.set(-.08,-.07,0);art.add(house);sphere(art,.055,[.21,.25,.015],'#d8b56c',[1,1,.08]);
-    const family=emblem('family','#8ea9b4');family.scale.setScalar(.4);family.position.set(.12,-.17,.015);art.add(family);
+    const tree=new T.Group();art.add(tree);cube(tree,[.025,.2,.008],[-.22,-.08,.015],'#99765a');sphere(tree,.105,[-.22,.09,.015],'#82967b',[1,1,.08]);
+    const house=emblem('house','#bf8f84');house.scale.setScalar(.36);house.position.set(0,-.03,.02);art.add(house);
+    const moon=emblem('moon','#b89b69');moon.scale.setScalar(.26);moon.position.set(.23,.09,.025);art.add(moon);
   }else if(kind==='photo'){
     cube(g,[1.55,1.4,.1],[0,.7,0],'#7d604e');cube(g,[1.4,1.25,.025],[0,.7,.061],'#d9c6a1',{metalness:.55});
     photoMaps(part(g,new T.PlaneGeometry(1.3,1.14),'#fff',[0,.7,.078],{roughness:.65}),textures);cube(g,[1.35,1.2,.018],[0,.7,-.059],'#8f7866');
@@ -128,7 +129,9 @@ export function createModel(kind, textures={}) {
   }else if(kind==='clock'){
     cube(g,[.72,.55,.28],[0,.28,0],'#a69277');const face=cyl(g,.23,.23,.028,[0,.29,.155],'#d5ceb5');face.rotation.x=Math.PI/2;
     for(let i=0;i<12;i++){const tick=cube(g,[.012,.035,.01],[Math.sin(i*Math.PI/6)*.185,.29+Math.cos(i*Math.PI/6)*.185,.177],'#6b7164');tick.rotation.z=-i*Math.PI/6;}
-    cube(g,[.012,.16,.012],[0,.36,.184],'#514f46');const lid=new T.Group();lid.position.set(0,.56,-.15);g.add(lid);cube(lid,[.74,.035,.32],[0,0,.15],'#b29e7f');lid.name='lid';
+    const minute=new T.Group();minute.position.set(0,.29,.184);g.add(minute);cube(minute,[.012,.16,.012],[0,.08,0],'#514f46');minute.name='minute-hand';
+    const hour=new T.Group();hour.position.set(0,.29,.194);g.add(hour);cube(hour,[.022,.11,.012],[0,.055,0],'#514f46');hour.name='hour-hand';
+    const lid=new T.Group();lid.position.set(0,.56,-.15);g.add(lid);cube(lid,[.74,.035,.32],[0,0,.15],'#b29e7f');lid.name='lid';
   }else if(kind==='cushion'){
     cube(g,[.83,.18,.7],[0,.09,0],'#9d8d7a');const lid=new T.Group();lid.position.set(0,.19,-.34);g.add(lid);sphere(lid,.44,[0,.04,.34],'#c5aebf',[1,.28,.79]);lid.name='lid';
     for(const x of [-.3,.3])sphere(lid,.015,[x,.15,.34],'#a78da3');

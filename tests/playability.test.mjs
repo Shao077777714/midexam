@@ -27,36 +27,29 @@ test('window eyes stay visible across long ticks, disabled effects, resync, relo
     assert.equal(w.windowEyes.group.visible,false);state.levels[level].triggered=true;w.sync();assert.equal(w.windowEyes.group.visible,true);
     const count=w.windowEyes.group.children.length;w.setEffects(false);for(const t of [0,1,10,200,3600]){w.tick(t);w.sync();assert.equal(w.windowEyes.group.visible,true);}
     assert.equal(w.windowEyes.group.children.length,count);
-    for(const facade of w.windowEyes.group.children){const box=new T.Box3().setFromObject(facade);assert.ok(Math.abs(box.min.y)<.001);const eye=facade.children.find(o=>o.material?.isMeshBasicMaterial);assert.ok(eye.material.depthTest);assert.equal(eye.material.fog,false);assert.equal(eye.visible,true);}
+    assert.equal(w.windowEyes.group.children.length,1);assert.equal(w.windowEyes.group.userData.cameraCentered,true);
+    const sky=w.windowEyes.sky;assert.ok(sky.material.depthTest);assert.equal(sky.material.fog,false);assert.equal(sky.material.transparent,false);assert.equal(sky.material.side,T.BackSide);
+    for(const x of [-5.8,0,5.8]){w.camera.position.set(x,1.65,-3);w.tick(2);assert.deepEqual(w.windowEyes.group.position.toArray(),w.camera.position.toArray());}
     if(level===4){state.levels[level].projectionDone=true;w.sync();assert.equal(w.windowEyes.group.visible,true);}
     state=loadGame({getItem:()=>JSON.stringify(state)}).state;assert.ok(state);w.build(level);assert.equal(w.windowEyes.group.visible,true);
     state.levels[level].triggered=false;w.sync();assert.equal(w.windowEyes.group.visible,false);
   }
 });
 
-test('wall eyes have equal sizes and spacing on solid walls, stay outside exit and below window glazing',()=>{
+test('wall eyes vary in size, height and roll while staying mounted and clear of clues',()=>{
   for(let level=0;level<5;level++){
     const s=newGame();s.level=level;const w=createWorld(null,()=>s,()=>{},{headless:true});
-    const walls=new Map();
-    for(const {eye} of w.eyes.pupils){const m=eye.userData.mount,key=`${m.axis}:${m.normal}:${eye.position.y}`;if(!walls.has(key))walls.set(key,[]);walls.get(key).push(eye);
-      if(m.axis==='x'&&m.normal===1){assert.ok(new T.Box3().setFromObject(eye).max.y<1.05);assert.ok(eye.rotation.y>0);}else assert.equal(eye.scale.x,.62);
-      if(m.axis==='z'&&m.normal===1)assert.ok(Math.abs(eye.position.x)>1.1);
-    }
-    assert.ok(walls.size>=7);
-    for(const e of w.entities.filter(e=>e.group.userData.mount)){
-      const clue=new T.Box3().setFromObject(e.group).expandByScalar(.1);
-      for(const {eye}of w.eyes.pupils)assert.equal(clue.intersectsBox(new T.Box3().setFromObject(eye)),false,`level ${level+1}: eye covers ${e.name}`);
-    }
-    for(const eyes of walls.values()){
-      const axis=eyes[0].userData.mount.axis==='x'?'z':'x',positions=eyes.map(e=>e.position[axis]).sort((a,b)=>a-b);
-      const deltas=positions.slice(1).map((p,i)=>p-positions[i]);if(deltas.length>1){const m=eyes[0].userData.mount,span=axis==='z'?w.bounds.maxZ-w.bounds.minZ:w.bounds.maxX-w.bounds.minX;const base=span/(m.axis==='x'&&m.normal===1?Math.ceil(span/3.5):Math.max(3,Math.ceil(span/1.9)));assert.ok(deltas.every(v=>Math.abs(v/base-Math.round(v/base))<.001));}
-    }
+    assert.ok(new Set(w.eyes.pupils.map(v=>v.eye.scale.x.toFixed(3))).size>4);
+    assert.ok(new Set(w.eyes.pupils.map(v=>v.eye.rotation.z.toFixed(3))).size>4);
+    const walls=new Set();for(const {eye}of w.eyes.pupils){const m=eye.userData.mount;walls.add(m.axis+':'+m.normal);if(m.axis==='x'&&m.normal===1)assert.ok(new T.Box3().setFromObject(eye).max.y<1.05);}
+    assert.equal(walls.size,4);
+    for(const e of w.entities.filter(e=>e.group.userData.mount))for(const {eye}of w.eyes.pupils)assert.equal(new T.Box3().setFromObject(e.group).expandByScalar(.1).intersectsBox(new T.Box3().setFromObject(eye)),false);
   }
 });
 
-test('fourth room exposes exactly three cassette props and no obsolete map or connector pickups',()=>{
-  const state=newGame();state.level=3;state.levels[3].triggered=true;state.levels[3].searched=['work-panel','family-phone','mirror-recess'];
+test('fourth room exposes exactly five cassette props and no obsolete map or connector pickups',()=>{
+  const state=newGame();state.level=3;state.levels[3].triggered=true;state.levels[3].searched=['work-panel','family-phone','mirror-recess','child-message','desk-recess'];
   const w=createWorld(null,()=>state,()=>{},{headless:true});
-  assert.deepEqual(w.visibleEntities().filter(e=>e.id.startsWith('tape-')).map(e=>e.id).sort(),['tape-family','tape-self','tape-work']);
+  assert.deepEqual(w.visibleEntities().filter(e=>e.id.startsWith('tape-')).map(e=>e.id).sort(),['tape-child','tape-family','tape-promise','tape-self','tape-work']);
   assert.equal(w.entities.some(e=>/^(map|plug)[0-3]$/.test(e.id)),false);
 });
