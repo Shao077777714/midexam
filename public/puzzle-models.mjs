@@ -13,6 +13,8 @@ export function createPuzzleModel(kind){
     box([.65,.1,.42],[0,.05,0],'#443f3a');box([.59,.02,.3],[0,.11,0],ivory);box([.35,.025,.12],[0,.125,0],'#302e2e');
     for(const x of [-.15,.15]){cyl(.075,.025,[x,.14,0],brass);cyl(.025,.03,[x,.16,0],dark);}
     for(const x of [-.26,.26])for(const z of [-.15,.15])cyl(.014,.025,[x,.125,z],brass);
+    if(kind==='tape-child'){for(const x of [-.26,.26])ball(.035,[x,.145,.1],'#d2bb72');}
+    if(kind==='tape-promise')wire([[-.3,.13,.12],[0,.15,.16],[.3,.13,.12]],'#658fa6',.012);
     if(kind==='tape-family')wire([[-.3,.13,-.16],[0,.15,-.12],[.3,.13,-.16]],'#aa4d53',.012);
   }else if(kind.startsWith('map')){
     box([.45,.012,.36],[0,.006,0],ivory);const n=Number(kind.slice(-1));

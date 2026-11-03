@@ -1,4 +1,5 @@
 import {puzzleState,puzzleAction,validPuzzle,switchboardReady,lampsReady,NEW_ITEMS,BOARD_ITEMS,PARTS,HIDES} from './puzzles.mjs';
+import {FINAL_ECHOES} from './finale.mjs';
 import {shadowPlacementFree} from './spatial.mjs';
 export const SAVE_KEY='dream-gap-save-v1';
 export const MEMORIES=['記起','聽見','看見','承認','改變'];
@@ -6,7 +7,7 @@ export const PHOTO_IDS=Array.from({length:9},(_,i)=>`p${i}`);
 export const PHOTO_CODES=['H','C','F','A','I','D','B','G','E'];
 export const PHOTO_TRAY=[4,0,7,2,8,5,1,6,3].map(i=>PHOTO_IDS[i]);
 export const PHOTO_HIDES={p4:'radio',p5:'book',p6:'cushion',p7:'cabinet',p8:'television'};
-export const RECORD_HIDES={work:'work-panel',family:'family-phone',self:'mirror-recess'};
+export const RECORD_HIDES={work:'work-panel',family:'family-phone',self:'mirror-recess',child:'child-message',promise:'desk-recess'};
 export const SEARCHES=[[],['clock','letterbox'],Object.values(PHOTO_HIDES),Object.values(RECORD_HIDES),['lamp-crate','linen-box','power-radio'],[]];
 export const ITEMS={...NEW_ITEMS,key:'舊家鑰匙',drawing:'孩子的畫',letter:'未寄出的信',...Object.fromEntries(PHOTO_IDS.map((id,i)=>[id,`照片碎片 ${PHOTO_CODES[i]}`]))};
 export const SHADOW_TARGETS=[{x:-2.8,z:-2,angle:0},{x:0,z:-1.2,angle:90},{x:2.8,z:-2,angle:180}];
@@ -51,9 +52,9 @@ export function opticsStatus(level){
   return {trace,segmentFilters,received,matched:received.map((v,i)=>v===RECEIVER_FILTERS[i]),ready:trace.solved&&received.every((v,i)=>v===RECEIVER_FILTERS[i])};
 }
 export function shadowAligned(value,target){return Math.hypot(value.x-target.x,value.z-target.z)<0.32&&angleDistance(value.angle,target.angle)<12;}
-function levelState(){return {...puzzleState(),triggered:false,drawer:false,chair:false,frame:false,collected:[],slots:{},shadow:[{x:-3.7,z:1,angle:90},{x:0.6,z:1.4,angle:0},{x:3.4,z:0.8,angle:45}],searched:[],pieceAngles:[90,180,270,90,270,180,90,180,270],photos:Array(9).fill(null),photoRead:false,mirrors:[0,45,0],mirrorFilters:[0,0,0],torchAngle:0,flashlight:false,opticsUnlocked:false,records:[],sequence:[],projecting:false,projectionDone:false,mailed:false};}
+function levelState(){return {...puzzleState(),echoesSeen:[],triggered:false,drawer:false,chair:false,frame:false,collected:[],slots:{},shadow:[{x:-3.7,z:1,angle:90},{x:0.6,z:1.4,angle:0},{x:3.4,z:0.8,angle:45}],searched:[],pieceAngles:[90,180,270,90,270,180,90,180,270],photos:Array(9).fill(null),photoRead:false,mirrors:[0,45,0],mirrorFilters:[0,0,0],torchAngle:0,flashlight:false,opticsUnlocked:false,records:[],sequence:[],projecting:false,projectionDone:false,mailed:false};}
 const corridorState=()=>({clockHour:0,clockMinute:0,seal:[0,0,0]});
-export function newGame(){const levels=Array.from({length:6},()=>({...levelState(),...corridorState()}));levels[5].triggered=true;return {version:5,level:0,unlocked:0,completed:Array(6).fill(false),memories:[],inventory:[],letter:false,elapsed:0,levels,persisted:false};}
+export function newGame(){const levels=Array.from({length:6},()=>({...levelState(),...corridorState()}));levels[5].triggered=true;return {version:6,level:0,unlocked:0,completed:Array(6).fill(false),memories:[],inventory:[],letter:false,elapsed:0,levels,persisted:false};}
 export function canComplete(s){const l=s.levels[s.level];if(!l.triggered)return false; switch(s.level){
 case 0:return l.shadow.every((v,i)=>shadowAligned(v,SHADOW_TARGETS[i]));
 case 1:return ['key','drawing','letter'].every(id=>l.slots[id]===id);
@@ -117,6 +118,7 @@ export function applyAction(current,a){
       case 'SLOT':
         if(s.level!==1||!['key','drawing','letter'].includes(a.slot)||!s.inventory.includes(a.id))return fail('先從物品欄選取已找到的道具。');
         if(a.slot!==a.id)return fail('形狀不相符。這件物品似乎屬於另一個凹槽。');
+        if(l.slots[a.slot]===a.id)return fail('這件物品已經放入凹槽，仍可在背包檢視。');
         l.slots[a.slot]=a.id;message='道具與凹槽吻合。';break;
       case 'SHADOW':
         if(s.level!==0||!Number.isInteger(a.index)||a.index<0||a.index>2||![a.x,a.z,a.angle].every(Number.isFinite))return fail('無效的物件位置。');
@@ -159,6 +161,9 @@ export function applyAction(current,a){
       case 'REMOVE_MEMORY':if(s.level!==4||l.projecting||l.projectionDone)return fail('投影已啟動。');l.sequence.pop();break;
       case 'PROJECT':if(s.level!==4||!lampsReady(l)||!s.completed.slice(0,4).every(Boolean)||l.projecting||l.projectionDone)return fail('先修復電路，依過去、現在、未來點亮三盞燈。');l.projecting=true;message='記憶正在重新連結……';break;
       case 'PROJECTION_END':if(s.level!==4||!l.projecting)return fail('投影尚未啟動。');l.projecting=false;l.projectionDone=true;message='現在，你可以寄出那封信了。';break;
+      case 'FINAL_ECHO':
+        if(s.level!==5||a.index!==l.echoesSeen.length||!Number.isInteger(a.index)||a.index<0||a.index>=FINAL_ECHOES.length)return fail('這段回憶尚未到來，或已經走過。');
+        l.echoesSeen.push(a.index);message='一段回憶浮現了。';break;
       case 'MAIL':if(s.level!==5||!s.letter||!s.completed.slice(0,5).every(Boolean)||!s.levels[4].projectionDone)return fail('完成前五段記憶，才能在這裡寄出第二關的信。');l.mailed=true;message='這一次，你終於願意面對。';break;
       default:return fail('未知操作。');
     }
@@ -171,8 +176,8 @@ export function applyAction(current,a){
 export function saveGame(storage,state){try{storage.setItem(SAVE_KEY,JSON.stringify(state));return {ok:true};}catch{return {ok:false,message:'無法儲存進度，請允許此網站儲存資料後重試。'};}}
 export function loadGame(storage){try{
   const raw=storage.getItem(SAVE_KEY);if(!raw)return {state:null,error:null};const s=JSON.parse(raw);
-  const size=s.version===5?6:5,max=size-1;
-  if(![1,2,3,4,5].includes(s.version)||!Number.isInteger(s.level)||s.level<0||s.level>max||!Number.isInteger(s.unlocked)||s.level>s.unlocked||s.unlocked>max||!Array.isArray(s.completed)||s.completed.length!==size||s.completed.some(v=>typeof v!=='boolean')||!Array.isArray(s.levels)||s.levels.length!==size||!Array.isArray(s.inventory)||s.inventory.some(id=>!(id in ITEMS))||typeof s.letter!=='boolean'||!Number.isFinite(s.elapsed)||s.elapsed<0)throw Error();
+  const size=s.version>=5?6:5,max=size-1;
+  if(![1,2,3,4,5,6].includes(s.version)||!Number.isInteger(s.level)||s.level<0||s.level>max||!Number.isInteger(s.unlocked)||s.level>s.unlocked||s.unlocked>max||!Array.isArray(s.completed)||s.completed.length!==size||s.completed.some(v=>typeof v!=='boolean')||!Array.isArray(s.levels)||s.levels.length!==size||!Array.isArray(s.inventory)||s.inventory.some(id=>!(id in ITEMS))||typeof s.letter!=='boolean'||!Number.isFinite(s.elapsed)||s.elapsed<0)throw Error();
   let gap=false;for(const v of s.completed){if(!v)gap=true;else if(gap)throw Error();}
   const count=s.completed.filter(Boolean).length;if(s.unlocked!==Math.min(max,count)||s.memories?.join(',')!==MEMORIES.slice(0,count).join(',')||(s.completed[1]&&!s.letter))throw Error();
   const legacy=s.version===1;
@@ -206,6 +211,12 @@ export function loadGame(storage){try{
     if(l.projectionDone&&lampsReady(l))s.completed[4]=true;
     s.unlocked=Math.min(5,s.completed.filter(Boolean).length);s.memories=MEMORIES.filter((_,i)=>s.completed[i]);s.version=5;
   }
+  if(s.version===5){
+    for(const l of s.levels)l.echoesSeen=[];
+    if(s.completed[3]){const l=s.levels[3];l.recordOrder=[0,1,2,3,4];l.switchboardOn=true;for(const id of ['tape-work','tape-family','tape-self','tape-child','tape-promise']){if(!l.collected.includes(id))l.collected.push(id);if(!s.inventory.includes(id))s.inventory.push(id);}}
+    if(s.completed[5])s.levels[5].echoesSeen=FINAL_ECHOES.map((_,i)=>i);s.version=6;
+  }
+  if(s.levels.some(l=>!Array.isArray(l.echoesSeen)||l.echoesSeen.length>FINAL_ECHOES.length||l.echoesSeen.some((v,i)=>v!==i)))throw Error();
   if(s.levels.some(l=>!Number.isInteger(l.clockHour)||l.clockHour<0||l.clockHour>11||!Number.isInteger(l.clockMinute)||l.clockMinute<0||l.clockMinute>59||!Array.isArray(l.seal)||l.seal.length!==3||l.seal.some(v=>!Number.isInteger(v)||v<0||v>2)))throw Error();
   // Projection playback is transient: a reload must allow replay, never strand the player.
   s.levels.forEach(l=>l.projecting=false);

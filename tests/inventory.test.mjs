@@ -18,17 +18,17 @@ test('restored memories keep their actual model index and the cross-stage letter
   assert.deepEqual(inventoryEntries(restored).map(e=>[e.kind,e.name]),[['letter','未寄出的信']]);
   restored.level=3;restored.inventory.push('tape-work','plug0');assert.ok(inventoryEntries(restored).some(e=>e.id==='tape-work'));assert.ok(!inventoryEntries(restored).some(e=>e.id==='plug0'));
 });
-test('used corridor items hide but the archived letter returns only when needed in stage five',()=>{
+test('used corridor items stay visible but the archived letter returns only when needed in stage five',()=>{
   const state=newGame();state.level=1;state.inventory=['key','drawing','letter'];state.letter=true;
-  state.levels[1].slots={key:'key',letter:'letter'};assert.deepEqual(inventoryEntries(state).map(e=>e.id),['drawing']);
+  state.levels[1].slots={key:'key',letter:'letter'};assert.deepEqual(inventoryEntries(state).map(e=>[e.id,e.used]),[['key',true],['drawing',false],['letter',true]]);
   const before=JSON.stringify(state.inventory);state.level=2;assert.deepEqual(inventoryEntries(state),[]);state.level=3;assert.deepEqual(inventoryEntries(state),[]);
   state.level=4;state.memories=MEMORIES.slice(0,4);state.levels[4].sequence=[0,1];assert.deepEqual(inventoryEntries(state).map(e=>e.id),['letter']);
-  state.level=5;assert.deepEqual(inventoryEntries(state).map(e=>e.id),['letter']);state.levels[5].mailed=true;assert.deepEqual(inventoryEntries(state),[]);assert.equal(JSON.stringify(state.inventory),before);
+  state.level=5;assert.deepEqual(inventoryEntries(state).map(e=>e.id),['letter']);state.levels[5].mailed=true;assert.equal(inventoryEntries(state)[0].note,'已寄出');assert.equal(JSON.stringify(state.inventory),before);
 });
-test('placed photo pieces hide, but taking back a wrong placement makes them available again',()=>{
+test('placed photo pieces stay visible and taking back a wrong placement updates their status',()=>{
   let state=newGame();state.level=2;state.levels[2].triggered=true;state.inventory=['letter','p0','p1'];
   state=applyAction(state,{type:'PHOTO',id:'p0',slot:4,angle:90}).state;
-  assert.deepEqual(inventoryEntries(state).map(e=>e.id),['p1']);
+  assert.deepEqual(inventoryEntries(state).map(e=>[e.id,e.used]),[['p0',true],['p1',false]]);
   state=applyAction(state,{type:'REMOVE_PHOTO',id:'p0'}).state;assert.deepEqual(inventoryEntries(state).map(e=>e.id),['p0','p1']);
 });
 test('picked shadow props survive dropping and reloading, then hide when aligned',()=>{
@@ -38,7 +38,7 @@ test('picked shadow props survive dropping and reloading, then hide when aligned
   state=loadGame({getItem:()=>JSON.stringify(state)}).state;assert.deepEqual(inventoryEntries(state).map(e=>e.id),['moon']);
   state=applyAction(state,{type:'SHADOW',index:0,...SHADOW_TARGETS[0]}).state;assert.deepEqual(inventoryEntries(state,'moon'),[]);
 });
-test('installed lamp parts and completed-stage inventory hide without deletion',()=>{const state=newGame();state.level=4;state.inventory=['bulb'];assert.equal(inventoryEntries(state).length,1);state.levels[4].installed[0]=true;assert.equal(inventoryEntries(state).length,0);assert.deepEqual(state.inventory,['bulb']);state.level=1;state.inventory=['key'];state.completed[1]=true;assert.deepEqual(inventoryEntries(state),[]);});
+test('installed lamp parts and completed-stage inventory remain visible without deletion',()=>{const state=newGame();state.level=4;state.inventory=['bulb'];assert.equal(inventoryEntries(state).length,1);state.levels[4].installed[0]=true;assert.equal(inventoryEntries(state)[0].note,'已安裝');assert.deepEqual(state.inventory,['bulb']);state.level=1;state.inventory=['key'];state.completed[1]=true;assert.equal(inventoryEntries(state)[0].id,'key');});
 test('double-click picks only a fresh ray hit in exploration, using the same reticle with or without Pointer Lock',()=>{
   const canvas={getBoundingClientRect:()=>({left:20,top:30,width:200,height:100})};let calls=0,ray;
   const world={target(x,y){ray=[x,y];return {pickupAction(){calls++;}};}};

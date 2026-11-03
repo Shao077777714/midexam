@@ -31,22 +31,22 @@ test('corridor clock and symbol seal reject wrong time, missing clues and wrong 
  s=action(s,{type:'CHAIR'});s=action(s,{type:'COLLECT',id:'drawing'});s=action(s,{type:'SEAL_SET',index:0,value:0});assert.equal(applyAction(s,{type:'SEARCH',id:'letterbox'}).ok,false);assert.equal(applyAction(s,{type:'COLLECT',id:'letter'}).ok,false);
  s=action(s,{type:'SEAL_SET',index:0,value:1});s=loadGame({getItem:()=>JSON.stringify(s)}).state;assert.ok(s);s=action(s,{type:'SEARCH',id:'letterbox'});s=action(s,{type:'COLLECT',id:'letter'});assert.equal(s.completed[1],false);for(const id of ['key','drawing','letter'])s=action(s,{type:'SLOT',id,slot:id});assert.equal(s.completed[1],true);
 });
-test('fourth room has a closed cabinet for a required tape and protagonist portraits in every mirror',()=>{
+test('fourth room has a closed cabinet for a required tape and no substitute protagonist portraits or mirrors',()=>{
  const s=checkpoint(3);s.levels[3].triggered=true;s.levels[3].searched=['mirror-recess'];const w=createWorld(null,()=>s,()=>{},{headless:true});
  const cabinet=w.entities.find(e=>e.id==='search-mirror-recess');assert.equal(cabinet.group.userData.closedCavity,true);assert.ok(cabinet.group.getObjectByName('hatch').rotation.y<0);
  const tape=w.entities.find(e=>e.id==='tape-self');assert.equal(tape.group.visible,true);assert.ok(Math.abs(new T.Box3().setFromObject(tape.group).min.y-.855)<.001);
- const portraits=[];w.scene.traverse(o=>{if(o.userData.portrait)portraits.push(o);});assert.equal(portraits.length,7);assert.ok(portraits.every(p=>p.material.userData.protagonist));
+ const portraits=[];w.scene.traverse(o=>{if(o.userData.portrait)portraits.push(o);});assert.equal(portraits.length,0);assert.equal(w.entities.some(e=>e.id.startsWith('mirror')),false);
 });
-test('fixed circuit rotates only one cell, rejects swaps, and projection unlocks a separate final scene',()=>{
- let s=action(checkpoint(4),{type:'TRIGGER'});const old=structuredClone(s.levels[4]);assert.equal(applyAction(s,{type:'CIRCUIT_SWAP',index:0,slot:1}).ok,false);s=action(s,{type:'CIRCUIT_ROTATE',index:2});assert.deepEqual(s.levels[4].circuit,old.circuit);for(let i=0;i<9;i++)if(i!==2)assert.equal(s.levels[4].circuitAngles[i],old.circuitAngles[i]);
+test('circuit rotates only one cell, allows explicit swaps, and projection unlocks a separate final scene',()=>{
+ let s=action(checkpoint(4),{type:'TRIGGER'});const old=structuredClone(s.levels[4]);assert.equal(applyAction(s,{type:'CIRCUIT_SWAP',index:0,slot:1}).ok,true);s=action(s,{type:'CIRCUIT_ROTATE',index:2});assert.deepEqual(s.levels[4].circuit,old.circuit);for(let i=0;i<9;i++)if(i!==2)assert.equal(s.levels[4].circuitAngles[i],old.circuitAngles[i]);
  s=repaired(checkpoint(4));s=action(s,{type:'PROJECT'});s=action(s,{type:'PROJECTION_END'});assert.equal(s.completed[4],true);assert.equal(s.completed[5],false);assert.deepEqual(s.memories,MEMORIES);assert.equal(applyAction(s,{type:'MAIL'}).ok,false);s=action(action(s,{type:'ACK_SAVE'}),{type:'NEXT'});assert.equal(s.level,5);s=action(s,{type:'MAIL'});assert.ok(s.completed.every(Boolean));assert.equal(s.memories.length,5);assert.equal(applyAction(s,{type:'MAIL'}).ok,false);assert.equal(loadGame({getItem:()=>JSON.stringify(s)}).state.completed[5],true);
 });
 test('sixth scene contains only a reachable supported mailbox, black background and no water',()=>{
  const s=checkpoint(5);s.levels[4].projectionDone=true;const w=createWorld(null,()=>s,()=>{},{headless:true});assert.deepEqual(w.entities.map(e=>e.id),['mailbox']);assert.equal(w.scene.background.getHex(),0);assert.equal(w.wadingAt(0,0),false);
- const e=w.entities[0],b=new T.Box3().setFromObject(e.group);assert.ok(Math.abs(b.min.y)<.001);const path=findPath([0,3],[0,-1.4],w.bounds,w.blocks,p=>w.approachable(e,new T.Vector3(p[0],1.65,p[1])));assert.ok(path.length);w.tick(3600);assert.equal(w.entities.length,1);
+ const e=w.entities[0],b=new T.Box3().setFromObject(e.group);assert.ok(Math.abs(b.min.y)<.001);const path=findPath([0,7],[0,-45],w.bounds,w.blocks,p=>w.approachable(e,new T.Vector3(p[0],1.65,p[1])));assert.ok(path.length);w.tick(3600);assert.equal(w.entities.length,1);
  for(const alter of [x=>x.letter=false,x=>x.completed[4]=false]){const broken=structuredClone(s);alter(broken);assert.equal(applyAction(broken,{type:'MAIL'}).ok,false);}
 });
 test('v4 saves preserve all earned progress, normalize fixed circuits and map prior mail to the sixth scene',()=>{
  for(const finished of [false,true]){const s=checkpoint(4);s.version=4;s.levels=s.levels.slice(0,5);s.completed=s.completed.slice(0,5);s.levels[4].circuit=[1,0,2,3,4,6,5,7,8];if(finished){s.completed[4]=true;s.memories=[...MEMORIES];Object.assign(s.levels[4],{triggered:true,projectionDone:true,mailed:true,installed:[true,true,true],lampOrder:[0,1,2]});}
- const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,5);assert.equal(r.state.levels.length,6);assert.equal(r.state.completed[5],finished);assert.equal(r.state.level,finished?5:4);assert.deepEqual(r.state.levels[4].circuit,[0,1,2,3,4,5,6,7,8]);assert.equal(r.state.letter,true);assert.deepEqual(r.state.memories,s.memories);}
+ const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,6);assert.equal(r.state.levels.length,6);assert.equal(r.state.completed[5],finished);assert.equal(r.state.level,finished?5:4);assert.deepEqual(r.state.levels[4].circuit,[0,1,2,3,4,5,6,7,8]);assert.equal(r.state.letter,true);assert.deepEqual(r.state.memories,s.memories);}
 });

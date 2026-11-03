@@ -1,3 +1,4 @@
+import {FINAL_HALL,echoCheckpoint} from './finale.mjs';
 import {BOARD_ITEMS,PARTS,HIDES,NEW_ITEMS,circuitStatus,LINE_NAMES,LAMP_NAMES} from './puzzles.mjs';
 import * as T from './vendor/three.module.js';
 import {SHADOW_TARGETS,shadowAligned,MIRROR_POINTS,traceMirrors,PHOTO_IDS,opticsStatus,SPECTRA,RECEIVER_FILTERS} from './engine.mjs';
@@ -7,7 +8,7 @@ import {buildPhenomena} from './phenomena.mjs';
 import {buildExterior,buildEyes,buildWindowEyes,buildFlood} from './atmosphere.mjs';
 import {disposeObjects,watchContext} from './rendering.mjs';
 const loader=new T.TextureLoader(),textures={};
-if(typeof document!=='undefined')for(const [k,f] of Object.entries({grass:'grass-dreamcore-v1.png',siding:'siding-tintable-v1.png',road:'asphalt-dreamcore-v1.png',eyes:'sky-eyes-nightmare-v1.png',family:'family-aged-v2.png',corrupt:'family-distorted-v2.png',organic:'organic-eye-v2.png',protagonist:'protagonist-mirror-v1.png'})){
+if(typeof document!=='undefined')for(const [k,f] of Object.entries({grass:'grass-dreamcore-v1.png',siding:'siding-tintable-v1.png',road:'asphalt-dreamcore-v1.png',eyes:'sky-eyes-nightmare-v1.png',family:'family-aged-v2.png',corrupt:'family-distorted-v2.png',organic:'organic-eye-v2.png'})){
   const tex=loader.load(`assets/dreamcore/${f}`);tex.colorSpace=T.SRGBColorSpace;
   if(['grass','siding','road'].includes(k)){tex.wrapS=tex.wrapT=T.RepeatWrapping;tex.repeat.set(k==='grass'?8:3,k==='grass'?8:3);}
   textures[k]=tex;
@@ -132,7 +133,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
     cylinder(g,.006,.006,y-.3,[0,(y-.3)/2+.1,0],'#b8b4a6');cylinder(g,.1,.12,.1,[0,.05,0],'#9e9a89');track(g);return g;
   }
   function room(level){
-    bounds=level===1?{minX:-3.4,maxX:3.4,minZ:-15,maxZ:7}:{minX:-6,maxX:6,minZ:-7.2,maxZ:7};
+    bounds=level===3?{minX:-8,maxX:8,minZ:-10.5,maxZ:9}:level===1?{minX:-3.4,maxX:3.4,minZ:-15,maxZ:7}:{minX:-6,maxX:6,minZ:-7.2,maxZ:7};
     const w=bounds.maxX-bounds.minX,d=bounds.maxZ-bounds.minZ,cz=(bounds.minZ+bounds.maxZ)/2;
     box(root,[w+.3,.22,d+.3],[0,-.12,cz],level===1?'#9aae8f':'#b9b2a5',level===1?{map:textures.grass}:{});
     if(level!==1){for(let x=-5.7;x<6;x+=.6)box(root,[.014,.008,14],[x,.004,0],'#8c7d6a');}
@@ -166,13 +167,16 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
     scene.remove(root);disposeObjects(root,Object.values(textures));root=new T.Group();scene.add(root);entities=[];blocks=[];shadowModels=[];ghosts=[];mirrorModels=[];curtain=[];plates=[];mirrorVeil=null;clockHand=null;shadowSupports=[];colliderSources=[];decor=[];sensors=[];searchObjects=[];
     const s=getState(),i=s.level;photoCorrupted=s.levels[i].triggered;
     if(i===5){
-      bounds={minX:-4,maxX:4,minZ:-5,maxZ:6};camera.position.set(0,1.65,3);camera.rotation.set(-.08,0,0);
-      const mailbox=new T.Group();root.add(mailbox);mailbox.position.set(0,0,-1.4);
+      bounds={minX:-FINAL_HALL.halfWidth,maxX:FINAL_HALL.halfWidth,minZ:FINAL_HALL.minZ,maxZ:FINAL_HALL.maxZ};camera.position.set(0,1.65,FINAL_HALL.startZ-echoCheckpoint(s.levels[5].echoesSeen));camera.rotation.set(-.08,0,0);
+      const mailbox=new T.Group();root.add(mailbox);mailbox.position.set(0,0,FINAL_HALL.mailboxZ);
       box(mailbox,[1.1,1.15,.6],[0,1.25,0],'#90747d');box(mailbox,[.72,.065,.04],[0,1.5,.325],'#191718');
       box(mailbox,[1.16,.08,.66],[0,1.865,0],'#a58d8e');cylinder(mailbox,.09,.15,.64,[0,.34,0],'#6e7370');cylinder(mailbox,.29,.34,.08,[0,.04,0],'#4a504b');
       track(mailbox);entity('mailbox','最後的信箱',mailbox,()=>onActivate({type:'MAIL_UI'}));
-      const light=new T.SpotLight('#d9d1bd',18,8,Math.PI/7,.8,1);light.position.set(0,3.6,1.2);light.target.position.set(0,1,-1.4);root.add(light,light.target);
-      box(root,[8,.1,11],[0,-.06,.5],'#000000');sync();return;
+      const light=new T.SpotLight('#d9d1bd',18,8,Math.PI/7,.8,1);light.position.set(0,3.6,FINAL_HALL.mailboxZ+2.6);light.target.position.set(0,1,FINAL_HALL.mailboxZ);root.add(light,light.target);
+      box(root,[4.8,.1,57],[0,-.06,-19.5],'#060405');
+      for(const side of [-1,1]){box(root,[.16,4.8,57],[side*2.48,2.4,-19.5],'#010101');for(let z=-44;z<8;z+=4)box(root,[.035,.012,.65],[side*1.72,.005,z],'#492329',{emissive:'#6a2834',emissiveIntensity:.6});}
+      // A dim marker at the real mailbox guides the walk without lighting the void.
+      box(mailbox,[.09,.025,.035],[0,1.72,.326],'#a84852',{emissive:'#cd6770',emissiveIntensity:1});sync();return;
     }
     room(i);beamRoot=new T.Group();beamRoot.userData.nonOccluding=true;root.add(beamRoot);
     camera.position.set(i===1?0:0,1.65,i===1?5:5.9);camera.rotation.set(-.03,0,0);
@@ -220,15 +224,12 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
       for(let n=0;n<4;n++)balloon(-4.8+n*.65,4.8,3.2+(n%2)*.35,['#b5c5a4','#d2a4b4','#d7c08c'][n%3]);
     } else if(i===3){
       table(4.5,3.1,1.7,1);item('trigger','成癮諮詢紀錄','consult',[4.5,1.075,3.1],()=>onActivate({type:'TRIGGER'}));
-      MIRROR_POINTS.forEach(([x,z],n)=>{const g=new T.Group();root.add(g);g.position.set(x,0,z);box(g,[.12,2.2,2],[0,1.7,0],'#988575');box(g,[.13,2,1.8],[0,1.7,0],'#a6c1b8',{metalness:.93,roughness:.1});cylinder(g,.28,.34,.15,[0,.075,0],'#707b72');box(g,[.08,.9,.08],[0,.5,0],'#7c897a');for(let p=0;p<n+1;p++)box(g,[.15,.025,.06],[0,2.5-p*.09,.88],'#b7a978');entity(`mirror${n}`,`第${n+1}面立鏡`,g,()=>onActivate({type:'MIRROR_NOTE',index:n}));const filter=box(g,[.145,.26,.32],[0,1.7,.3],'#f1e6bb',{metalness:.25,roughness:.25,emissive:'#252925',emissiveIntensity:.3});filter.name='filter-glass';mirrorModels.push(g);track(g);});
-      const central=box(root,[3,2.7,.12],[-3.2,2,-7.02],'#b9c5bd',{metalness:.98,roughness:.18});mounted(central,'z',bounds.minZ+.1,1);
-      const portraitMaterial=()=>{const portrait=textures.protagonist?.clone();if(portrait){portrait.repeat.set(.5,1);portrait.needsUpdate=true;}const m=new T.MeshBasicMaterial({map:portrait||null,color:'#ffffff',toneMapped:false});m.userData.protagonist=true;return m;};
-      mirrorVeil=mesh(new T.PlaneGeometry(1.3,2.2),portraitMaterial(),root,[-3.2,2,bounds.minZ+.223]);mirrorVeil.userData.portrait=true;
-      for(const g of mirrorModels)for(const side of [-1,1]){const p=mesh(new T.PlaneGeometry(1.5,1.95),portraitMaterial(),g,[side*.078,1.7,0]);p.rotation.y=side*Math.PI/2;p.userData.portrait=true;}
       drawer(3.9,-4,'隱藏抽屜');
       supplyStation('work-panel','工作檔案匣','book',4.5,-5.4,['tape-work']);
       supplyStation('family-phone','失聯的答錄機','radio',-4.5,-4.6,['tape-family']);
-      supplyStation('mirror-recess','鏡旁的木櫃','cabinet',2.2,5.2,['tape-self']);
+      supplyStation('mirror-recess','斑駁的木櫃','cabinet',2.2,5.2,['tape-self']);
+      supplyStation('child-message','孩子的留言匣','cushion',-6.3,1.2,['tape-child']);
+      supplyStation('desk-recess','角落的矮櫃','cabinet',6.3,-8.1,['tape-promise']);
       table(0,3.8,2.25,1.15);const board=supported('switchboard',[0,1.075,3.8]);entity('switchboard','老式電話總機',board,()=>onActivate({type:'BOARD_UI'}),()=>getState().levels[3].triggered);track(board);const boardLight=new T.PointLight('#dec69c',1.8,3.5);boardLight.position.set(0,2.3,4.3);root.add(boardLight);
 
     } else {
@@ -257,7 +258,7 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
     sync();
   }
   function sync(){const s=getState(),l=s.levels[s.level],weird=l.triggered;
-    if(s.level===5){scene.background.set('#000000');scene.fog.color.set('#000000');scene.fog.near=1;scene.fog.far=9;hemi.intensity=sun.intensity=spot.intensity=nearbyLight.intensity=0;refreshColliders();renderer.shadowMap.needsUpdate=true;scene.updateMatrixWorld(true);return;}
+    if(s.level===5){scene.background.set('#000000');scene.fog.color.set('#000000');scene.fog.near=1;scene.fog.far=65;hemi.intensity=sun.intensity=spot.intensity=nearbyLight.intensity=0;refreshColliders();renderer.shadowMap.needsUpdate=true;scene.updateMatrixWorld(true);return;}
     scene.background.set(weird?'#10191b':'#cbdee5');scene.fog.color.set(weird?'#263738':'#e7d9cf');scene.fog.near=weird?16:45;scene.fog.far=weird?90:180;
     hemi.color.set(weird?'#a7c2bd':'#fae6d6');hemi.groundColor.set(weird?'#494354':'#a2ad90');hemi.intensity=weird?.48:1.65;sun.intensity=weird?.17:2.1;sun.color.set(weird?'#bbc6e0':'#fff0d7');spot.intensity=s.level===0?(weird?75:45):0;ghostEye.visible=false;wallEyes.group.visible=weird;windowEyes.group.visible=weird;windowEyes.follow(camera);
     photoCorrupted=weird;setPhotoMood(root,weird);phenomena.setVisible(weird);nearbyLight.intensity=weird?.9:0;flood.group.visible=weird&&[1,3,4].includes(s.level);
@@ -270,7 +271,6 @@ export function createWorld(canvas,getState,onActivate,{headless=false}={}){
     if(s.level===0){shadowModels.forEach((g,n)=>{const v=l.shadow[n];g.position.set(v.x,1.4,v.z);g.rotation.y=v.angle*Math.PI/180;restOn(g,1.4);shadowSupports[n].position.set(v.x,0,v.z);g.traverse(o=>{if(o.material?.emissive)o.material.emissive.set(shadowAligned(v,SHADOW_TARGETS[n])?'#163321':'#000000');});});ghosts.forEach(g=>g.visible=weird);}
     if(s.level===2&&s.completed[2])plates[2].visible=false;
     if(s.level===1){const g=searchObjects.find(v=>v.id==='clock')?.g;if(g){g.getObjectByName('hour-hand').rotation.z=-(l.clockHour+l.clockMinute/60)*Math.PI/6;g.getObjectByName('minute-hand').rotation.z=-l.clockMinute*Math.PI/30;}}
-    if(s.level===3){root.traverse(g=>{if(g.userData.portrait&&g.material.map)g.material.map.offset.x=weird?.5:0;});mirrorModels.forEach((g,n)=>{g.rotation.y=-(l.mirrors[n]*Math.PI/180);g.getObjectByName('filter-glass').visible=false;});}
 
     if(s.level===3){const board=entities.find(e=>e.id==='switchboard')?.group;for(let n=0;n<3;n++){const light=board?.getObjectByName(`board-light${n}`);if(light)light.material.emissiveIntensity=l.switchboardOn?2:0;
       const marker=board?.getObjectByName(`signal-marker${n}`),angle=(l.signals[n]-1)*Math.PI/3;if(marker){marker.position.x=(n-1)*.56+Math.sin(angle)*.06;marker.position.z=.22+Math.cos(angle)*.06;marker.rotation.y=angle;}

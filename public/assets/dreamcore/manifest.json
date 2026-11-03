@@ -108,7 +108,8 @@
       "prompts": "PROMPTS-v3.json",
       "generatedOn": "2026-11-03",
       "inGameVerified": true,
-      "verificationScope": "Codex IAB dream/weird portrait sample; formal Chrome/Edge matrix pending."
+      "verificationScope": "Historical v5 screenshot only. Removed from runtime in v6: protagonist is the father from the existing family photograph.",
+      "status": "archived-unused"
     }
   ]
 }

@@ -24,11 +24,11 @@ test('content pack has six ordered levels with narrative, clues, three non-answe
   }
 });
 
-test('content reflects the latest search chain, cassette cabinet, fixed circuit and sixth mailbox ending',async()=>{
+test('content reflects the latest search chain, cassette cabinet, drag circuit and sixth mailbox ending',async()=>{
  const [second,fourth,fifth,sixth]=await Promise.all([2,4,5,6].map(n=>readJson(`content/level-${n}.json`)));
  assert.match(second.answer.summary,/08:10/);assert.match(second.answer.summary,/樹→房子→月亮/);
  for(const word of ['工作檔案匣','答錄機','木櫃','錄音','接通'])assert.ok(JSON.stringify(fourth).includes(word));
- assert.match(fifth.clues.join(''),/不能互換/);assert.match(fifth.story.afterPuzzle,/第六關/);assert.equal(sixth.memory,null);assert.match(sixth.answer.summary,/投入.*結局/);
+ assert.match(fifth.clues.join(''),/拖放交換/);assert.match(fifth.story.afterPuzzle,/第六關/);assert.equal(sixth.memory,null);assert.match(sixth.answer.summary,/投入.*結局/);
  for(const level of [second,fourth,fifth,sixth])assert.ok(level.sources.some(s=>s.includes('2026-11-03')));
 });
 
