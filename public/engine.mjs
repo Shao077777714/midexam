@@ -53,9 +53,9 @@ export function opticsStatus(level){
   return {trace,segmentFilters,received,matched:received.map((v,i)=>v===RECEIVER_FILTERS[i]),ready:trace.solved&&received.every((v,i)=>v===RECEIVER_FILTERS[i])};
 }
 export function shadowAligned(value,target){return Math.hypot(value.x-target.x,value.z-target.z)<0.32&&angleDistance(value.angle,target.angle)<12;}
-function levelState(){return {...puzzleState(),exitOpened:false,guidance:initialGuidance(),echoesSeen:[],triggered:false,drawer:false,chair:false,frame:false,collected:[],slots:{},shadow:[{x:-3.7,z:1,angle:90},{x:0.6,z:1.4,angle:0},{x:3.4,z:0.8,angle:45}],searched:[],pieceAngles:[90,180,270,90,270,180,90,180,270],photos:Array(9).fill(null),photoRead:false,mirrors:[0,45,0],mirrorFilters:[0,0,0],torchAngle:0,flashlight:false,opticsUnlocked:false,records:[],sequence:[],projecting:false,projectionDone:false,mailed:false};}
+function levelState(){return {...puzzleState(),outroHeard:false,exitOpened:false,guidance:initialGuidance(),echoesSeen:[],triggered:false,drawer:false,chair:false,frame:false,collected:[],slots:{},shadow:[{x:-3.7,z:1,angle:90},{x:0.6,z:1.4,angle:0},{x:3.4,z:0.8,angle:45}],searched:[],pieceAngles:[90,180,270,90,270,180,90,180,270],photos:Array(9).fill(null),photoRead:false,mirrors:[0,45,0],mirrorFilters:[0,0,0],torchAngle:0,flashlight:false,opticsUnlocked:false,records:[],sequence:[],projecting:false,projectionDone:false,mailed:false};}
 const corridorState=()=>({clockHour:0,clockMinute:0,seal:[0,0,0]});
-export function newGame(){const levels=Array.from({length:6},()=>({...levelState(),...corridorState()}));levels[5].triggered=true;return {version:7,level:0,unlocked:0,completed:Array(6).fill(false),memories:[],inventory:[],letter:false,elapsed:0,levels,persisted:false};}
+export function newGame(){const levels=Array.from({length:6},()=>({...levelState(),...corridorState()}));levels[5].triggered=true;return {version:8,level:0,unlocked:0,completed:Array(6).fill(false),memories:[],inventory:[],letter:false,elapsed:0,levels,persisted:false};}
 export function canComplete(s){const l=s.levels[s.level];if(!l.triggered)return false; switch(s.level){
 case 0:return l.shadow.every((v,i)=>shadowAligned(v,SHADOW_TARGETS[i]));
 case 1:return ['key','drawing','letter'].every(id=>l.slots[id]===id);
@@ -69,16 +69,22 @@ export function applyAction(current,a){
   const fail=m=>({state:current,ok:false,message:m,completedNow:false});
   if(a.type==='NEXT'){
     if(!s.completed[s.level]||!s.persisted)return fail('請先完成本關並成功儲存進度。');
+    if(!l.outroHeard)return fail('請先完整聽完這一段記憶。');
     if(!l.exitOpened)return fail('請親自走到出口，把門打開。');
     if(s.level===5)return fail('你已找到清醒之門。');
     s.level++;return {state:s,ok:true,message:'新的記憶正在浮現。',completedNow:false};
   }
   if(a.type==='OPEN_EXIT'){
     if(!s.completed[s.level]||!s.persisted)return fail('先完成本關並成功儲存，出口才會解鎖。');
+    if(!l.outroHeard)return fail('這段記憶還在播放，聽完後才能開門。');
     if(l.exitOpened)return fail('出口已經打開。');
     l.exitOpened=true;s.persisted=false;return {state:s,ok:true,message:'你親手打開了門。',completedNow:false,exitOpenedNow:true};
   }
   if(a.type==='ACK_SAVE'){s.persisted=true;return {state:s,ok:true,message:'進度已儲存',completedNow:false};}
+  if(a.type==='OUTRO_END'){
+    if(!s.completed[s.level]||l.outroHeard)return fail('這段結尾尚未開始，或已經聽完。');
+    l.outroHeard=true;s.persisted=false;return {state:s,ok:true,message:'你聽完了這段記憶，現在可以親自開門。',completedNow:false};
+  }
   if(s.completed[s.level])return fail('本關已完成，請從出口前往下一關。');
   const puzzle=puzzleAction(s,a);
   if(puzzle){if(!puzzle.ok)return {...fail(puzzle.message),distorted:puzzle.distorted};message=puzzle.message;}
@@ -176,16 +182,16 @@ export function applyAction(current,a){
     }
   }
   const completedNow=canComplete(s);
-  if(completedNow){s.completed[s.level]=true;s.unlocked=Math.min(5,s.level+1);s.memories=MEMORIES.filter((_,i)=>s.completed[i]);s.persisted=false;message=s.level===5?'信已寄出。最後的門已經解鎖。':`找回記憶：${MEMORIES[s.level]}`;}
+  if(completedNow){s.completed[s.level]=true;s.unlocked=Math.min(5,s.level+1);s.memories=MEMORIES.filter((_,i)=>s.completed[i]);s.persisted=false;message=s.level===5?'信已寄出。請聽完這段記憶，再親自開門。':`找回記憶：${MEMORIES[s.level]}`;}
   const shadowSolvedNow=a.type==='SHADOW'&&shadowAligned(l.shadow[a.index],SHADOW_TARGETS[a.index])?a.index:null;
   return {state:s,ok:true,message,completedNow,shadowSolvedNow};
 }
-export function endingReady(s){return s.level===5&&s.completed.every(Boolean)&&s.levels[5].mailed&&s.levels[5].exitOpened;}
+export function endingReady(s){return s.level===5&&s.completed.every(Boolean)&&s.levels[5].mailed&&s.levels[5].outroHeard&&s.levels[5].exitOpened;}
 export function saveGame(storage,state){try{storage.setItem(SAVE_KEY,JSON.stringify(state));return {ok:true};}catch{return {ok:false,message:'無法儲存進度，請允許此網站儲存資料後重試。'};}}
 export function loadGame(storage){try{
   const raw=storage.getItem(SAVE_KEY);if(!raw)return {state:null,error:null};const s=JSON.parse(raw);
   const size=s.version>=5?6:5,max=size-1;
-  if(![1,2,3,4,5,6,7].includes(s.version)||!Number.isInteger(s.level)||s.level<0||s.level>max||!Number.isInteger(s.unlocked)||s.level>s.unlocked||s.unlocked>max||!Array.isArray(s.completed)||s.completed.length!==size||s.completed.some(v=>typeof v!=='boolean')||!Array.isArray(s.levels)||s.levels.length!==size||!Array.isArray(s.inventory)||s.inventory.some(id=>!(id in ITEMS))||typeof s.letter!=='boolean'||!Number.isFinite(s.elapsed)||s.elapsed<0)throw Error();
+  if(![1,2,3,4,5,6,7,8].includes(s.version)||!Number.isInteger(s.level)||s.level<0||s.level>max||!Number.isInteger(s.unlocked)||s.level>s.unlocked||s.unlocked>max||!Array.isArray(s.completed)||s.completed.length!==size||s.completed.some(v=>typeof v!=='boolean')||!Array.isArray(s.levels)||s.levels.length!==size||!Array.isArray(s.inventory)||s.inventory.some(id=>!(id in ITEMS))||typeof s.letter!=='boolean'||!Number.isFinite(s.elapsed)||s.elapsed<0)throw Error();
   let gap=false;for(const v of s.completed){if(!v)gap=true;else if(gap)throw Error();}
   const count=s.completed.filter(Boolean).length;if(s.unlocked!==Math.min(max,count)||s.memories?.join(',')!==MEMORIES.slice(0,count).join(',')||(s.completed[1]&&!s.letter))throw Error();
   const legacy=s.version===1;
@@ -228,7 +234,9 @@ export function loadGame(storage){try{
   if(s.levels.some(l=>!Number.isInteger(l.clockHour)||l.clockHour<0||l.clockHour>11||!Number.isInteger(l.clockMinute)||l.clockMinute<0||l.clockMinute>59||!Array.isArray(l.seal)||l.seal.length!==3||l.seal.some(v=>!Number.isInteger(v)||v<0||v>2)))throw Error();
   if(s.version===6){for(const [i,l]of s.levels.entries()){l.exitOpened=Boolean(s.completed[i]&&(i<s.level||i===5));l.guidance=initialGuidance();}s.version=7;}
   if(s.levels.some(l=>typeof l.exitOpened!=='boolean'||l.exitOpened&&!s.completed[s.levels.indexOf(l)]||!l.guidance||typeof l.guidance.goalId!=='string'||l.guidance.goalId.length>160||!Number.isFinite(l.guidance.seconds)||l.guidance.seconds<0||l.guidance.seconds>1e7||l.guidance.tier!==hintTier(l.guidance.seconds)||!Number.isInteger(l.guidance.bestProgress)||l.guidance.bestProgress<0||l.guidance.bestProgress>1000))throw Error();
-  // Projection playback is transient: a reload must allow replay, never strand the player.
+  if(s.version===7){for(const [i,l]of s.levels.entries())l.outroHeard=Boolean(s.completed[i]&&(i<s.level||l.exitOpened));s.version=8;}
+  if(s.levels.some((l,i)=>typeof l.outroHeard!=='boolean'||l.outroHeard&&!s.completed[i]||l.exitOpened&&!l.outroHeard))throw Error();
+  // Playback itself is transient. Only a fully heard outro is persisted.
   s.levels.forEach(l=>l.projecting=false);
   s.persisted=true;return {state:s,error:null};
 }catch{return {state:null,error:'無法讀取這份存檔。你仍可以開始新的旅程。'};}}

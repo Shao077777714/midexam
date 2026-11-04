@@ -1,9 +1,7 @@
 import {createAudioDirector} from './audio-director.mjs';
-import {VOICE_CLIPS} from './voice-clips.mjs';
 import {currentGoal} from './guidance.mjs';
 import {FAMILY_PHOTOS,FINAL_HALL,FINAL_ECHOES,createFinalePlayback} from './finale.mjs';
 import {createPuzzleUI} from './puzzle-ui.mjs';
-import {RECORDINGS} from './puzzles.mjs';
 import * as T from './vendor/three.module.js';
 import {newGame,applyAction,saveGame,loadGame,endingReady,MEMORIES,ITEMS,angleDistance,shadowAligned,SHADOW_TARGETS,PHOTO_IDS,PHOTO_CODES,PHOTO_TRAY} from './engine.mjs';
 import {createWorld,createInspector,createInspectorPool,FAMILY_URL,HORROR_FAMILY_URL} from './scene.mjs';
@@ -14,12 +12,12 @@ import {inventoryEntries} from './inventory.mjs';
 import {LEVELS,PROJECTION} from './content.mjs';
 const $=id=>document.getElementById(id), symbols=['☾','≋','▧','◇','✧'];
 const storage={getItem:k=>localStorage.getItem(k),setItem:(k,v)=>localStorage.setItem(k,v)};
-let saved=loadGame(storage),state=newGame(),world,mode='title',selected=null,held=null,inspector=null,panelRefresh=null,nearby=null,focusEntity=null,navigation=[],navTarget=null,toastTimer,projectionTime=0,projectionPage=-1,elapsedLast=performance.now(),hintDepth=0,muted=false,lastRender=0,photoController=null,effectsEnabled=true,eyeTimer,mouseLook,inputMode,controlHover=false,cursorAim=null;
+let saved=loadGame(storage),state=newGame(),world,mode='title',selected=null,held=null,inspector=null,panelRefresh=null,nearby=null,focusEntity=null,navigation=[],navTarget=null,toastTimer,elapsedLast=performance.now(),hintDepth=0,muted=false,lastRender=0,photoController=null,effectsEnabled=true,eyeTimer,mouseLook,inputMode,controlHover=false,cursorAim=null;
 const keys=new Set();
 const finalePlayback=createFinalePlayback();
 const finaleOverlay=document.createElement('aside');finaleOverlay.id='finale-memory';finaleOverlay.hidden=true;finaleOverlay.setAttribute('role','status');finaleOverlay.setAttribute('aria-live','polite');
 finaleOverlay.innerHTML='<div class="finale-photo" aria-hidden="true"></div><div class="finale-words"><p class="eyebrow">那些沒有被接住的聲音</p><p class="finale-quote"></p><p class="finale-detail"></p></div><span class="finale-eye first" aria-hidden="true"></span><span class="finale-eye second" aria-hidden="true"></span>';document.body.append(finaleOverlay);
-let finaleActive=null,doorTime=0,pageFocused=true;
+let finaleActive=null,doorTime=0,pageFocused=true,narrationPaused=false;
 function resetFinale(){finalePlayback.reset();finaleActive=null;finaleOverlay.hidden=true;}
 function updateFinale(dt){
   const running=mode==='explore'&&!controlHover,view=finalePlayback.step({distance:FINAL_HALL.startZ-world.camera.position.z,seen:state.levels[5].echoesSeen,dt,running});
@@ -43,7 +41,7 @@ const text=(tag,value,cls)=>{const e=document.createElement(tag);e.textContent=v
 const btn=(label,fn,cls='secondary')=>{const b=text('button',label,cls);b.type='button';b.addEventListener('click',fn);return b;};
 const add=(parent,...children)=>children.forEach(c=>parent.append(c));
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const audio=createAudioDirector({snapshot:()=>({level:state.level,triggered:state.levels[state.level].triggered,muted,active:!['title','render-error','recovering'].includes(mode),paused:mode==='paused'||!pageFocused||document.hidden,overlay:['modal','panel','projection'].includes(mode)}),onStatus(status){const button=$('sound-button');button.dataset.voice=status.voice;button.dataset.loaded=String(status.ready);button.dataset.paused=String(status.paused);if(status.error)button.title=status.error;}});
+const audio=createAudioDirector({snapshot:()=>({level:state.level,triggered:state.levels[state.level].triggered,muted,active:!['title','render-error','recovering'].includes(mode),paused:mode==='paused'||narrationPaused||!pageFocused||document.hidden,overlay:['modal','panel','projection','outro'].includes(mode)}),onStatus(status){const button=$('sound-button');button.dataset.voice=status.voice;button.dataset.loaded=String(status.ready);button.dataset.paused=String(status.paused);if(status.error)button.title=status.error;}});
 function toast(copy){if(!copy)return;$('toast').textContent=copy;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),4200);}
 function setMode(next){mode=next;if(next!=='explore')finaleOverlay.hidden=true;keys.clear();document.body.classList.toggle('exploring',next==='explore');document.body.classList.toggle('interface-open',next==='panel');$('inventory-button').setAttribute('aria-expanded','false');inputMode?.setMode(next);$('crosshair').hidden=next!=='explore';$('interact').hidden=next!=='explore';audio.update();}
 function syncInput({active,cursor}){controlHover=!active;document.body.classList.toggle('cursor-mode',mode==='explore'&&cursor);$('quick-controls').inert=mode==='explore'&&!cursor||mode!=='explore'&&mode!=='panel';keys.clear();cursorAim=null;if(!active){navigation=[];navTarget=null;}}
@@ -60,12 +58,31 @@ function persist(){const result=saveGame(storage,state);if(result.ok){state=appl
 function complete(){
   audio.play('correct');const good=persist(),meta=LEVELS[state.level];
   if(endingReady(state)){if(good)ending(0);else modal('進度尚未保存','<p>請重試儲存，既有進度會保留。</p>',[['重試儲存',complete]]);return;}
-  const title=state.level===5?'信已寄出，門還在等你':`找回「${meta.memory}」`;
-  const copy=state.level===5?'那些話終於送出去了。走向信箱後方，親手打開最後的門。':meta.story;
-  modal(title,`<p>${esc(copy)}</p><p class="muted">${good?'✓ 已儲存。回到場景，靠近出口並親自開門。':'尚未儲存，請重試。'}</p>`,good?[['回到場景，走向出口',resume]]:[['重試儲存',complete]],state.level===5?'THE LAST DOOR':`MEMORY ${state.level+1} / 5`);
-  if(good&&state.level<5)audio.speak(`memory-${state.level}`);
+  if(!good){modal('進度尚未保存','<p>請允許網站保存這段記憶，再開始結尾旁白。</p>',[['重試儲存',complete]]);return;}
+  const title=state.level===5?'信已寄出，門還在等你':`找回「${meta.memory}」`,heard=state.levels[state.level].outroHeard;
+  const body=document.createElement('div'),copy=text('p',meta.story,'narration-copy'),status=text('p',heard?'✓ 已聽完並保存，回到場景親自開門。':'請聽完這段記憶，出口才會解鎖。','muted');
+  copy.id='outro-copy';status.id='narration-status';status.setAttribute('aria-live','polite');body.append(copy,status);
+  modal(title,body,[['回到場景，走向出口',()=>{if(!state.levels[state.level].outroHeard)return;if(!state.persisted&&!persist())return;resume();}]],state.level===5?'THE LAST DOOR':`MEMORY ${state.level+1} / 5`);
+  const back=$('modal-actions').querySelector('button');back.id='outro-return';back.disabled=!heard;
+  if(!heard){addNarrationPause();setMode('outro');audio.narrate([{id:`memory-${state.level}`,copy:meta.story}]);}
+}
+function addNarrationPause(){
+ narrationPaused=false;const pauseButton=btn('暫停語音',toggleNarration,'secondary');pauseButton.id='narration-toggle';$('modal-actions').append(pauseButton);
+}
+function toggleNarration(){if(!['outro','projection'].includes(mode))return;narrationPaused=!narrationPaused;const button=$('narration-toggle');if(button)button.textContent=narrationPaused?'繼續播放':'暫停語音';audio.update();}
+function updateNarration(dt){
+ if(!['outro','projection'].includes(mode))return;const view=audio.tickNarration(dt);if(!view)return;
+ const status=$('narration-status'),caption=mode==='projection'?$('projection-copy'):$('outro-copy');if(caption&&caption.textContent!==view.copy)caption.textContent=view.copy;
+ const label=view.waiting?'正在載入語音……':view.paused?'語音與字幕已暫停。':view.fallback?`語音暫時無法播放，請閱讀完整字幕 · ${Math.ceil(Math.max(0,view.duration-view.elapsed))} 秒`:`正在播放這段記憶 · ${Math.ceil(Math.max(0,view.duration-view.elapsed))} 秒`;
+ if(status&&status.textContent!==label)status.textContent=label;
+ if(view.done){
+  narrationPaused=false;
+  if(mode==='projection'){$('modal').hidden=true;audio.stopVoice();dispatch({type:'PROJECTION_END'});}
+  else{const result=applyAction(state,{type:'OUTRO_END'});if(!result.ok)return;state=result.state;const good=persist();world.sync();setMode('modal');$('outro-return').disabled=false;if(!good)$('outro-return').textContent='重試儲存，返回場景';if(status)status.textContent=good?'✓ 已完整聽完並保存，現在可以親自開門。':'已聽完，儲存成功後才可開門。';$('narration-toggle')?.remove();}
+ }
 }
 function openExit(){
+ if(state.completed[state.level]&&!state.levels[state.level].outroHeard)return complete();
  if(!state.completed[state.level])return toast('這段記憶還沒有完整，門仍然鎖著。');
  if(!state.persisted&&!persist())return modal('暫時無法保存','<p>請允許網站儲存，再試一次。進度會留在這裡。</p>',[['重試儲存',()=>{if(persist())resume();}]]);
  if(!state.levels[state.level].exitOpened){const r=dispatch({type:'OPEN_EXIT'},{silent:true});if(!r.ok)return;}
@@ -78,8 +95,8 @@ function dispatch(a,{silent=false}={}){
   const result=applyAction(state,a);if(!result.ok){toast(result.message);audio.play('retry');return result;}state=result.state;world.sync();updateHUD();audio.update();if(!silent)toast(result.message);if(a.type==='TRIGGER'){document.body.classList.add('eyes-surge');clearTimeout(eyeTimer);eyeTimer=setTimeout(()=>document.body.classList.remove('eyes-surge'),EYE_SURGE_MS);document.body.classList.add('flash');setTimeout(()=>document.body.classList.remove('flash'),850);audio.tone(90);}
   if(result.completedNow)complete();else{persist();if(result.shadowSolvedNow!==null&&result.shadowSolvedNow!==undefined){held=null;selected=null;modal('影子與記憶重合了',`<p>${['月亮燈','兔子玩偶','花瓶'][result.shadowSolvedNow]}回到了原本的位置。</p>`,[['繼續探索',resume]],'ALIGNED / 已保存');}}return result;
 }
-function nextLevel(){audio.stopVoice();resetFinale();const result=applyAction(state,{type:'NEXT'});if(!result.ok)return toast(result.message);setMode('modal');$('transition').classList.add('active');$('modal').hidden=true;setTimeout(()=>{state=result.state;held=null;selected=null;nearby=null;focusEntity=null;world.build();updateHUD();audio.update();persist();$('transition').classList.remove('active');modal(LEVELS[state.level].name,`<p>${esc('一段熟悉又陌生的記憶，在門後展開。')}</p>`,[['繼續探索',resume]],LEVELS[state.level].tag);},700);}
-function showTitle(){audio.stopVoice();resetFinale();saved=loadGame(storage);state=newGame();held=null;selected=null;nearby=null;focusEntity=null;world.build();updateHUD();$('modal').hidden=true;$('title-screen').hidden=false;['hud','memory-hud','control-bar'].forEach(id=>$(id).hidden=true);$('continue-game').hidden=!saved.state;setMode('title');}
+function nextLevel(){narrationPaused=false;audio.stopVoice();resetFinale();const result=applyAction(state,{type:'NEXT'});if(!result.ok)return toast(result.message);setMode('modal');$('transition').classList.add('active');$('modal').hidden=true;setTimeout(()=>{state=result.state;held=null;selected=null;nearby=null;focusEntity=null;world.build();updateHUD();audio.update();persist();$('transition').classList.remove('active');modal(LEVELS[state.level].name,`<p>${esc('一段熟悉又陌生的記憶，在門後展開。')}</p>`,[['繼續探索',resume]],LEVELS[state.level].tag);},700);}
+function showTitle(){narrationPaused=false;audio.stopVoice();resetFinale();saved=loadGame(storage);state=newGame();held=null;selected=null;nearby=null;focusEntity=null;world.build();updateHUD();$('modal').hidden=true;$('title-screen').hidden=false;['hud','memory-hud','control-bar'].forEach(id=>$(id).hidden=true);$('continue-game').hidden=!saved.state;setMode('title');}
 function ending(page){const pages=[
   ['清晨','你在現實中醒來。\n\n窗外，不再是停留不動的黃昏。\n手機裡有幾封未讀訊息。\n\n這一次，你沒有再把它翻面。'],
   ['改變，是開始','你決定聯絡可信任的人，尋求專業協助。\n\n家人不會因此立刻回到身邊。\n過去造成的傷害，也不會瞬間消失。\n\n但你終於願意，為自己的生活踏出第一步。'],
@@ -106,7 +123,7 @@ function updateInventoryHUD(){
 }
 function toggleInventory(){if(mode==='panel'&&$('panel').classList.contains('inventory-panel'))closePanel();else showInventory();}
 function showInventory(){
-  if(['title','projection','recovering','render-error'].includes(mode))return;
+  if(['title','outro','projection','recovering','render-error'].includes(mode))return;
   const body=openPanel('隨身物品','BACKPACK / 已收集的物品');$('panel').classList.add('inventory-panel');$('panel').setAttribute('aria-modal','false');$('inventory-button').setAttribute('aria-expanded','true');$('quick-controls').inert=false;
   const entries=inventoryEntries(state,held),grid=text('div','','inventory-grid');body.append(grid);
   const status=text('p','','inventory-selection');status.setAttribute('aria-live','polite');
@@ -159,9 +176,9 @@ function showPhoto(){
   photoController={rotate};refresh();
 }
 function showCompletePhoto(){const body=openPanel('照片的另一面','INSPECT / 翻面查看');let facing=false;const copy=text('p','相片背面似乎有字。拖曳旋轉照片，或按下方按鈕翻面。','read-text');const read=btn('讀取背面訊息',()=>dispatch({type:'PHOTO_READ'}),'primary');read.disabled=true;const update=y=>{facing=Math.cos(y)<-.7;copy.textContent=facing?'我們曾經等過你很多次。\n這次，我帶孩子先離開了。':'相片背面似乎有字。拖曳旋轉照片，或按下方按鈕翻面。';read.disabled=!facing;};const p=preview(body,'photo',update);body.append(btn('翻到照片背面',()=>{p.group.rotation.y=Math.PI;update(Math.PI);}));add(body,copy,read);}
-function projectionStart(){inspector?.dispose();inspector=null;$('panel').hidden=true;projectionTime=0;projectionPage=-1;setMode('projection');modal('記憶正在連結','<div id="projection-copy" class="projection"></div>',[],'MEMORY PROJECTION');mode='projection';audio.update();audio.speak('projection');}
+function projectionStart(){inspector?.dispose();inspector=null;$('panel').hidden=true;modal('記憶正在連結','<div id="projection-copy" class="projection"></div><p id="narration-status" class="muted" aria-live="polite">正在載入語音……</p>',[],'MEMORY PROJECTION');addNarrationPause();setMode('projection');audio.narrate(PROJECTION.map((copy,i)=>({id:`projection-${i}`,copy})));}
 function activate(e){if(!e||mode!=='explore')return;const aimed=world.target();if(!world.near(e)&&aimed?.id!==e.id)return toast('請再靠近一些，或從另一側避開遮擋。');navigation=[];focusEntity=null;doubleClickAction(e)?.();}
-const puzzleUI=createPuzzleUI({openPanel(title,kicker,wide=false){const host=openPanel(title,kicker);if(wide)$('panel').classList.add('optics-panel');return host;},closePanel,getState:()=>state,dispatch,projectionStart,toast,play(index,distorted){if(index==='all'){audio.speak('record-all');return;}const tape=RECORDINGS[index];if(!state.levels[3].collected.includes(tape.id)&&!state.completed[3])return toast('先找到這段錄音。');audio.speak(`record-${index}`);}});
+const puzzleUI=createPuzzleUI({openPanel(title,kicker,wide=false){const host=openPanel(title,kicker);if(wide)$('panel').classList.add('optics-panel');return host;},closePanel,getState:()=>state,dispatch,projectionStart,toast});
 function handle(a){if(a.type==='FAMILY_PHOTO'){const photo=FAMILY_PHOTOS[a.key];if(!photo)return;return modal('那些還記得的日常',`<img class="family-memory-preview" src="${photo.url}" alt="同一位爸爸與家人的生活照片"><p>${esc(photo.caption)}</p>`,[['把回憶收好',resume]],'FAMILY / 我曾經在這裡');}if(a.type==='CLOCK_UI')return showClock();if(a.type==='SEAL_UI')return showSeal();if(a.type==='PHONE_NOTE')return modal('未接來電','<p>08:10，孩子打來第一通電話。<br>座鐘停在另一個時刻。<br><br>17:40：你說今晚會回家。<br>21:05：活動已經結束。<br>23:55：無人接聽。</p>',[['收好手機',resume]],'MISSED CALLS');if(a.type==='BOARD_UI')return puzzleUI.board();if(a.type==='LAMP_UI')return puzzleUI.lamp(a.index);if(a.type==='CIRCUIT_UI'){if(!state.levels[4].triggered)return toast('先讀桌上的求助信，配電箱還沒有回應。');return puzzleUI.circuit();}if(a.type==='SOUND_CUE'){if(state.level!==1||!state.levels[1].triggered)return toast('先拿起手機，才能聽見走廊裡的回憶。');const cue=['child','keys','argument','call'][a.index];audio.play(cue);toast(['門後傳來孩子的笑聲。','門後傳來鑰匙碰撞聲。','門後傳來爭吵聲。','門後傳來無人接聽的電話聲。'][a.index]);return;}if(a.type==='DECOR'){if(a.name==='木製音樂盒'&&a.active)[523,659,784,659,587,523].forEach((note,i)=>audio.tone(note,i*.24));else audio.tone(220);toast(a.copy);return;}if(a.type==='MANIPULATE')return showShadow(a.index);if(a.type==='SLOT_UI')return showSlot(a.slot);if(a.type==='PHOTO_UI')return showPhoto();if(a.type==='MEMORY_UI')return puzzleUI.projector();
   if(a.type==='MAIL_UI'){if(state.levels[5].mailed)return toast('信已寄出，請打開信箱後方的門。');const body=openPanel('寄出那封信','MAIL / 最後的選擇');body.append(text('p',state.levels[4].projectionDone?'這次，你想把那些從未說出口的話，送到另一個人手裡。':'先修復電路、依序點亮三盞燈，再完成中央裝置的投影。','read-text'));body.append(btn('投入第二關未寄出的信',()=>dispatch({type:'MAIL'}),'primary'));return;}
   if(a.type==='READ'){const body=openPanel('家庭照片','A FADED MEMORY');preview(body,'photo');body.append(text('p',state.completed[0]?'家人的輪廓逐漸清晰，但你的臉仍然模糊。':'你覺得自己應該認識照片裡的人，卻想不起名字。'));return;}
@@ -183,14 +200,14 @@ function showControls(page=0){const pages=[['探索與互動','WASD 移動。滑
 function pause(){modal('把時間停在這裡','<p>記憶不會催促你。準備好了，就繼續走。</p>',[['繼續探索',resume],['操作說明',()=>showControls(),'secondary'],['回到主畫面',showTitle,'secondary']],'PAUSE');mode='paused';audio.update();}
 function move(dx,dz){const p=world.camera.position,n=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.1));for(let i=0;i<n;i++){if(walkable(p.x+dx/n,p.z,world.bounds,world.blocks))p.x+=dx/n;if(walkable(p.x,p.z+dz/n,world.bounds,world.blocks))p.z+=dz/n;}}
 function frame(now){requestAnimationFrame(frame);if(document.hidden||renderFailed||renderContext?.lost){elapsedLast=now;return;}try{const dt=Math.min((now-elapsedLast)/1000,1);elapsedLast=now;
-  if(pageFocused&&['explore','panel','projection'].includes(mode))state.elapsed+=dt;
+  if(pageFocused&&['explore','panel','projection','outro'].includes(mode)&&!narrationPaused)state.elapsed+=dt;
   if(mode==='explore'&&!controlHover){
     mouseLook.tick(dt);const speed=movementSpeed();
     let x=(keys.has('KeyD')?1:0)-(keys.has('KeyA')?1:0),z=(keys.has('KeyS')?1:0)-(keys.has('KeyW')?1:0);if(x||z){navigation=[];navTarget=null;focusEntity=null;const n=Math.hypot(x,z);x/=n;z/=n;const yaw=world.camera.rotation.y;move((x*Math.cos(yaw)+z*Math.sin(yaw))*dt*speed,(-x*Math.sin(yaw)+z*Math.cos(yaw))*dt*speed);}
     else if(navigation.length){let budget=dt*movementSpeed(true);while(navigation.length&&budget>0){const p=navigation[0],dx=p[0]-world.camera.position.x,dz=p[1]-world.camera.position.z,dist=Math.hypot(dx,dz);if(dist<.001){navigation.shift();continue;}const step=Math.min(dist,budget);move(dx/dist*step,dz/dist*step);world.camera.rotation.y=Math.atan2(-dx,-dz);world.camera.rotation.x=0;budget-=step;if(step<.001)break;}if(!navigation.length)arrive();}
     const target=world.target();$('crosshair').hidden=false;if(focusEntity&&(!focusEntity.group.visible||!world.near(focusEntity)))focusEntity=null;nearby=focusEntity||target;$('interact').hidden=!nearby;$('interact-name').textContent=nearby?.name||'';
   }else $('interact').hidden=true;
-  if(mode==='projection'&&pageFocused){if(!(audio.pending==='projection'&&!audio.ready))projectionTime+=dt;const total=Math.max(20,VOICE_CLIPS.projection.duration+.8),page=Math.min(3,Math.floor(projectionTime/total*4));if(page!==projectionPage){projectionPage=page;const el=$('projection-copy');if(el)el.textContent=PROJECTION[page];}if(projectionTime>=total){$('modal').hidden=true;dispatch({type:'PROJECTION_END'});}}
+  updateNarration(dt);
   if(mode==='door'&&pageFocused){doorTime+=dt;world.setExitProgress(Math.min(1,doorTime/.9));if(doorTime>=.9){if(state.level===5)ending(0);else nextLevel();}}
   if(state.level===5)updateFinale(dt);else finaleOverlay.hidden=true;
   world.tick(now*.001);if(mode==='title'){world.camera.position.set(1.5+Math.sin(now*.00008)*.15,2.1,5.5);world.camera.lookAt(-1,1,-1.4);}if(now-lastRender>33){world.render();inspector?.render();lastRender=now;}}catch(error){renderProblem(error);}
@@ -201,8 +218,8 @@ try{
   $('world').tabIndex=0;
 
   addEventListener('keydown',e=>{if(e.code==='AltLeft'||e.code==='AltRight'){e.preventDefault();if(!e.repeat&&inputMode.toggle())toast(inputMode.cursor?'游標已顯示 · 再按 Alt 恢復環視':'直接移動滑鼠環視');return;}if(['Tab','Space','KeyW','KeyA','KeyS','KeyD','KeyE','KeyG','KeyR','KeyH','KeyN','Escape'].includes(e.code)&&mode!=='title'&&!(e.code==='Space'&&e.target.closest?.('#quick-controls')))e.preventDefault();if(e.repeat)return;if(controlHover&&mode==='explore'&&['KeyW','KeyA','KeyS','KeyD'].includes(e.code))return;if(mode==='panel'&&photoController){if(['KeyQ','KeyE'].includes(e.code)){e.preventDefault();photoController.rotate(e.code==='KeyQ'?-90:90);return;}if(e.code==='Tab')return;}
-    if(e.code==='Escape'){if(mode==='panel')closePanel();else if(mode==='explore')pause();return;}
-    if(['title','modal','paused','projection','door','recovering','render-error'].includes(mode))return;
+    if(e.code==='Escape'){if(['outro','projection'].includes(mode)){toggleNarration();return;}if(mode==='panel')closePanel();else if(mode==='explore')pause();return;}
+    if(['title','modal','outro','paused','projection','door','recovering','render-error'].includes(mode))return;
     if(e.code==='Tab'){mode==='panel'?closePanel():showInventory();return;}
     if(e.code==='KeyR'){if(mode==='panel')closePanel();else if(state.level===0&&['moon','rabbit','vase'].includes(held))showShadow(['moon','rabbit','vase'].indexOf(held));else if(held)showInspection(held,inventoryEntries(state,held).find(e=>e.id===held)?.name||ITEMS[held]||'手持物件');else toast('先拿起一件可以檢視的物品。');return;}
     if(mode!=='explore')return;keys.add(e.code);if(e.code==='KeyE')activate(nearby);if(e.code==='KeyH')showHints();if(e.code==='KeyN')showNavigation();if(e.code==='KeyG'){held=null;selected=null;updateInventoryHUD();toast('你放下了手持物件。已收集的任務物品仍保存在物品欄。');}

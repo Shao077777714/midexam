@@ -58,5 +58,25 @@ export const VOICE_CLIPS={
   "memory-4": {
     "url": "assets/audio/voice-v2/memory-4.mp3",
     "duration": 7.128
+  },
+  "memory-5": {
+    "url": "assets/audio/voice-v2/memory-5.mp3",
+    "duration": 5.016
+  },
+  "projection-0": {
+    "url": "assets/audio/voice-v2/projection-0.mp3",
+    "duration": 3.36
+  },
+  "projection-1": {
+    "url": "assets/audio/voice-v2/projection-1.mp3",
+    "duration": 6.6
+  },
+  "projection-2": {
+    "url": "assets/audio/voice-v2/projection-2.mp3",
+    "duration": 5.928
+  },
+  "projection-3": {
+    "url": "assets/audio/voice-v2/projection-3.mp3",
+    "duration": 10.92
   }
 };

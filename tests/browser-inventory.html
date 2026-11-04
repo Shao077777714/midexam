@@ -18,7 +18,7 @@ function seed(target){
   if(location.hostname!=='localhost'||!['4181','4182'].includes(location.port))throw Error('Use isolated localhost:4181 or :4182, never the player origin');
   let state=newGame();const act=a=>{const r=applyAction(state,a);if(!r.ok)throw Error(r.message);state=r.state;};
   const launch=()=>{if(!saveGame(localStorage,state).ok)throw Error('Save failed');location.href='./';};
-  const next=()=>{act({type:'ACK_SAVE'});act({type:'OPEN_EXIT'});act({type:'ACK_SAVE'});act({type:'NEXT'});};
+  const next=()=>{act({type:'OUTRO_END'});act({type:'ACK_SAVE'});act({type:'OPEN_EXIT'});act({type:'ACK_SAVE'});act({type:'NEXT'});};
   act({type:'TRIGGER'});if(target===0){launch();return;}for(let i=0;i<3;i++)act({type:'SHADOW',index:i,...SHADOW_TARGETS[i]});if(target==='shadow-done'){launch();return;}next();
   if(target===1){launch();return;}
   act({type:'TRIGGER'});act({type:'CLOCK_SET',hour:8,minute:10});act({type:'SEARCH',id:'clock'});act({type:'CHAIR'});for(const id of ['key','drawing'])act({type:'COLLECT',id});for(const [index,value]of [1,0,2].entries())act({type:'SEAL_SET',index,value});act({type:'SEARCH',id:'letterbox'});act({type:'COLLECT',id:'letter'});if(target==='bag'){launch();return;}for(const id of ['key','drawing','letter'])act({type:'SLOT',slot:id,id});next();

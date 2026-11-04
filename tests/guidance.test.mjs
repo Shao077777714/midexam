@@ -14,12 +14,12 @@ const checkpoint=level=>{const s=newGame();s.level=s.unlocked=level;s.completed=
 test('solving alone cannot advance: explicitly open and acknowledge the door after saving',()=>{
  let s=action(newGame(),{type:'TRIGGER'});for(let index=0;index<3;index++)s=action(s,{type:'SHADOW',index,...SHADOW_TARGETS[index]});assert.equal(s.completed[0],true);
  assert.equal(applyAction(s,{type:'OPEN_EXIT'}).ok,false);s=action(s,{type:'ACK_SAVE'});assert.equal(applyAction(s,{type:'NEXT'}).ok,false);
- s=action(s,{type:'OPEN_EXIT'});assert.equal(s.level,0);assert.equal(s.levels[0].exitOpened,true);assert.equal(applyAction(s,{type:'OPEN_EXIT'}).ok,false);assert.equal(applyAction(s,{type:'NEXT'}).ok,false);
+ assert.equal(applyAction(s,{type:'OPEN_EXIT'}).ok,false);s=action(s,{type:'OUTRO_END'});s=action(s,{type:'ACK_SAVE'});s=action(s,{type:'OPEN_EXIT'});assert.equal(s.level,0);assert.equal(s.levels[0].exitOpened,true);assert.equal(applyAction(s,{type:'OPEN_EXIT'}).ok,false);assert.equal(applyAction(s,{type:'NEXT'}).ok,false);
  s=action(s,{type:'ACK_SAVE'});s=action(s,{type:'NEXT'});assert.equal(s.level,1);assert.equal(s.levels[1].exitOpened,false);assert.equal(s.memories.length,1);
 });
 test('final mailbox saves the letter, but the last physical door still gates the ending',()=>{
  let s=checkpoint(5);s.levels[4].projectionDone=true;assert.equal(applyAction(s,{type:'OPEN_EXIT'}).ok,false);s=action(s,{type:'MAIL'});assert.equal(s.completed[5],true);assert.equal(endingReady(s),false);
- s=action(s,{type:'ACK_SAVE'});s=action(s,{type:'OPEN_EXIT'});assert.equal(endingReady(s),true);assert.equal(s.memories.length,5);
+ s=action(s,{type:'OUTRO_END'});s=action(s,{type:'ACK_SAVE'});s=action(s,{type:'OPEN_EXIT'});assert.equal(endingReady(s),true);assert.equal(s.memories.length,5);
  const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(endingReady(r.state),true);
 });
 test('the phone supporting bench remains visible before and after the notification trigger',()=>{
@@ -53,7 +53,7 @@ test('a real corridor milestone resets guidance even when collected out of the s
 });
 test('v6 saves preserve already-seen endings while unfinished exits and timed help migrate safely to v7',()=>{
  for(const ended of [false,true]){const s=checkpoint(ended?5:1);s.version=6;if(ended){s.completed[5]=true;s.levels[5].mailed=true;s.memories=[...MEMORIES];s.levels[4].projectionDone=true;}else{s.completed[1]=true;s.unlocked=2;s.letter=true;s.inventory=['letter'];s.memories=MEMORIES.slice(0,2);}
- for(const l of s.levels){delete l.exitOpened;delete l.guidance;}const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,7);assert.deepEqual(r.state.completed,s.completed);assert.equal(r.state.levels[s.level].exitOpened,ended);assert.equal(endingReady(r.state),ended);assert.deepEqual(r.state.levels[0].guidance,initialGuidance());}
+ for(const l of s.levels){delete l.exitOpened;delete l.guidance;}const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,8);assert.deepEqual(r.state.completed,s.completed);assert.equal(r.state.levels[s.level].exitOpened,ended);assert.equal(endingReady(r.state),ended);assert.deepEqual(r.state.levels[0].guidance,initialGuidance());}
 });
 test('modern timer and door checkpoints survive reload and reject inconsistent or malformed values',()=>{
  const s=newGame();s.levels[0].guidance={goalId:'0:trigger',seconds:93,tier:2,bestProgress:0};const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.deepEqual(r.state.levels[0].guidance,s.levels[0].guidance);
