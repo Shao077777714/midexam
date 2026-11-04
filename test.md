@@ -1,5 +1,16 @@
 # TEST.md —《夢隙：醒來之前》測試計畫與執行紀錄
 
+## 腳本場景細化與玩法前後對照（2026-11-04）
+
+- 基準：最新 main 5704bcd，整合至加薪的branch；依 content/level-1.json～level-6.json、現行 brief／verify 與九張美術參考實作。Windows、Node.js 24.22.1、Three.js 0.186.1；IAB 版本未提供。
+- 細化：前五關分別採童年布料、長廊木作、家庭餐桌布件、褪色空房及清醒設備的配色；加入頂角線層次、燈具外殼／格柵、牆裙嵌條、織物收邊與原家具內的縫線，桌椅／抽屜用木紋，兔子／軟墊用織物紋理。第五關只修飾原平台外殼；第六關不加任何呈現批次，保留黑暗留白。原照片／拼圖 Image Gen 圖檔沿用，未另生成圖片。
+- PASS（自動化）：node --test tests/*.test.mjs **154／154**。新增 tests/refinement.test.mjs：六關兩世界、逐一實體邊界／碰撞／名稱／拿取及觸發能力對比完全一致；依原導覽路徑走近每個可見目標後，比對中央及四個偏移射線；不寫入關卡／存檔狀態。純呈現層每關最多三批 InstancedMesh、不增加燈光或投射陰影、深度測試保留，tick 0／1／3600 及重建後資源數固定。
+- PASS（建置）：node scripts/build.mjs 檢查25模組；git diff origin/main --check。臨時 .qa-refinement.html 僅由 tests/browser-inventory.html 複製供 QA，完成後移除 public／dist 複本。
+- PASS（IAB 抽驗）：隔離 localhost:4182；1038×668 視窗且 scrollWidth／Height 與畫面相同，無整頁溢出。第一關由新遊戲正常導覽、開床邊抽屜及操作回診提醒切至怪核，原互動正常。第三關及第五關由既有測試頁透過合法引擎動作建立檢查點，餐廳正常載入，投影機可沿原通路走近，三燈／電路仍正確顯示，原啟動按鈕可用；error／warn 空白。這些檢查點不冒充人工完整六關。
+- 證據：docs/screenshots/refined-bedroom.png、refined-dining-room.png。未覆寫 localhost:4181 或正式 Pages 的使用者存檔。沒有更改 engine／謎底／控制／音效／進度格式。
+- NOT TESTED：正式 Chrome／Edge 四組完整流程、逐一展示設備效能／GPU長時間負載、完整六關人工通關及新玩家約25分鐘驗收；本輪未指定像素級FPS保證。
+
+
 ## 顯智分支合併最新 main（2026-11-03）
 
 - 來源：顯智的branch 的 b066ffd，合併 origin/main 的 be7559e（含兔子輪廓與主動含蓄提示）。七份文件／程式衝突逐段整合，保留雙方規格與歷史實測；新提示規格優先於歷史自動提示。README同步現行操作，不覆蓋原音檔、貼圖、家具、投影設備或投信後整座門顯示的成果。

@@ -1,4 +1,4 @@
-import {surfaceMaterial,roundedBoxGeometry} from './surfaces.mjs';
+import {SURFACE_TEXTURES,surfaceMaterial,roundedBoxGeometry} from './surfaces.mjs';
 import {createPuzzleModel} from './puzzle-models.mjs';
 import * as T from './vendor/three.module.js';
 
@@ -155,5 +155,7 @@ export function createModel(kind, textures={}) {
     sphere(g,.042,[-.09,.86,.255],'#5d5549',[1,1,.3]);
     const patch=cube(g,[.16,.13,.035],[.08,.36,.22],'#806b69');patch.rotation.z=-.2;g.userData.wornDoll=true;
   }
+  const finish=['rabbit','wornDoll','cushion'].includes(kind)?'fabric':['clock','cabinet','musicbox','radio','book'].includes(kind)?'wood':null;
+  if(finish)g.traverse(o=>{if(o.material?.map===SURFACE_TEXTURES['plaster-color']){o.material.map=SURFACE_TEXTURES[`${finish}-color`];o.material.bumpMap=SURFACE_TEXTURES[`${finish}-height`];o.material.roughnessMap=SURFACE_TEXTURES[`${finish}-height`];o.material.bumpScale=finish==='fabric'?.004:.006;o.material.roughness=finish==='fabric'?.95:.64;}});
   return g;
 }
