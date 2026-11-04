@@ -30,7 +30,7 @@ test('simplified board DOM keeps dates/transcripts visible without playing and s
     for(const i of [2,0,1,4,3]){f.click('查看'+RECORDINGS[i].name);f.click('排列'+RECORDINGS[i].name);}
     f.click('接通記憶總機');assert.equal(f.results.at(-1).ok,false);assert.match(f.copies(),/日期還沒有/);assert.equal(f.state.completed[3],false);
     for(const i of [2,0,1,4,3,0,1,2,3,4]){f.click('查看'+RECORDINGS[i].name);f.click('排列'+RECORDINGS[i].name);}
-    f.click('接通記憶總機');assert.equal(f.state.completed[3],true);assert.deepEqual(f.plays.at(-1),['all',false]);
+    f.click('接通記憶總機');assert.equal(f.state.completed[3],true);assert.deepEqual(f.plays,[]);for(const t of RECORDINGS)assert.equal(f.button('播放'+t.name),undefined);
   }finally{globalThis.document=old;}
 });
 test('lamp, circuit and projector DOM controls gate projection until the actual three branches are powered',()=>{

@@ -5,7 +5,7 @@
   "pitch": "+0Hz",
   "language": "zh-TW",
   "identity": "虛構爸爸／回憶旁白，非真人錄音，非ChatGPT聲音複製",
-  "generatedOn": "2026-11-03",
+  "generatedOn": "2026-11-04",
   "source": "https://github.com/rany2/edge-tts",
   "clips": [
     {
@@ -127,6 +127,46 @@
       "duration": 7.128,
       "bytes": 42768,
       "sha256": "ddfdffd96a68d5ad6f3b7f0a83e939e813bdc88c40729778047d828f6bfa468d"
+    },
+    {
+      "id": "memory-5",
+      "text": "信已寄出。你終於願意面對明天。",
+      "url": "assets/audio/voice-v2/memory-5.mp3",
+      "duration": 5.016,
+      "bytes": 30096,
+      "sha256": "5b2265b7085285fc04eae16cef5b1704d3292e7d577aa6fba0a210d819f1d09e"
+    },
+    {
+      "id": "projection-0",
+      "text": "我曾以為，還有很多明天。",
+      "url": "assets/audio/voice-v2/projection-0.mp3",
+      "duration": 3.36,
+      "bytes": 20160,
+      "sha256": "53bf2372279d84e42e2b389c10096250f23a252a193e3e5038e05b4741519a85"
+    },
+    {
+      "id": "projection-1",
+      "text": "一次缺席，下一次失約。\n我漸漸聽不見家人的聲音。",
+      "url": "assets/audio/voice-v2/projection-1.mp3",
+      "duration": 6.6,
+      "bytes": 39600,
+      "sha256": "21e863934ed9faca3f2597c1f554d7847e3ae87fd36407eb7e4ac67aed33bce1"
+    },
+    {
+      "id": "projection-2",
+      "text": "我把問題藏起來，\n連同那些原本最重要的人。",
+      "url": "assets/audio/voice-v2/projection-2.mp3",
+      "duration": 5.928,
+      "bytes": 35568,
+      "sha256": "0a3f86dd0c38b462994726244b8e74dc4193576abef3012cd59d730267921d7b"
+    },
+    {
+      "id": "projection-3",
+      "text": "記起。聽見。看見。承認。\n現在，我願意接受幫助。",
+      "url": "assets/audio/voice-v2/projection-3.mp3",
+      "duration": 10.92,
+      "bytes": 65520,
+      "sha256": "a49c2bf01ede6ec50f60fba2879c193446bae2c0c5f3e2009b27583003099303"
     }
   ]
 }

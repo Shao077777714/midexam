@@ -1,5 +1,5 @@
 import {RECORDINGS,PARTS,PART_NAMES,LAMP_NAMES,circuitStatus,portsAt,lampsReady} from './puzzles.mjs';
-export function createPuzzleUI({openPanel,closePanel,getState,dispatch,projectionStart,play,toast}){
+export function createPuzzleUI({openPanel,closePanel,getState,dispatch,projectionStart,toast}){
   const el=(tag,copy='',cls='')=>{const e=document.createElement(tag);e.textContent=copy;e.className=cls;return e;};
   const button=(copy,fn,cls='secondary')=>{const b=el('button',copy,cls);b.type='button';b.onclick=fn;return b;};
   const row=(host)=>{const r=el('div','','button-row');host.append(r);return r;};
@@ -11,7 +11,7 @@ export function createPuzzleUI({openPanel,closePanel,getState,dispatch,projectio
     const status=el('p','','mechanism-status');host.append(status);
     const workspace=el('div','','recording-workspace'),list=el('div','','recording-index'),detail=el('section','','recording-card');workspace.append(list,detail);host.append(workspace);
     const feedback=el('p','','mechanism-feedback');feedback.hidden=true;
-    const activate=button('接通記憶總機',()=>{const r=dispatch({type:'ACTIVATE_BOARD'});if(r.completedNow)play('all',false);else{refresh();feedback.hidden=false;feedback.textContent=r.message;}},'primary');
+    const activate=button('接通記憶總機',()=>{const r=dispatch({type:'ACTIVATE_BOARD'});if(!r.completedNow){refresh();feedback.hidden=false;feedback.textContent=r.message;}},'primary');
     function refresh(){
       feedback.hidden=true;feedback.textContent='';const found=RECORDINGS.filter(t=>l().collected.includes(t.id)).length;
       status.textContent=`已尋回 ${found} / 5 段錄音 · 時間線：`+(l().recordOrder.length?l().recordOrder.map(i=>RECORDINGS[i].date.split(' · ')[0]).join(' → '):'尚未排列');
@@ -22,7 +22,7 @@ export function createPuzzleUI({openPanel,closePanel,getState,dispatch,projectio
       }
       const t=RECORDINGS[chosen];detail.replaceChildren(el('h3',t.name),el('p',t.date,'recording-date'));
       if(l().collected.includes(t.id)){
-        detail.append(el('p',t.copy,'transcript'),button(`播放${t.name}`,()=>play(chosen,false)));
+        detail.append(el('p',t.copy,'transcript'));
         const arrange=button(`排列${t.name}`,()=>{dispatch({type:'RECORD_ORDER',index:chosen},{silent:true});refresh();});arrange.dataset.order=chosen;arrange.setAttribute('aria-pressed',String(l().recordOrder.includes(chosen)));detail.append(arrange);
       }else say(detail,'探索檔案匣、答錄機、木櫃、孩子的留言匣與角落矮櫃。');
       activate.disabled=found<5||l().recordOrder.length<5;

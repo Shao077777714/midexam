@@ -192,6 +192,31 @@
         "path": "public/assets/audio/voice-v2/memory-4.mp3",
         "purpose": "外部生成中文爸爸旁白：memory-4",
         "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/memory-5.mp3",
+        "purpose": "逐段字幕同步／完整旁白門檻：memory-5",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/projection-0.mp3",
+        "purpose": "逐段字幕同步／完整旁白門檻：projection-0",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/projection-1.mp3",
+        "purpose": "逐段字幕同步／完整旁白門檻：projection-1",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/projection-2.mp3",
+        "purpose": "逐段字幕同步／完整旁白門檻：projection-2",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/projection-3.mp3",
+        "purpose": "逐段字幕同步／完整旁白門檻：projection-3",
+        "status": "available"
       }
     ]
   },
