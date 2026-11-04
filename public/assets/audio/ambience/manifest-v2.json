@@ -1,0 +1,23 @@
+[
+  {
+    "file": "suspense-dream-v2.wav",
+    "seconds": 24,
+    "sampleRate": 22050,
+    "sha256": "929b1e77ee305d711f69440ef7d83ea85371ba7e3eee5909242037f42c084601",
+    "source": "original procedural synthesis; scripts/generate-soundscapes.py"
+  },
+  {
+    "file": "suspense-weird-v2.wav",
+    "seconds": 24,
+    "sampleRate": 22050,
+    "sha256": "4c76de75362510bda0466b9bb25e3989540c6b775415eb9dec70fc29c07bdf96",
+    "source": "original procedural synthesis; scripts/generate-soundscapes.py"
+  },
+  {
+    "file": "suspense-void-v2.wav",
+    "seconds": 24,
+    "sampleRate": 22050,
+    "sha256": "2bc892883bbf12675a193b46bd8393e0b26b599920cb3b3e6d732700c40633c2",
+    "source": "original procedural synthesis; scripts/generate-soundscapes.py"
+  }
+]

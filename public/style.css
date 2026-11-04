@@ -460,3 +460,11 @@ button, input, .eyebrow, .title-copy h1 span { font-family: var(--memory-font); 
 .inventory-panel .inventory-help { font-size: 12px; }
 .recording-index-item { align-items: center; }
 .family-memory-preview { display: block; width: min(360px,42vh); aspect-ratio: 1; object-fit: cover; margin: auto; border: 7px solid #bbaa94; }
+/* One stable memory composition per event; each new walk chooses another sequence. */
+.finale-words { top: var(--echo-top,16%); }
+.finale-photo { top: var(--echo-photo-top,52%); transform: rotate(var(--echo-tilt,-7deg)); }
+.photo-right .finale-photo { left: auto; right: 6%; }
+.one-eye .finale-eye.second { display: none; }
+.eye-swap .finale-eye.first { left: auto; right: 2%; transform: rotate(12deg); }
+.eye-swap .finale-eye.second { right: auto; left: 2%; top: auto; bottom: 8%; }
+@media(prefers-reduced-motion:reduce) { .finale-photo { transform: none; } }
