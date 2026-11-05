@@ -331,6 +331,10 @@
 
 2026-11-05 試玩紀錄模板：新增 `playtest.md`，提供可複製的單場紀錄，涵蓋版本與環境、開場至結局計時、五關現行謎題觀察、提示級別、玩家回饋、問題追蹤及未觀察項目。已核對文件內容與章節格式；沒有執行遊戲試玩，亦未填入虛構玩家結果。文件檢查為 PASS（DOC-03），遊戲流程與實際遊玩時間維持 NOT TESTED。
 
+2026-11-05 新增 13 張使用者提供的參考 JPEG：TDD 測試先因缺少 manifest `references` 清單而 FAIL；加入 `assets/reference-images/`、13 筆 metadata、README 用途說明後，`node --test tests/assets.test.mjs` 1／1 PASS，逐張檢查來源檔名、路徑、JPEG 標記、實際尺寸、位元組數及 SHA-256；完整 `node --test tests/*.test.mjs` 110／110 PASS，`git diff --check` PASS。環境沒有 `npm` 命令，直接使用 Node 執行測試。素材限定美術參考，不複製至 public／dist，未修改遊戲程式。重複來源檔依原檔名保留；原作者與公開再散布授權未知，遊戲素材實際使用及授權仍 NOT TESTED。
+
+2026-11-05 Pinterest 來源及致謝文件：先擴充資產 TDD，確認缺少 `credit.md` 時測試 FAIL；新增 `credit.md` 列出 13 張 `assets/reference-images/` 圖片及既有 9 張風格參考圖，兩份 manifest 均登錄來源平台 Pinterest，並分開標示 Image Gen 貼圖及程式合成 WAV。13 張本次附件與分支現有檔案逐張 SHA-256 比對相同，未重複複製圖片。`node --test tests/assets.test.mjs` 2／2 PASS，完整 `node --test` 111／111 PASS，`git diff --check` PASS。個別 Pin 網址、原作者與授權條款未提供，未將來源平台等同授權；遊戲內實際顯示未測試。
+
 | 日期 | 範圍 | 方法 | 結果 |
 | --- | --- | --- | --- |
 | 2026-11-04～05 | main 9a43c17同步與VOX-01～05語音門檻 | 166／166自動化、25模組建置；隔離IAB第四關僅結尾、播中／播後重載，第五關四段音檔字幕及反覆暫停恢復，第六關投信後完整旁白再親自開門與三結語；兩尺寸投影與error／warn空白，詳test.md | PASS（記錄範圍）；非連續人工六關，正式矩陣／主觀聲音／25分鐘未測 |
