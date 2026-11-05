@@ -44,11 +44,46 @@ test('each hall run uses five distinct stable arrangements with all three photos
  for(const l of createFinaleLayouts(random)){assert.ok(l.top>=10&&l.top<=21);assert.ok(l.photoTop>=48&&l.photoTop<=59);assert.ok(['left','right'].includes(l.side));}
 });
 test('suspense stays present in all six scenes and ducks for voice, pause and mute',()=>{
- for(let level=0;level<6;level++)for(const triggered of [false,true]){const state={level,triggered},mix=ambienceMix(state);assert.ok(Object.values(mix).some(v=>v>0));const speech=ambienceMix(state,true);for(const k of Object.keys(mix))assert.equal(speech[k],mix[k]*.24);for(const flag of ['paused','muted'])assert.ok(Object.values(ambienceMix({...state,[flag]:true})).every(v=>v===0));}assert.ok(ambienceMix({level:5}).void>0);
+ assert.equal(AUDIO_FILES.dream,'ambience/gone-beyond.mp3');
+ assert.equal(AUDIO_FILES.weird,'ambience/this-house.mp3');
+ for(let level=0;level<6;level++)for(const triggered of [false,true]){
+   const state={level,triggered},mix=ambienceMix(state);
+   const track=level===5?'void':triggered?'weird':'dream';
+   assert.deepEqual(Object.keys(mix).filter(id=>mix[id]>0),[track]);
+   assert.equal(ambienceMix(state,true)[track],mix[track]*.24);
+   for(const flag of ['paused','muted'])assert.ok(Object.values(ambienceMix({...state,[flag]:true})).every(v=>v===0));
+ }
 });
-class FakeNode{constructor(){this.gain={value:0,setTargetAtTime:v=>this.gain.value=v,setValueAtTime(){},exponentialRampToValueAtTime(){}};this.frequency={value:0};}connect(){}disconnect(){}start(){this.started=true;}stop(){this.stopped=true;this.onended?.();}}
+class FakeNode{constructor(){this.gain={value:0,setTargetAtTime:(v,_,fade)=>{this.gain.value=v;this.gain.fade=fade;},setValueAtTime(){},exponentialRampToValueAtTime(){}};this.frequency={value:0};}connect(){}disconnect(){}start(when,offset){this.started=true;this.offset=offset;}stop(){this.stopped=true;this.onended?.();}}
 class FakeContext{state='running';currentTime=0;destination={};createGain(){return new FakeNode();}createBufferSource(){return new FakeNode();}createOscillator(){return new FakeNode();}async resume(){this.state='running';}async suspend(){this.state='suspended';}async close(){this.state='closed';}async decodeAudioData(){return{duration:1};}}
 const fakeFetch=async()=>({ok:true,arrayBuffer:async()=>new ArrayBuffer(4)});
+test('weirdcore starts at the audible cue on entry and uses the full local loop if the MP3 fails',async()=>{
+ for(const unavailable of [false,true]){
+  const state={level:0,triggered:false,active:true},fallback=[];
+  const fetchFn=async url=>{
+   if(url.pathname.endsWith('/this-house.mp3'))return {ok:true,arrayBuffer:async()=>new Uint8Array([unavailable?1:2]).buffer};
+   if(url.pathname.endsWith('/weirdcore_loop.wav'))fallback.push(url.pathname);
+   return fakeFetch();
+  };
+  class Context extends FakeContext{
+   async decodeAudioData(data){const tag=new Uint8Array(data)[0];if(tag===1)throw Error('corrupt MP3');return {duration:tag===2?268.56:1};}
+  }
+  const a=createAudioDirector({snapshot:()=>state,AudioContextClass:Context,fetchFn});
+  await a.init();
+  assert.equal(a.tracks.weird,undefined);
+  state.triggered=true;a.update();
+  const {source,gain}=a.tracks.weird;
+  assert.equal(source.loop,true);
+  assert.equal(source.offset,unavailable?0:.25);
+  assert.equal(source.loopEnd,unavailable?undefined:264);
+  assert.equal(fallback.length,unavailable?1:0);
+  assert.equal(gain.gain.value,.35);
+  assert.equal(gain.gain.fade,.12);
+  assert.equal(a.tracks.dream.gain.gain.value,0);
+  assert.equal(a.lastError,null);
+  a.dispose();
+ }
+});
 test('external audio plays one complete clip, pauses the context, resumes it and stops voices on mute',async()=>{
  const state={level:3,triggered:true,active:true,paused:false,muted:false},a=createAudioDirector({snapshot:()=>state,AudioContextClass:FakeContext,fetchFn:fakeFetch});await a.init();assert.equal(Object.keys(a.tracks).length,3);a.speak('record-2');const first=a.voiceSource;assert.ok(first.started);a.update();assert.equal(a.voiceSource,first);state.paused=true;a.update();await a.contextSync;assert.equal(a.ctx.state,'suspended');assert.equal(first.stopped,undefined);state.paused=false;a.update();await a.contextSync;assert.equal(a.ctx.state,'running');a.speak('record-3');assert.equal(first.stopped,true);const second=a.voiceSource;state.muted=true;a.update();assert.equal(second.stopped,true);assert.equal(a.voiceSource,null);a.dispose();
 });
