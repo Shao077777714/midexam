@@ -45,7 +45,7 @@ test('each hall run uses five distinct stable arrangements with all three photos
 });
 test('suspense stays present in all six scenes and ducks for voice, pause and mute',()=>{
  assert.equal(AUDIO_FILES.dream,'ambience/gone-beyond.mp3');
- assert.equal(AUDIO_FILES.weird,'ambience/suspense-weird-v2.wav');
+ assert.equal(AUDIO_FILES.weird,'ambience/weirdcore_loop.wav');
  for(let level=0;level<6;level++)for(const triggered of [false,true]){
    const state={level,triggered},mix=ambienceMix(state);
    const track=level===5?'void':triggered?'weird':'dream';

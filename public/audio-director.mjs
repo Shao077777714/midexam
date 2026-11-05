@@ -1,5 +1,5 @@
 import {VOICE_CLIPS} from './voice-clips.mjs';
-export const AUDIO_FILES={dream:'ambience/gone-beyond.mp3',weird:'ambience/suspense-weird-v2.wav',void:'ambience/suspense-void-v2.wav',correct:'puzzle/correct.wav',retry:'puzzle/retry.wav',child:'corridor/child_laugh.wav',keys:'corridor/keys.wav',argument:'corridor/argument.wav',call:'corridor/unanswered_call.wav'};
+export const AUDIO_FILES={dream:'ambience/gone-beyond.mp3',weird:'ambience/weirdcore_loop.wav',void:'ambience/suspense-void-v2.wav',correct:'puzzle/correct.wav',retry:'puzzle/retry.wav',child:'corridor/child_laugh.wav',keys:'corridor/keys.wav',argument:'corridor/argument.wav',call:'corridor/unanswered_call.wav'};
 export function ambienceMix({level,triggered,active=true,paused=false,muted=false,overlay=false},speaking=false){
  const scale=(!active||paused||muted)?0:(speaking?.24:1)*(overlay?.68:1);
  return {dream:scale*(level!==5&&!triggered?.22:0),weird:scale*(level!==5&&triggered?.25:0),void:scale*(level===5?.26:0)};
@@ -13,7 +13,10 @@ export function createAudioDirector({snapshot,onStatus=()=>{},AudioContextClass=
    await Promise.all(files.map(async([id,url])=>{try{const buffer=await decode(url).catch(error=>{if(id!=='dream')throw error;return decode('assets/audio/ambience/suspense-dream-v2.wav');});this.buffers.set(id,buffer);if(['dream','weird','void'].includes(id))this.startTrack(id);if(this.pending===id)this.playVoice(id);}catch{this.lastError='部分音效未能載入，字幕與解謎仍可使用。';}}));this.ready=true;this.update();
   },
   startTrack(id){if(this.tracks[id])return;const source=this.ctx.createBufferSource(),gain=this.ctx.createGain();source.buffer=this.buffers.get(id);source.loop=true;gain.gain.value=0;source.connect(gain);gain.connect(this.output);source.start();this.tracks[id]={source,gain};this.update();},
-  update(){if(!this.ctx)return;const state=snapshot(),now=this.ctx.currentTime;if(state.muted&&!this.muted){if(!this.narration||this.narration.done)this.stopVoice();for(const s of this.effects)try{s.stop();}catch{}this.effects.clear();}this.muted=state.muted;this.output.gain.setTargetAtTime(this.muted?0:1,now,.06);const mix=ambienceMix(state,!!this.voiceSource);for(const [id,track]of Object.entries(this.tracks))track.gain.gain.setTargetAtTime(mix[id],now,this.voiceSource?.12:.65);
+  update(){if(!this.ctx)return;const state=snapshot(),now=this.ctx.currentTime;if(state.muted&&!this.muted){if(!this.narration||this.narration.done)this.stopVoice();for(const s of this.effects)try{s.stop();}catch{}this.effects.clear();}this.muted=state.muted;this.output.gain.setTargetAtTime(this.muted?0:1,now,.06);
+   const mix=ambienceMix(state,!!this.voiceSource);
+   const fadeTime = this.voiceSource || mix.weird > 0 ? .12 : .65;
+   for(const [id,track]of Object.entries(this.tracks))track.gain.gain.setTargetAtTime(mix[id],now,fadeTime);
    this.syncContext();if(state.active&&!state.paused&&this.pending&&!this.voiceSource)this.playVoice(this.pending);this.emit();
   },
   speak(id){if(!VOICE_CLIPS[id]||snapshot().muted||this.narration&&!this.narration.done)return;this.stopVoice();this.pending=id;this.playVoice(id);},
