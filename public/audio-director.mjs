@@ -4,7 +4,7 @@ export function ambienceMix({level,triggered,active=true,paused=false,muted=fals
  const scale=(!active||paused||muted)?0:(speaking?.24:1)*(overlay?.68:1);
  return {dream:scale*(level!==5&&!triggered?.22:0),weird:scale*(level!==5&&triggered?.25:0),void:scale*(level===5?.26:0)};
 }
-export function createAudioDirector({snapshot,sceneMusic,onStatus=()=>{},AudioContextClass=globalThis.AudioContext,fetchFn=globalThis.fetch}={}){
+export function createAudioDirector({snapshot,onStatus=()=>{},AudioContextClass=globalThis.AudioContext,fetchFn=globalThis.fetch}={}){
  const a={ctx:null,output:null,sfx:null,voiceGain:null,buffers:new Map(),tracks:{},effects:new Set(),voiceSource:null,voiceId:null,pending:null,ready:false,loading:null,lastError:null,muted:false,lastStatus:'',narration:null,deviceBlocked:false,contextSync:null,
   init(){if(this.loading)return this.loading;try{this.ctx=new AudioContextClass();this.output=this.ctx.createGain();this.sfx=this.ctx.createGain();this.voiceGain=this.ctx.createGain();this.output.connect(this.ctx.destination);this.sfx.connect(this.output);this.voiceGain.connect(this.output);this.sfx.gain.value=.62;this.voiceGain.gain.value=.9;this.syncContext();this.loading=this.load();return this.loading;}catch{this.ready=true;this.lastError='目前裝置無法播放音效，字幕仍可閱讀。';this.emit();return Promise.resolve();}},
   async load(){
@@ -13,7 +13,7 @@ export function createAudioDirector({snapshot,sceneMusic,onStatus=()=>{},AudioCo
    await Promise.all(files.map(async([id,url])=>{try{const buffer=await decode(url).catch(error=>{if(id!=='dream')throw error;return decode('assets/audio/ambience/suspense-dream-v2.wav');});this.buffers.set(id,buffer);if(['dream','weird','void'].includes(id))this.startTrack(id);if(this.pending===id)this.playVoice(id);}catch{this.lastError='部分音效未能載入，字幕與解謎仍可使用。';}}));this.ready=true;this.update();
   },
   startTrack(id){if(this.tracks[id])return;const source=this.ctx.createBufferSource(),gain=this.ctx.createGain();source.buffer=this.buffers.get(id);source.loop=true;gain.gain.value=0;source.connect(gain);gain.connect(this.output);source.start();this.tracks[id]={source,gain};this.update();},
-  update(){const state=snapshot(),videoPlaying=sceneMusic?.update(state);if(!this.ctx)return;const now=this.ctx.currentTime;if(state.muted&&!this.muted){if(!this.narration||this.narration.done)this.stopVoice();for(const s of this.effects)try{s.stop();}catch{}this.effects.clear();}this.muted=state.muted;this.output.gain.setTargetAtTime(this.muted?0:1,now,.06);const mix=ambienceMix(state,!!this.voiceSource);for(const [id,track]of Object.entries(this.tracks))track.gain.gain.setTargetAtTime(videoPlaying?0:mix[id],now,videoPlaying?.12:this.voiceSource?.12:.65);
+  update(){if(!this.ctx)return;const state=snapshot(),now=this.ctx.currentTime;if(state.muted&&!this.muted){if(!this.narration||this.narration.done)this.stopVoice();for(const s of this.effects)try{s.stop();}catch{}this.effects.clear();}this.muted=state.muted;this.output.gain.setTargetAtTime(this.muted?0:1,now,.06);const mix=ambienceMix(state,!!this.voiceSource);for(const [id,track]of Object.entries(this.tracks))track.gain.gain.setTargetAtTime(mix[id],now,this.voiceSource?.12:.65);
    this.syncContext();if(state.active&&!state.paused&&this.pending&&!this.voiceSource)this.playVoice(this.pending);this.emit();
   },
   speak(id){if(!VOICE_CLIPS[id]||snapshot().muted||this.narration&&!this.narration.done)return;this.stopVoice();this.pending=id;this.playVoice(id);},

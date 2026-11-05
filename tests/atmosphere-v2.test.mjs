@@ -44,7 +44,15 @@ test('each hall run uses five distinct stable arrangements with all three photos
  for(const l of createFinaleLayouts(random)){assert.ok(l.top>=10&&l.top<=21);assert.ok(l.photoTop>=48&&l.photoTop<=59);assert.ok(['left','right'].includes(l.side));}
 });
 test('suspense stays present in all six scenes and ducks for voice, pause and mute',()=>{
- for(let level=0;level<6;level++)for(const triggered of [false,true]){const state={level,triggered},mix=ambienceMix(state);assert.ok(Object.values(mix).some(v=>v>0));const speech=ambienceMix(state,true);for(const k of Object.keys(mix))assert.equal(speech[k],mix[k]*.24);for(const flag of ['paused','muted'])assert.ok(Object.values(ambienceMix({...state,[flag]:true})).every(v=>v===0));}assert.ok(ambienceMix({level:5}).void>0);
+ assert.equal(AUDIO_FILES.dream,'ambience/gone-beyond.mp3');
+ assert.equal(AUDIO_FILES.weird,'ambience/suspense-weird-v2.wav');
+ for(let level=0;level<6;level++)for(const triggered of [false,true]){
+   const state={level,triggered},mix=ambienceMix(state);
+   const track=level===5?'void':triggered?'weird':'dream';
+   assert.deepEqual(Object.keys(mix).filter(id=>mix[id]>0),[track]);
+   assert.equal(ambienceMix(state,true)[track],mix[track]*.24);
+   for(const flag of ['paused','muted'])assert.ok(Object.values(ambienceMix({...state,[flag]:true})).every(v=>v===0));
+ }
 });
 class FakeNode{constructor(){this.gain={value:0,setTargetAtTime:v=>this.gain.value=v,setValueAtTime(){},exponentialRampToValueAtTime(){}};this.frequency={value:0};}connect(){}disconnect(){}start(){this.started=true;}stop(){this.stopped=true;this.onended?.();}}
 class FakeContext{state='running';currentTime=0;destination={};createGain(){return new FakeNode();}createBufferSource(){return new FakeNode();}createOscillator(){return new FakeNode();}async resume(){this.state='running';}async suspend(){this.state='suspended';}async close(){this.state='closed';}async decodeAudioData(){return{duration:1};}}

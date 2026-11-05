@@ -5,7 +5,7 @@
 ## 場景配樂與來源（2026-11-05）
 
 - **夢核：** [Gone Beyond](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100752) by Kevin MacLeod (incompetech.com), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)。使用[作者提供的 MP3](https://incompetech.com/music/royalty-free/mp3-royaltyfree/Gone%20Beyond.mp3)，檔案未修改，遊戲調整播放音量並循環。對應使用者的 [YouTube 參考](https://www.youtube.com/watch?v=TRpU4bnzIdA)。
-- **怪核：** Gregi and Kurczak 的 [Amazing SCARY 3D Holophonic Sound](https://www.youtube.com/watch?v=5fdJlEru1mw)，探索時使用可見的 YouTube 播放器。網路、播放器限制或較小視窗會使用原有怪核音景；暫停、靜音、離開分頁及開啟介面時停止影片播放。影片未收入素材檔。
+- **怪核**在背景循環播放 `ambience/suspense-weird-v2.wav`。指定影片為風格參考，待取得可用於遊戲的音檔再替換。[Amazing SCARY 3D Holophonic Sound](https://www.youtube.com/watch?v=5fdJlEru1mw)
 - 第五關依觸發前後選曲；第六關保留黑暗長廊音景。必聽旁白及機關音效沿用本地檔案。
 
 ## 2026-11-03 新版聲音
