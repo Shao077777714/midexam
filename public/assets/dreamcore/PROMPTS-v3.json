@@ -1,0 +1,7 @@
+{
+  "generator": "built-in image_gen",
+  "generatedOn": "2026-11-03",
+  "file": "protagonist-mirror-v1.png",
+  "purpose": "第四關同一男主角正常與怪核倒影，UV 分別取左／右半，不修改生成原圖",
+  "prompt": "Use case: stylized-concept. Asset type: single square game texture atlas for a psychological dreamcore/weirdcore Three.js mirror, exactly two equally sized vertical portrait panels side-by-side, no border or gap. Both halves depict the SAME fictional adult Taiwanese man about 30 years old, same hairstyle, dark casual shirt, exactly matching frontal face position and head-and-shoulders composition centered in each half. Left half: handsome, healthy, clean, calm, warm pastel photographic memory, subtle vintage grain. Right half: recognizably the same man but hideously uncanny, gaunt exhausted face, stretched asymmetric features, sunken black eyes, mottled skin, disturbing but non-graphic, cold green-black weirdcore lighting. Plain dark background. Photographic high detail, no illustration, no words, no typography, no watermark, no other people, no mirror frame. Each portrait must fill its half so the game can display each half with UV coordinates."
+}

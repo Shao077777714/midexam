@@ -7,7 +7,7 @@ import {newGame,SHADOW_TARGETS,applyAction,SEARCHES} from '../public/engine.mjs'
 import {createWorld} from '../public/scene.mjs';
 import {findPath,walkable} from '../public/navigation.mjs';
 import {EXTERIOR} from '../public/atmosphere.mjs';
-import {interactionHint,doubleClickAction} from '../public/controls.mjs';
+import {doubleClickAction} from '../public/controls.mjs';
 
 function fixture(level=0,triggered=true){
   const state=newGame();state.level=level;
@@ -20,23 +20,23 @@ test('all five world triggers can activate once without claiming to be inventory
     let state=newGame();state.level=level;state.levels[level].drawer=true;
     const world=createWorld(null,()=>state,a=>{state=applyAction(state,a).state;},{headless:true});
     const trigger=world.entities.find(e=>e.id==='trigger');
-    assert.ok(trigger);assert.equal(trigger.pickupAction,undefined);assert.equal(interactionHint(trigger),'');
+    assert.ok(trigger);assert.equal(trigger.pickupAction,undefined);
     doubleClickAction(trigger)();world.sync();assert.equal(state.levels[level].triggered,true);
-    assert.equal(interactionHint(trigger),'已觸發');assert.equal(doubleClickAction(trigger),null);assert.deepEqual(state.inventory,[]);
+    assert.equal(doubleClickAction(trigger),level===1?trigger.readAction:null);assert.deepEqual(state.inventory,[]);
   }
 });
 
 test('only available shadow props and new cassette pickups promise pickup',()=>{
   const shadows=fixture(0,false),shadow=shadows.world.entities.find(e=>e.id==='shadow0');
-  assert.equal(interactionHint(shadow),'');shadows.state.levels[0].triggered=true;assert.equal(interactionHint(shadow),'雙擊拿取');
-  shadows.state.levels[0].collected.push('moon');assert.equal(interactionHint(shadow),'');assert.equal(doubleClickAction(shadow),shadow.action);doubleClickAction(shadow)();assert.deepEqual(shadows.signals.at(-1),{type:'MANIPULATE',index:0});
+  shadows.state.levels[0].triggered=true;
+  shadows.state.levels[0].collected.push('moon');assert.equal(doubleClickAction(shadow),shadow.action);doubleClickAction(shadow)();assert.deepEqual(shadows.signals.at(-1),{type:'MANIPULATE',index:0});
   shadows.state.completed[0]=true;assert.equal(doubleClickAction(shadow),null);
-  const f=fixture(3),tape=f.world.entities.find(e=>e.id==='tape-work');assert.equal(interactionHint(tape),'雙擊拿取');f.state.levels[3].collected.push('tape-work');f.world.sync();assert.equal(tape.group.visible,false);assert.equal(doubleClickAction(tape),null);
+  const f=fixture(3),tape=f.world.entities.find(e=>e.id==='tape-work');f.state.levels[3].collected.push('tape-work');f.world.sync();assert.equal(tape.group.visible,false);assert.equal(doubleClickAction(tape),null);
 });
 
 test('pickup rays require the visible object surface within reach and stop at opaque obstacles',()=>{
   const {world}=fixture(1),letter=world.entities.find(e=>e.id==='letter');
-  const aim=()=>{world.camera.lookAt(new T.Box3().setFromObject(letter.group).getCenter(new T.Vector3()));world.camera.updateMatrixWorld(true);world.scene.updateMatrixWorld(true);};
+  const aim=()=>{world.camera.lookAt(world.focusPoint(letter)||new T.Box3().setFromObject(letter.group).getCenter(new T.Vector3()));world.camera.updateMatrixWorld(true);world.scene.updateMatrixWorld(true);};
   world.camera.position.set(1.7,1.65,-9.2);aim();assert.equal(world.target()?.id,'letter');assert.equal(typeof world.target().pickupAction,'function');
   const wall=new T.Mesh(new T.BoxGeometry(1,2,.1),new T.MeshBasicMaterial());wall.position.set(1.7,1.3,-9.8);letter.group.parent.add(wall);aim();assert.equal(world.target(),null);
   wall.visible=false;aim();assert.equal(world.target()?.id,'letter');
@@ -72,11 +72,9 @@ test('shadow placement cannot clip the bed, cabinet, or another movable pedestal
   assert.ok(SHADOW_TARGETS.every((v,i)=>shadowPlacementFree(i,v,SHADOW_TARGETS)));
 });
 
-test('rotating mirrors updates their physical bounds and prevents clipping the player',()=>{
-  const {state,world}=fixture(3),e=world.entities.find(e=>e.id==='mirror0');
-  const initial=footprint(e.group);state.levels[3].mirrors[0]=45;world.sync();const rotated=footprint(e.group);
-  assert.ok(rotated.w>initial.w+.4);assert.ok(!walkable(-3,-2,world.bounds,world.blocks));
-  world.camera.position.set(-2.3,1.65,-2);assert.equal(world.canApply({type:'MIRROR',index:0,angle:90}),false);
+test('fourth room removes all mirror entities and exposes a larger solid exploration space',()=>{
+  const {world}=fixture(3);assert.ok(world.bounds.maxX-world.bounds.minX>=16);assert.ok(world.bounds.maxZ-world.bounds.minZ>=19);
+  assert.equal(world.entities.some(e=>e.id.startsWith('mirror')),false);const portraits=[];world.scene.traverse(o=>{if(o.userData.portrait)portraits.push(o);});assert.equal(portraits.length,0);
 });
 
 test('moving chairs and opening drawers updates collisions including the protruding tray',()=>{
@@ -149,4 +147,22 @@ test('3D switchboard plugs and dial markers follow the same wiring and signal va
   const wire=board.getObjectByName('board-wire0'),end=wire.geometry.parameters.path.getPoint(1);near(end.x,.56);near(end.y,.44);
   const marker=board.getObjectByName('signal-marker0');near(marker.rotation.y,Math.PI/3);
   l.wires[0]=null;world.sync();near(board.getObjectByName('board-wire0').geometry.parameters.path.getPoint(1).y,.14);
+});
+
+
+test('rabbit target is on the front of the real door and stays attached when the exit opens',()=>{
+ const state=newGame(),w=createWorld(null,()=>state,()=>{},{headless:true});
+ const targets=[];w.scene.traverse(o=>{if(o.userData.shadowTarget)targets.push(o);});
+ assert.deepEqual([...new Set(targets.map(o=>o.userData.shadowTarget))].sort(),['moon','rabbit','vase']);
+ assert.ok(targets.every(o=>!o.visible));state.levels[0].triggered=true;w.sync();assert.ok(targets.every(o=>o.visible));
+ const rabbit=targets.filter(o=>o.userData.shadowTarget==='rabbit'),door=w.entities.find(e=>e.id==='exit').group;
+ assert.ok(rabbit.length>0);const panel=door.getObjectByName('exit-panel'),front=new T.Box3().setFromObject(panel).max.z;
+ for(const mesh of rabbit){
+  assert.equal(mesh.parent,door);assert.equal(mesh.material.depthTest,true);assert.equal(mesh.userData.nonOccluding,true);
+  const b=new T.Box3().setFromObject(mesh);assert.ok(b.min.z>front+.005,'door must not hide the silhouette');
+  assert.ok(b.min.y>0&&b.max.y<3.2);assert.ok(b.min.x>-.785&&b.max.x<.785);
+ }
+ const before=new T.Box3().setFromObject(rabbit[0]).getCenter(new T.Vector3());w.setExitProgress(1);
+ assert.ok(before.distanceTo(new T.Box3().setFromObject(rabbit[0]).getCenter(new T.Vector3()))>.1);
+ state.levels[0].triggered=false;w.sync();assert.ok(targets.every(o=>!o.visible));
 });

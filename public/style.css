@@ -32,6 +32,7 @@ body.weird #world { filter: saturate(.8) contrast(1.04); }
 .title-top { top: 6vh; }
 .title-top > span:first-child { font-weight: 700; letter-spacing: .4em; }
 .title-bottom { bottom: 6vh; font-size: 12px; line-height: 2; letter-spacing: .08em; }
+.title-bottom a { color: inherit; text-underline-offset: .2em; }
 .title-bottom > span:last-child { text-align: right; }
 .title-copy { position: absolute; left: 10vw; top: 21vh; max-width: 520px; }
 .title-copy .eyebrow { color: #5c685b; }
@@ -279,12 +280,10 @@ body.low-effects #world { animation: none; }
 .panel .panel-note { font-size: 18px; line-height: 1.7; }
 @media (max-width:700px) { .photo-toolbar p { flex-basis:100%; text-align:center; } .photo-workspace { grid-template-columns:1fr; } .piece-tray { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 /* Immediate first-person input, short transition eyes and readable optical controls. */
-body.exploring, body.exploring * { cursor: none !important; }
+body.exploring #world { cursor: default; }
+body.exploring.looking #world { cursor: grabbing; }
 body.exploring #quick-controls, body.exploring #quick-controls * { cursor: auto !important; }
 body.exploring #quick-controls button, body.exploring #quick-controls button * { cursor: pointer !important; }
-body.cursor-mode #crosshair { visibility: hidden; }
-body.exploring.cursor-mode, body.exploring.cursor-mode * { cursor: auto !important; }
-body.exploring.cursor-mode button, body.exploring.cursor-mode button * { cursor: pointer !important; }
 #quick-controls { flex-direction: column; align-items: stretch; width: 320px; padding: 10px 12px; background: #22372ff2; border: 1px solid #c4c9ad66; border-radius: 12px 3px 12px 3px; box-shadow: 0 8px 24px #101c2933; }
 #hud { z-index: 6; }
 .controls-caption { font-size: 11px; letter-spacing: .18em; color: #eee3d0; padding: 0 3px; }
@@ -361,14 +360,112 @@ body.weird .inventory-card:hover, body.weird .inventory-card.selected { border-c
 .circuit-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(310px,1fr);gap:12px 32px;align-items:start}.circuit-body>p,.circuit-body>.button-row{grid-column:1;margin:8px 0}.circuit-body>.circuit-layout{grid-column:2;grid-row:1 / span 5;align-self:center}.circuit-body .circuit-layout{grid-template-columns:35px minmax(200px,1fr) 45px}
 @media(max-width:800px){.circuit-body{display:block}.mechanism-body .recording-list{grid-template-columns:1fr}.circuit-layout{margin:20px 0}}
 
-/* Exploration owns pointer movement; HUD becomes interactive only while Alt is held. */
-body.exploring:not(.cursor-mode) #quick-controls { pointer-events: none; }
-body.exploring:not(.cursor-mode) #quick-controls button { cursor: none !important; }
 #control-bar, #memory-hud { pointer-events: none; }
 body.exploring #world:focus { outline: none; }
+
+/* One viewport; exploration and cursor input are exclusive. */
+html, body { position: fixed; inset: 0; width: 100%; height: 100dvh; overscroll-behavior: none; }
+#world { width: 100vw; height: 100dvh; }
+body.exploring:not(.cursor-mode), body.exploring:not(.cursor-mode) * { cursor: none !important; }
+body.exploring:not(.cursor-mode) #quick-controls { pointer-events: none; opacity: .7; }
+body.exploring:not(.cursor-mode) #interact { pointer-events: none; }
+body.exploring.cursor-mode #world { cursor: auto; }
+.modal-wrap { height: 100dvh; overflow: hidden; padding: 16px; }
+.modal { max-height: calc(100dvh - 32px); padding: 24px 36px; overflow-y: auto; }
+.modal::before { margin-bottom: 10px; }
+.modal h2 { font-size: 32px; margin-bottom: 12px; }
+.modal p { margin: 10px 0; line-height: 1.7; }
+.modal-actions { margin-top: 16px; }
+.modal .quote { margin: 12px 0; padding: 12px 0; }
+.tutorial-grid { gap: 5px 16px; }
+.panel { top: 16px; bottom: 16px; padding: 20px 26px; }
+.panel > header { padding-bottom: 10px; margin-bottom: 12px; }
+.panel .object-preview { height: 180px; }
+.panel label { margin-top: 10px; }
+.panel .primary { margin-top: 12px; }
+.nav-item { min-height: 44px; padding: 8px 12px; }
+.navigation-body { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px 12px; }
+.navigation-body > p { grid-column: 1/-1; margin: 2px 0 10px; }
+.navigation-body .nav-item { margin: 0; font-size: 15px; }
+.seal-dials { display: flex; gap: 14px; justify-content: center; margin: 32px 0; }
+.seal-dials button { font-size: 40px; width: 78px; height: 88px; }
+.clock-face { position: relative; width: 160px; height: 160px; margin: 20px auto; border-radius: 50%; border: 8px double #b39676; background: repeating-conic-gradient(from -1deg,#beab8c 0deg 2deg,transparent 2deg 30deg),#222b28; box-shadow: inset 0 0 0 12px #222b28; }
+.clock-face span { position: absolute; left: calc(50% - 3px); bottom: 50%; width: 6px; transform-origin: center bottom; border-radius: 4px; background: #f1d8ac; }
+.clock-face .hour-hand { height: 38px; }
+.clock-face .minute-hand { height: 58px; width: 3px; }
+body.void-scene #memory-hud, body.void-scene #hud, body.void-scene #grain, body.void-scene #eye-overlay, body.void-scene #movement-state, body.void-scene #vignette { display: none !important; }
+body.void-scene #control-bar { background: #000; border: 0; color: #a09a90; }
+@media (max-height:800px) { .modal .eyebrow { margin-bottom: 8px; } .modal .tutorial-grid { font-size: 14px; } .panel .object-preview { height: 160px; } .recording-card h3 { margin: 2px 0 6px; } .recording-card p { margin: 6px 0; } .mechanism-body .recording-card { padding: 12px; } }
 
 .recording-date { font-weight: 700; color: #efc99c; border-bottom: 1px solid #b9956966; padding-bottom: 8px; }
 
 .mechanism-body .recording-card { padding: 16px; }
 .recording-card h3 { margin: 4px 0 12px; font-size: 19px; }
 .recording-card p { margin: 10px 0; line-height: 1.7; }
+
+/* Collected clues stay legible even after their quest use is complete. */
+.panel.inventory-panel { width: min(460px,calc(100vw - 32px),calc(100dvh - 180px)); height: min(460px,calc(100vw - 32px),calc(100dvh - 180px)); aspect-ratio: auto; }
+.inventory-panel #panel-body { flex: 1 1 0; }
+.inventory-grid { flex: 1 1 0; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.inventory-card { padding: 8px; min-height: 126px; }
+.inventory-card .inventory-picture { flex: 0 0 66px; height: 66px; }
+.inventory-card strong { font-size: 18px; line-height: 1.7; }
+.inventory-card small { font-size: 12px; line-height: 1.5; opacity: .85; }
+.inventory-card.used { border-style: dashed; }
+.recording-workspace { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; align-items: start; }
+.recording-index { display: grid; gap: 7px; }
+.recording-index-item { display: flex; flex-direction: column; text-align: left; gap: 2px; padding: 7px 14px; min-height: 58px; font-size: 16px; }
+.recording-index-item strong { font-size: 17px; }
+.recording-index-item span { font-size: 14px; }
+.recording-card .transcript { min-height: 86px; font-size: 18px; }
+.recording-card button { display: block; width: 100%; margin: 10px 0 0; }
+.circuit-cell { cursor: grab; touch-action: none; }
+.circuit-cell.dragging { opacity: .45; }
+.circuit-cell.drop-target { outline: 3px solid #ffe0a3; outline-offset: -3px; background: #5b4a36; }
+#finale-memory { position: fixed; inset: 0; z-index: 9; pointer-events: none; }
+#finale-memory[hidden] { display: none; }
+.finale-words { position: absolute; top: 16%; left: 26%; right: 12%; color: #ff9c9f; text-align: center; text-shadow: 0 2px 12px #000,0 0 22px #a91935; }
+.finale-words .eyebrow { color: #ca8b90; font-size: 13px; letter-spacing: .3em; }
+.finale-quote { font-size: clamp(26px,3vw,42px); line-height: 1.7; margin: 12px 0; }
+.finale-detail { font-size: 18px; line-height: 1.7; margin: 12px 0; }
+.finale-photo { position: absolute; left: 6%; top: 25%; width: 180px; height: 180px; background: url('assets/dreamcore/family-aged-v2.png') center/cover; border: 10px solid #bcb2a5; border-bottom-width: 30px; transform: rotate(-7deg); opacity: .5; filter: sepia(.4) brightness(.75); box-shadow: 0 0 45px #8f263f33; }
+.finale-eye { position: absolute; width: 190px; height: 170px; background: url('assets/dreamcore/organic-eye-v2.png') center/contain no-repeat; opacity: 0; }
+.with-eyes .finale-eye { opacity: .33; }
+.finale-eye.first { left: 1%; bottom: 7%; transform: rotate(-18deg); }
+.finale-eye.second { right: 1%; top: 43%; transform: rotate(16deg) scale(.8); }
+body.low-effects .finale-eye { display: none; }
+@media(prefers-reduced-motion:reduce) { .finale-eye { display: none; } .finale-photo { transform: none; } }
+
+.recording-index-item { background: #24161d; color: #ffb9b0; border: 1px solid #87515a; border-radius: 5px; }
+.recording-index-item:hover { background: #39232d; border-color: #f4b6a6; }
+
+body.void-scene.cursor-mode #hud, body.void-scene.interface-open #hud { display: flex !important; justify-content: flex-end; }
+body.void-scene #hud .chapter { display: none; }
+
+/* Handwritten memory cards, centered copy, and an unobstructed side guide. */
+:root { --memory-font: "DFKai-SB", "BiauKai", "KaiTi", "PMingLiU", serif; --serif: var(--memory-font); font-family: var(--memory-font); }
+body { text-align: center; }
+button, input, .eyebrow, .title-copy h1 span { font-family: var(--memory-font); }
+.modal p, .panel p, .panel h2, .panel h3, .panel label, .panel button, .inventory-card, .recording-index-item, .navigation-body .nav-item, .chapter, #memory-hud { text-align: center; }
+.modal, .panel { letter-spacing: .045em; }
+.modal p, .panel p { font-size: 18px; line-height: 1.7; }
+.panel > header { align-items: center; }
+.panel > header > div { flex: 1; }
+.button-row, .title-buttons { justify-content: center; align-items: center; }
+.title-copy { left: 50%; width: min(600px,85vw); max-width: none; transform: translateX(-50%); }
+.title-screen { background: linear-gradient(90deg,#f4e7dfb0,#eee0dde8 50%,#e3d8e8b0); }
+.title-copy h1 { font-weight: 600; }
+.title-bottom > span:last-child { text-align: center; }
+.inventory-card small { font-size: 12px; }
+.inventory-panel .inventory-selection { font-size: 14px; }
+.inventory-panel .inventory-help { font-size: 12px; }
+.recording-index-item { align-items: center; }
+.family-memory-preview { display: block; width: min(360px,42vh); aspect-ratio: 1; object-fit: cover; margin: auto; border: 7px solid #bbaa94; }
+/* One stable memory composition per event; each new walk chooses another sequence. */
+.finale-words { top: var(--echo-top,16%); }
+.finale-photo { top: var(--echo-photo-top,52%); transform: rotate(var(--echo-tilt,-7deg)); }
+.photo-right .finale-photo { left: auto; right: 6%; }
+.one-eye .finale-eye.second { display: none; }
+.eye-swap .finale-eye.first { left: auto; right: 2%; transform: rotate(12deg); }
+.eye-swap .finale-eye.second { right: auto; left: 2%; top: auto; bottom: 8%; }
+@media(prefers-reduced-motion:reduce) { .finale-photo { transform: none; } }

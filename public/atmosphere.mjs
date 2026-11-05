@@ -39,7 +39,7 @@ export function buildEyes(root,bounds,textures={}) {
   const group=new T.Group(),pupils=[];root.add(group);group.visible=false;
   const locations=[];
   const width=bounds.maxX-bounds.minX,depth=bounds.maxZ-bounds.minZ;
-  // Equal cells on each solid wall, with the same two heights and eye size.
+  // Stratified placement covers each wall while stable jitter avoids a wallpaper grid.
   for(const axis of ['x','z'])for(const normal of [-1,1]){
     if(axis==='x'&&normal===1)continue; // The left wall is glazed; use its solid base below.
     const span=axis==='x'?depth:width,count=Math.max(3,Math.ceil(span/1.9));
@@ -47,7 +47,8 @@ export function buildEyes(root,bounds,textures={}) {
     for(const y of [1.65,3.65])for(let c=0;c<count;c++){
       const along=(axis==='x'?bounds.minZ:bounds.minX)+(c+.5)*span/count;
       if(axis==='z'&&normal===1&&Math.abs(along)<1.1)continue; // Keep the exit clear.
-      locations.push({axis,surface,normal,pos:axis==='x'?[surface,y,along]:[along,y,surface],small:false});
+      const n=locations.length,offset=Math.sin(n*8.17)*.18,height=y+Math.sin(n*4.39)*.34;
+      locations.push({axis,surface,normal,pos:axis==='x'?[surface,height,along+offset]:[along+offset,height,surface],small:false});
     }
   }
   const count=Math.ceil(depth/3.5);
@@ -66,7 +67,7 @@ export function buildEyes(root,bounds,textures={}) {
     const disk=part(iris,new T.CylinderGeometry(.14,.14,.008,32),'#403e26',[0,0,0],{roughness:.35});disk.rotation.x=Math.PI/2;
     const pupil=part(iris,new T.SphereGeometry(.105,20,12),'#111b1b',[0,0,.024],{roughness:.15});pupil.scale.z=.35;
     const glint=part(iris,new T.SphereGeometry(.023,10,6),'#dce5d3',[-.04,.05,.063]);glint.castShadow=false;
-    eye.scale.setScalar(small?.27:.62);mountOn(eye,axis,surface,normal);pupils.push({eye,iris});
+    eye.scale.setScalar(small?.24+.025*(i%3):.43+.34*((i*7%13)/12));eye.rotateZ(Math.sin(i*2.37)*.55);mountOn(eye,axis,surface,normal);pupils.push({eye,iris});
   });
   return {group,pupils,tick(camera,time,reducedMotion=false){
     if(!group.visible)return;
@@ -75,36 +76,13 @@ export function buildEyes(root,bounds,textures={}) {
 }
 
 
-// Permanent, unlit eyes on supported facades outside the window. They do not blink
-// or share the short-lived screen overlay. Walls and opaque backing still occlude them.
+// Camera-centered eye sky, independent of the short-lived screen overlay.
+// Indoor walls still occlude it; the background itself is never a near-window facade.
 export function buildWindowEyes(root,bounds,textures={}){
-  const group=new T.Group();group.userData.exterior=true;group.visible=false;root.add(group);
-  const count=Math.ceil((bounds.maxZ-bounds.minZ)/6)+2;
-  for(let i=0;i<count;i++){
-    const facade=new T.Group();facade.position.set(bounds.minX-10,0,bounds.minZ-3+i*6);facade.rotation.y=Math.PI/2;group.add(facade);
-    part(facade,new T.BoxGeometry(6,4.6,.18),'#191b19',[0,3.6,0]);
-    for(const x of [-2.4,2.4])part(facade,new T.BoxGeometry(.18,1.3,.22),'#525449',[x,.65,0]);
-    const eye=new T.Mesh(new T.PlaneGeometry(5.5,4.4),new T.MeshBasicMaterial({map:textures.organic||textures.eyes||null,color:'#e3d0c6',transparent:true,alphaTest:.1,depthWrite:true,fog:false}));
-    eye.position.set(0,3.6,.1);eye.frustumCulled=false;facade.add(eye);
-  }
-  return {group};
-}
-
-export function buildFlood(root,bounds,level){
-  const group=new T.Group();group.userData.nonOccluding=true;group.userData.flood=true;root.add(group);group.visible=false;
-  const width=bounds.maxX-bounds.minX-.22,depth=bounds.maxZ-bounds.minZ-.22,height=level===1?.34:.43;
-  const geo=new T.PlaneGeometry(width,depth,28,48);geo.rotateX(-Math.PI/2);
-  const water=new T.Mesh(geo,new T.MeshPhysicalMaterial({color:'#82aaa6',emissive:'#315f65',emissiveIntensity:.42,metalness:.08,roughness:.12,transparent:true,opacity:.7,clearcoat:1,clearcoatRoughness:.09,depthWrite:false,side:T.DoubleSide}));
-  water.position.set(0,height,(bounds.minZ+bounds.maxZ)/2);water.receiveShadow=true;group.add(water);
-  // A visible tide line and thin highlights make the rise readable without hiding the clues.
-  for(const x of [bounds.minX+.11,bounds.maxX-.11])part(group,new T.BoxGeometry(.018,.035,depth),'#9eafa0',[x,height,(bounds.minZ+bounds.maxZ)/2],{transparent:true,opacity:.7});
-  for(let z=bounds.minZ+2;z<bounds.maxZ;z+=4)for(let line=0;line<3;line++){
-    const points=Array.from({length:12},(_,n)=>new T.Vector3(-.72+n*.13,height+.014,z+line*.065+Math.sin(n*.9+line)*.035));
-    const gleam=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(points),16,.009,4,false),new T.MeshBasicMaterial({color:'#d4dfc8',transparent:true,opacity:.3,depthWrite:false}));group.add(gleam);
-  }
-  const highlights=[];for(let i=0;i<16;i++){
-    const ring=new T.Mesh(new T.RingGeometry(.25+i%3*.12,.26+i%3*.12,40),new T.MeshBasicMaterial({color:'#c1cfc3',transparent:true,opacity:.2,side:T.DoubleSide,depthWrite:false}));
-    ring.rotation.x=-Math.PI/2;ring.position.set(Math.sin(i*4.3)*(width/2-.5),height+.013,bounds.minZ+.5+(i*.7%1)*(depth-1));group.add(ring);highlights.push(ring);
-  }
-  return {group,water,height,tick(time,reduced=false){if(!group.visible)return;const p=geo.attributes.position;for(let i=0;i<p.count;i++)p.setY(i,reduced?0:Math.sin(p.getX(i)*2.1+time*.8)*.013+Math.cos(p.getZ(i)*1.4-time*.5)*.009);p.needsUpdate=true;if(!reduced)highlights.forEach((r,i)=>r.scale.setScalar(1+Math.sin(time*.5+i)*.18));}};
+  const group=new T.Group();group.userData.nonOccluding=true;group.userData.cameraCentered=true;group.visible=false;root.add(group);
+  // An opaque, unlit six-sided sky encloses the camera, never a wall outside a window.
+  // Its farthest corner is 260m, safely inside the 350m far plane from every direction.
+  const sky=new T.Mesh(new T.BoxGeometry(300,300,300),new T.MeshBasicMaterial({map:textures.eyes||null,color:'#ffffff',side:T.BackSide,depthWrite:false,fog:false,toneMapped:false}));
+  sky.frustumCulled=false;sky.renderOrder=-100;group.add(sky);
+  return {group,sky,follow(camera){group.position.copy(camera.position);group.updateMatrixWorld(true);}};
 }

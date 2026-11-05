@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-03",
+  "generator": "built-in Image Gen",
+  "reference": "family-memory-v1.png",
+  "jobs": [
+    {
+      "key": "birthday",
+      "prompt": "Use case: identity-preserve. Asset type: full-bleed square family photograph texture for a Three.js dreamcore game. Input image 1 is the authoritative identity reference, not a replacement target. Create a NEW snapshot of the EXACT SAME three fictional family members: father on the right with short dark curly brown hair, strong dark eyebrows, brown eyes, light stubble, blue button-down shirt; mother with wavy brown hair, cream floral dress; their young daughter with long brown hair and straight bangs, light floral dress. Keep faces, apparent ages, skin tones and distinctive facial features consistent with the reference. No added people, no substitute father. Natural candid analogue 1990s print, slight fade and fine film grain, gentle edge wear but faces clearly readable. No text, date stamp, watermark, border, collage or injury. Three people only. Scene: the daughter at her birthday table with a small cake and pastel balloons in the same family home. Her father kneels beside her, smiling warmly with the same recognizable face as the reference; mother sits close on the other side. Waist-up family composition, all three faces large and visible. Soft warm light, tender ordinary memory. Square photograph.",
+      "file": "family-birthday-v4.png"
+    },
+    {
+      "key": "park",
+      "prompt": "Use case: identity-preserve. Asset type: full-bleed square family photograph texture for a Three.js dreamcore game. Input image 1 is the authoritative identity reference, not a replacement target. Create a NEW snapshot of the EXACT SAME three fictional family members: father on the right with short dark curly brown hair, strong dark eyebrows, brown eyes, light stubble, blue button-down shirt; mother with wavy brown hair, cream floral dress; their young daughter with long brown hair and straight bangs, light floral dress. Keep faces, apparent ages, skin tones and distinctive facial features consistent with the reference. No added people, no substitute father. Natural candid analogue 1990s print, slight fade and fine film grain, gentle edge wear but faces clearly readable. No text, date stamp, watermark, border, collage or injury. Three people only. Scene: a family picnic on a grassy park lawn beside a school path. Father sits next to his daughter holding her school backpack, mother beside them, all three looking toward the camera as if a timed snapshot. Medium close composition, faces prominent, natural daylight, quiet nostalgic warmth. Preserve same father mother daughter identities exactly. Square photograph.",
+      "file": "family-park-v4.png"
+    },
+    {
+      "key": "bedtime",
+      "prompt": "Use case: identity-preserve. Asset type: full-bleed square family photograph texture for a Three.js dreamcore game. Input image 1 is the authoritative identity reference, not a replacement target. Create a NEW snapshot of the EXACT SAME three fictional family members: father on the right with short dark curly brown hair, strong dark eyebrows, brown eyes, light stubble, blue button-down shirt; mother with wavy brown hair, cream floral dress; their young daughter with long brown hair and straight bangs, light floral dress. Keep faces, apparent ages, skin tones and distinctive facial features consistent with the reference. No added people, no substitute father. Natural candid analogue 1990s print, slight fade and fine film grain, gentle edge wear but faces clearly readable. No text, date stamp, watermark, border, collage or injury. Three people only. Scene: a quiet bedtime family memory in the daughter's room. The SAME father sits on the bed edge reading a picture book with blank abstract pictures to his daughter, mother sits beside the child; all three faces fully visible turned toward camera, clear recognizable faces. A bedside lamp casts soft amber light, pastel quilt and curtains. Peaceful domestic memory, no other people. Square photograph.",
+      "file": "family-bedtime-v4.png"
+    }
+  ]
+}

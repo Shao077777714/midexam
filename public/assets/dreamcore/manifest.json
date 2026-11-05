@@ -96,6 +96,59 @@
         255
       ],
       "verificationScope": "Codex IAB sample display; complete Chrome/Edge matrix pending."
+    },
+    {
+      "file": "protagonist-mirror-v1.png",
+      "url": "/assets/dreamcore/protagonist-mirror-v1.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2309631,
+      "sha256": "5d9369e1c88d4c2cb9f947fc1f2caea6346683e86eabdabd5e6504112d8a7bf2",
+      "type": "paired-protagonist-portrait",
+      "prompts": "PROMPTS-v3.json",
+      "generatedOn": "2026-11-03",
+      "inGameVerified": true,
+      "verificationScope": "Historical v5 screenshot only. Removed from runtime in v6: protagonist is the father from the existing family photograph.",
+      "status": "archived-unused"
+    },
+    {
+      "file": "family-birthday-v4.png",
+      "url": "/assets/dreamcore/family-birthday-v4.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2343323,
+      "sha256": "e7ea1409176d641419b1ab0149c2cbec93e4643b614c52c10b5626c02056b051",
+      "type": "identity-referenced-family-memory",
+      "prompts": "PROMPTS-v4.json",
+      "generatedOn": "2026-11-03",
+      "inGameVerified": true,
+      "verificationScope": "2026-11-03 isolated IAB: birthday / park / bedtime viewed in room photo interactions and corresponding sixth-hall memory overlays. Two desktop viewport layout samples; full browser art matrix remains untested."
+    },
+    {
+      "file": "family-park-v4.png",
+      "url": "/assets/dreamcore/family-park-v4.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2595440,
+      "sha256": "500ced253d38da67035ccd2f1a83c643664c96d95e556503939f6561ab43b0c8",
+      "type": "identity-referenced-family-memory",
+      "prompts": "PROMPTS-v4.json",
+      "generatedOn": "2026-11-03",
+      "inGameVerified": true,
+      "verificationScope": "2026-11-03 isolated IAB: birthday / park / bedtime viewed in room photo interactions and corresponding sixth-hall memory overlays. Two desktop viewport layout samples; full browser art matrix remains untested."
+    },
+    {
+      "file": "family-bedtime-v4.png",
+      "url": "/assets/dreamcore/family-bedtime-v4.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2457468,
+      "sha256": "037e1ee0872278a8f5f6d642e16dfdccfdad0d8da63e865dc8a3cd264070dbbf",
+      "type": "identity-referenced-family-memory",
+      "prompts": "PROMPTS-v4.json",
+      "generatedOn": "2026-11-03",
+      "inGameVerified": true,
+      "verificationScope": "2026-11-03 isolated IAB: birthday / park / bedtime viewed in room photo interactions and corresponding sixth-hall memory overlays. Two desktop viewport layout samples; full browser art matrix remains untested."
     }
   ]
 }

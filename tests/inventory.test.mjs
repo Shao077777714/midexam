@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,saveGame,loadGame,applyAction,MEMORIES,SHADOW_TARGETS} from '../public/engine.mjs';
-import {doubleClickPickup,interactionHint,doubleClickAction} from '../public/controls.mjs';
+import {doubleClickPickup,doubleClickAction} from '../public/controls.mjs';
 import {inventoryEntries,compactInventory} from '../public/inventory.mjs';
 import {createThumbnailCache} from '../public/rendering.mjs';
 
@@ -18,17 +18,17 @@ test('restored memories keep their actual model index and the cross-stage letter
   assert.deepEqual(inventoryEntries(restored).map(e=>[e.kind,e.name]),[['letter','未寄出的信']]);
   restored.level=3;restored.inventory.push('tape-work','plug0');assert.ok(inventoryEntries(restored).some(e=>e.id==='tape-work'));assert.ok(!inventoryEntries(restored).some(e=>e.id==='plug0'));
 });
-test('used corridor items hide but the archived letter returns only when needed in stage five',()=>{
+test('used corridor items stay visible but the archived letter returns only when needed in stage five',()=>{
   const state=newGame();state.level=1;state.inventory=['key','drawing','letter'];state.letter=true;
-  state.levels[1].slots={key:'key',letter:'letter'};assert.deepEqual(inventoryEntries(state).map(e=>e.id),['drawing']);
+  state.levels[1].slots={key:'key',letter:'letter'};assert.deepEqual(inventoryEntries(state).map(e=>[e.id,e.used]),[['key',true],['drawing',false],['letter',true]]);
   const before=JSON.stringify(state.inventory);state.level=2;assert.deepEqual(inventoryEntries(state),[]);state.level=3;assert.deepEqual(inventoryEntries(state),[]);
   state.level=4;state.memories=MEMORIES.slice(0,4);state.levels[4].sequence=[0,1];assert.deepEqual(inventoryEntries(state).map(e=>e.id),['letter']);
-  state.levels[4].mailed=true;state.levels[4].projectionDone=true;assert.deepEqual(inventoryEntries(state),[]);assert.equal(JSON.stringify(state.inventory),before);
+  state.level=5;assert.deepEqual(inventoryEntries(state).map(e=>e.id),['letter']);state.levels[5].mailed=true;assert.equal(inventoryEntries(state)[0].note,'已寄出');assert.equal(JSON.stringify(state.inventory),before);
 });
-test('placed photo pieces hide, but taking back a wrong placement makes them available again',()=>{
+test('placed photo pieces stay visible and taking back a wrong placement updates their status',()=>{
   let state=newGame();state.level=2;state.levels[2].triggered=true;state.inventory=['letter','p0','p1'];
   state=applyAction(state,{type:'PHOTO',id:'p0',slot:4,angle:90}).state;
-  assert.deepEqual(inventoryEntries(state).map(e=>e.id),['p1']);
+  assert.deepEqual(inventoryEntries(state).map(e=>[e.id,e.used]),[['p0',true],['p1',false]]);
   state=applyAction(state,{type:'REMOVE_PHOTO',id:'p0'}).state;assert.deepEqual(inventoryEntries(state).map(e=>e.id),['p0','p1']);
 });
 test('picked shadow props survive dropping and reloading, then hide when aligned',()=>{
@@ -38,7 +38,7 @@ test('picked shadow props survive dropping and reloading, then hide when aligned
   state=loadGame({getItem:()=>JSON.stringify(state)}).state;assert.deepEqual(inventoryEntries(state).map(e=>e.id),['moon']);
   state=applyAction(state,{type:'SHADOW',index:0,...SHADOW_TARGETS[0]}).state;assert.deepEqual(inventoryEntries(state,'moon'),[]);
 });
-test('installed lamp parts and completed-stage inventory hide without deletion',()=>{const state=newGame();state.level=4;state.inventory=['bulb'];assert.equal(inventoryEntries(state).length,1);state.levels[4].installed[0]=true;assert.equal(inventoryEntries(state).length,0);assert.deepEqual(state.inventory,['bulb']);state.level=1;state.inventory=['key'];state.completed[1]=true;assert.deepEqual(inventoryEntries(state),[]);});
+test('installed lamp parts and completed-stage inventory remain visible without deletion',()=>{const state=newGame();state.level=4;state.inventory=['bulb'];assert.equal(inventoryEntries(state).length,1);state.levels[4].installed[0]=true;assert.equal(inventoryEntries(state)[0].note,'已安裝');assert.deepEqual(state.inventory,['bulb']);state.level=1;state.inventory=['key'];state.completed[1]=true;assert.equal(inventoryEntries(state)[0].id,'key');});
 test('double-click picks only a fresh ray hit in exploration, using the same reticle with or without Pointer Lock',()=>{
   const canvas={getBoundingClientRect:()=>({left:20,top:30,width:200,height:100})};let calls=0,ray;
   const world={target(x,y){ray=[x,y];return {pickupAction(){calls++;}};}};
@@ -58,17 +58,25 @@ test('hidden mouse clicks use the visible center reticle even when the cursor is
   assert.equal(opened,1);
 });
 
-test('double-click hints distinguish triggers, reading, and eligible pickups',()=>{
+test('visible-cursor double-click uses the item under the cursor and still rejects UI or off-canvas hits',()=>{
+  const canvas={getBoundingClientRect:()=>({left:20,top:30,width:200,height:100})};let ray,calls=0;
+  const world={target(x,y){ray=[x,y];return {action(){calls++;}};}};
+  const context={mode:'explore',canvas,world,aim:'cursor'},event={target:canvas,button:0,clientX:170,clientY:55};
+  assert.equal(doubleClickPickup(event,context),true);assert.deepEqual(ray,[.5,.5]);assert.equal(calls,1);
+  assert.equal(doubleClickPickup({...event,clientX:500},context),false);assert.equal(doubleClickPickup({...event,target:{}},context),false);assert.equal(calls,1);
+});
+
+test('double-click eligibility distinguishes triggers, reading, and eligible pickups',()=>{
   const action=()=>{};
-  for(const [key,guard,ready,done] of [['triggerAction','canTrigger','','已觸發'],['readAction','canRead','雙擊閱讀','已閱讀'],['pickupAction','canPickup','雙擊拿取','']]){
+  for(const [key,guard] of [['triggerAction','canTrigger'],['readAction','canRead'],['pickupAction','canPickup']]){
     let eligible=true;const target={[key]:action,[guard]:()=>eligible};
-    assert.equal(interactionHint(target),ready);assert.equal(doubleClickAction(target),action);
-    eligible=false;assert.equal(interactionHint(target),done);assert.equal(doubleClickAction(target),null);
+    assert.equal(doubleClickAction(target),action);
+    eligible=false;assert.equal(doubleClickAction(target),null);
   }
-  assert.equal(interactionHint({action}), '');assert.equal(doubleClickAction({action}),action);
+  assert.equal(doubleClickAction({action}),action);
   assert.equal(doubleClickAction({action,pickupAction:action,canPickup:()=>false}),null);
   assert.equal(doubleClickAction({action,triggerAction:action,canTrigger:()=>false}),null);
-  assert.equal(interactionHint(null),'');assert.equal(doubleClickAction(null),null);
+  assert.equal(doubleClickAction(null),null);
 });
 
 test('compact shelf keeps the selected old item visible without hiding it behind newer memories',()=>{

@@ -40,9 +40,43 @@
         "path": "public/assets/dreamcore/organic-eye-v2.png",
         "purpose": "怪核場景眼睛與周邊注視效果。",
         "status": "available"
+      },
+      {
+        "path": "public/assets/dreamcore/protagonist-mirror-v1.png",
+        "purpose": "舊 v5 男性倒影素材歸檔；v6 已自遊戲移除，主角固定為家庭照片中的爸爸。",
+        "status": "archived-unused"
+      },
+      {
+        "path": "public/assets/dreamcore/family-birthday-v4.png",
+        "purpose": "與原照同一家人的生活回憶，套用各關相框與第六關：birthday",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/dreamcore/family-park-v4.png",
+        "purpose": "與原照同一家人的生活回憶，套用各關相框與第六關：park",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/dreamcore/family-bedtime-v4.png",
+        "purpose": "與原照同一家人的生活回憶，套用各關相框與第六關：bedtime",
+        "status": "available"
       }
     ],
     "audio": [
+      {
+        "path": "public/assets/audio/ambience/gone-beyond.mp3",
+        "purpose": "夢核循環配樂：Gone Beyond — Kevin MacLeod（CC BY 4.0）",
+        "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100752",
+        "sha256": "e9f0cea52dc716639ad3a744459e618fd880b26a0f00f3cf60852e5738b5248e",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/ambience/this-house.mp3",
+        "purpose": "怪核循環配樂：This House — Kevin MacLeod（CC BY 4.0）",
+        "source": "https://www.incompetech.com/music/royalty-free/index.html?isrc=USUAN1500055",
+        "sha256": "5d6070abd7fe89e13fd641406e6093c1eee8473ae0999b82e5e7334f28f36fd5",
+        "status": "available"
+      },
       {
         "path": "public/assets/audio/ambience/dreamcore_loop.wav",
         "purpose": "夢核循環氛圍音。",
@@ -50,7 +84,7 @@
       },
       {
         "path": "public/assets/audio/ambience/weirdcore_loop.wav",
-        "purpose": "怪核循環氛圍音。",
+        "purpose": "怪核曲目載入失敗時的備用循環氛圍音。",
         "status": "available"
       },
       {
@@ -81,6 +115,121 @@
       {
         "path": "public/assets/audio/corridor/unanswered_call.wav",
         "purpose": "第二關無人接聽的電話線索。",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/ambience/suspense-dream-v2.wav",
+        "purpose": "新版24秒恐怖懸疑循環音景：dream",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/ambience/suspense-weird-v2.wav",
+        "purpose": "新版24秒恐怖懸疑循環音景：weird",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/ambience/suspense-void-v2.wav",
+        "purpose": "新版24秒恐怖懸疑循環音景：void",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/record-0.mp3",
+        "purpose": "外部生成中文爸爸旁白：record-0",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/record-1.mp3",
+        "purpose": "外部生成中文爸爸旁白：record-1",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/record-2.mp3",
+        "purpose": "外部生成中文爸爸旁白：record-2",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/record-3.mp3",
+        "purpose": "外部生成中文爸爸旁白：record-3",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/record-4.mp3",
+        "purpose": "外部生成中文爸爸旁白：record-4",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/record-all.mp3",
+        "purpose": "外部生成中文爸爸旁白：record-all",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/projection.mp3",
+        "purpose": "外部生成中文爸爸旁白：projection",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/ending-0.mp3",
+        "purpose": "外部生成中文爸爸旁白：ending-0",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/ending-1.mp3",
+        "purpose": "外部生成中文爸爸旁白：ending-1",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/ending-2.mp3",
+        "purpose": "外部生成中文爸爸旁白：ending-2",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/memory-0.mp3",
+        "purpose": "外部生成中文爸爸旁白：memory-0",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/memory-1.mp3",
+        "purpose": "外部生成中文爸爸旁白：memory-1",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/memory-2.mp3",
+        "purpose": "外部生成中文爸爸旁白：memory-2",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/memory-3.mp3",
+        "purpose": "外部生成中文爸爸旁白：memory-3",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/memory-4.mp3",
+        "purpose": "外部生成中文爸爸旁白：memory-4",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/memory-5.mp3",
+        "purpose": "逐段字幕同步／完整旁白門檻：memory-5",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/projection-0.mp3",
+        "purpose": "逐段字幕同步／完整旁白門檻：projection-0",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/projection-1.mp3",
+        "purpose": "逐段字幕同步／完整旁白門檻：projection-1",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/projection-2.mp3",
+        "purpose": "逐段字幕同步／完整旁白門檻：projection-2",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/voice-v2/projection-3.mp3",
+        "purpose": "逐段字幕同步／完整旁白門檻：projection-3",
         "status": "available"
       }
     ]

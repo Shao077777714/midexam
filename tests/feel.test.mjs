@@ -7,11 +7,11 @@ import {setPhotoMood} from '../public/models.mjs';
 import {createWorld} from '../public/scene.mjs';
 import {findPath} from '../public/navigation.mjs';
 
-function inputFixture(refuse=false,edgeTurn=false){
+function inputFixture(refuse=false,edgeTurn=false,dragToLook=false){
   const events=new Map(),moves=[];let requests=0,unlocks=0,denied=0;
   const doc={pointerLockElement:null,addEventListener:(name,fn)=>events.set(name,fn),removeEventListener:name=>events.delete(name),exitPointerLock(){this.pointerLockElement=null;events.get('pointerlockchange')?.();}};
   const canvas={getBoundingClientRect:()=>({left:0,top:0,right:1000,bottom:700}),requestPointerLock(){requests++;if(refuse)return Promise.reject(Error('unsupported'));}};
-  const look=createMouseLook({canvas,documentRef:doc,edgeTurn,onLook:(...xy)=>moves.push(xy),onUnlock:()=>unlocks++,onDenied:()=>denied++});
+  const look=createMouseLook({canvas,documentRef:doc,edgeTurn,dragToLook,onLook:(...xy)=>moves.push(xy),onUnlock:()=>unlocks++,onDenied:()=>denied++});
   return {doc,canvas,look,moves,events,get requests(){return requests;},get unlocks(){return unlocks;},get denied(){return denied;}};
 }
 const action=(s,a)=>{const r=applyAction(s,a);assert.equal(r.ok,true,r.message);return r.state;};
@@ -49,12 +49,28 @@ test('menu unlocks are deliberate, Escape unlocks pause, and late lock acquisiti
   f.look.enter();f.doc.pointerLockElement=f.canvas;f.events.get('pointerlockchange')();f.doc.exitPointerLock();assert.equal(f.unlocks,1);
   f.look.leave();f.doc.pointerLockElement=f.canvas;f.events.get('pointerlockchange')();assert.equal(f.doc.pointerLockElement,null);
 });
-test('water applies exactly the same 55 percent factor to manual and assisted movement',()=>{
-  for(const assisted of [false,true])assert.equal(movementSpeed(true,assisted)/movementSpeed(false,assisted),.55);
+test('drag look rotates only while the left button is held and restores the cursor on release',()=>{
+  const f=inputFixture(false,false,true);f.look.enter();assert.equal(f.requests,0);
+  f.look.move({target:f.canvas,clientX:100,clientY:100,buttons:0});f.look.move({target:f.canvas,clientX:120,clientY:120,buttons:0});assert.deepEqual(f.moves,[]);
+  assert.equal(f.look.down({target:{},button:0}),false);assert.equal(f.look.down({target:f.canvas,button:2}),false);
+  f.look.down({target:f.canvas,button:0,clientX:120,clientY:120});f.look.move({target:f.canvas,clientX:150,clientY:130,buttons:1});assert.deepEqual(f.moves,[[30,10]]);assert.equal(f.look.dragging,true);
+  f.look.up({timeStamp:1000});f.look.move({target:f.canvas,clientX:500,clientY:350,buttons:0});assert.equal(f.look.dragging,false);assert.equal(f.moves.length,1);assert.equal(f.look.canDoubleClick({timeStamp:1100}),false);assert.equal(f.look.canDoubleClick({timeStamp:1400}),true);
+});
+
+test('drag look cancels on menus or lost buttons, with no jump or edge rotation after release',()=>{
+  const f=inputFixture(false,true,true);f.look.enter();f.look.down({target:f.canvas,button:0,clientX:999,clientY:350});f.look.leave();f.look.tick(.1);assert.equal(f.look.dragging,false);assert.deepEqual(f.moves,[]);
+  f.look.enter();f.look.move({target:f.canvas,clientX:900,clientY:500,buttons:1});assert.deepEqual(f.moves,[]);
+  f.look.down({target:f.canvas,button:0,clientX:900,clientY:500});f.look.move({target:f.canvas,clientX:910,clientY:502,buttons:1});assert.deepEqual(f.moves,[[10,2]]);
+  f.look.move({target:f.canvas,clientX:999,clientY:502,buttons:0,timeStamp:2000});f.look.tick(.1);assert.equal(f.look.dragging,false);assert.equal(f.moves.length,1);
+  f.look.down({target:f.canvas,button:0,clientX:500,clientY:350});f.look.up({timeStamp:2500});assert.equal(f.look.canDoubleClick({timeStamp:2501}),true);
+});
+
+test('manual and assisted speeds are fixed independently of the water visual',()=>{
+  assert.equal(movementSpeed(),2.7);assert.equal(movementSpeed(true),3.2);
   assert.equal(movementSpeed(false),2.7);assert.ok(EYE_SURGE_MS<=200);
 });
-test('wading follows the visible water and returns to normal in dry scenes',()=>{
-  for(let level=0;level<5;level++){const {s,w}=worldFixture(level,false);assert.equal(w.wadingAt(0,0),false);s.levels[level].triggered=true;w.sync();assert.equal(w.wadingAt(0,0),[1,3,4].includes(level));assert.equal(w.wadingAt(100,100),false);}
+test('all existing room states are dry after the flood system is removed',()=>{
+ for(let level=0;level<5;level++){const {s,w}=worldFixture(level,false);for(const triggered of [false,true]){s.levels[level].triggered=triggered;w.sync();assert.equal('flood' in w,false);assert.equal('wadingAt' in w,false);let wet=false;w.scene.traverse(o=>{if(o.userData.flood)wet=true;});assert.equal(wet,false);}}
 });
 test('new anomalies stay hidden before triggering, with grounded instanced dolls and fixed counts',()=>{
   for(let level=0;level<5;level++){const {s,w}=worldFixture(level,false);assert.equal(w.phenomena.group.visible,false);assert.ok(w.phenomena.dollCount>=8);assert.ok(w.phenomena.dolls.every(b=>Math.abs(b.min.y-.012)<.004));assert.ok(w.phenomena.blocks.every(b=>!b.active));
@@ -72,7 +88,7 @@ test('received light colors use the actual reflection segment and match displaye
   const s=mirrorState(),l=s.levels[3];l.mirrorFilters=[1,2,3];const status=opticsStatus(l);assert.deepEqual(status.segmentFilters,[0,1,2,3]);assert.deepEqual(status.received,[1,2,3]);l.mirrorFilters[1]=3;assert.equal(opticsStatus(l).ready,false);l.mirrors[0]=0;assert.equal(opticsStatus(l).trace.solved,false);
 });
 test('v2 mirror saves keep unlocked progress while unfinished mirrors receive the new controls',()=>{
-  for(const unlocked of [false,true]){const s=newGame();s.version=2;s.levels[3].opticsUnlocked=unlocked;for(const l of s.levels)delete l.mirrorFilters;const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,4);assert.equal(r.state.levels[3].opticsUnlocked,unlocked);assert.deepEqual(r.state.levels[3].mirrorFilters,unlocked?[1,2,3]:[0,0,0]);}
+  for(const unlocked of [false,true]){const s=newGame();s.version=2;s.levels=s.levels.slice(0,5);s.completed=s.completed.slice(0,5);s.levels[3].opticsUnlocked=unlocked;for(const l of s.levels)delete l.mirrorFilters;const r=loadGame({getItem:()=>JSON.stringify(s)});assert.equal(r.error,null);assert.equal(r.state.version,8);assert.equal(r.state.levels[3].opticsUnlocked,unlocked);assert.deepEqual(r.state.levels[3].mirrorFilters,unlocked?[1,2,3]:[0,0,0]);}
 });
 test('invalid mirror filter input and malformed modern saves are rejected',()=>{
   const s=mirrorState();for(const filter of [-1,4,1.2,NaN])assert.equal(applyAction(s,{type:'MIRROR_FILTER',index:0,filter}).ok,false);

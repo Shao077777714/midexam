@@ -1,12 +1,13 @@
+import {SURFACE_TEXTURES,surfaceMaterial,roundedBoxGeometry} from './surfaces.mjs';
 import {createPuzzleModel} from './puzzle-models.mjs';
 import * as T from './vendor/three.module.js';
 
-const material = (color, options={}) => new T.MeshStandardMaterial({color,roughness:.72,...options});
+const material = (color, options={}) => surfaceMaterial('plaster',color,{roughness:.72,...options});
 export function part(parent, geometry, color, pos=[0,0,0], options={}) {
   const m = new T.Mesh(geometry,material(color,options)); m.position.set(...pos);
   m.castShadow=true; m.receiveShadow=true; parent.add(m); return m;
 }
-const cube=(g,size,pos,color,options)=>part(g,new T.BoxGeometry(...size),color,pos,options);
+const cube=(g,size,pos,color,options)=>part(g,Math.min(...size)>.08?roundedBoxGeometry(...size):new T.BoxGeometry(...size),color,pos,options);
 const sphere=(g,r,pos,color,scale=[1,1,1],options)=>{const m=part(g,new T.SphereGeometry(r,24,16),color,pos,options);m.scale.set(...scale);return m;};
 const cyl=(g,r1,r2,h,pos,color,options)=>part(g,new T.CylinderGeometry(r1,r2,h,32),color,pos,options);
 const ring=(g,r,t,pos,color)=>part(g,new T.TorusGeometry(r,t,8,32),color,pos,{metalness:.65,roughness:.3});
@@ -58,7 +59,17 @@ function photoMaps(mesh,textures,n=null){
 export function createModel(kind, textures={}) {
   const puzzle=createPuzzleModel(kind);if(puzzle)return puzzle;
   const g=new T.Group();g.userData.kind=kind;
-  if(kind==='moon'){
+  if(kind==='projector'){
+    cube(g,[1.05,.48,.64],[0,.31,0],'#8d958c',{metalness:.45,roughness:.46});
+    for(const x of [-.38,.38])for(const z of [-.2,.2])cyl(g,.045,.055,.08,[x,.04,z],'#5c5c52');
+    for(const x of [-.3,.3]){const reel=cyl(g,.22,.22,.08,[x,.76,-.13],'#b2b1a0',{metalness:.65});reel.rotation.x=Math.PI/2;for(let n=0;n<5;n++){const a=n*Math.PI*2/5;const hole=cyl(g,.04,.04,.012,[x+Math.cos(a)*.12,.76+Math.sin(a)*.12,-.082],'#373e39');hole.rotation.x=Math.PI/2;}}
+    const barrel=cyl(g,.14,.18,.25,[0,.31,.41],'#5b625b',{metalness:.7});barrel.rotation.x=Math.PI/2;
+    const lens=cyl(g,.12,.12,.018,[0,.31,.545],'#b4c7c1',{metalness:.3,roughness:.12,emissive:'#b7d4c4',emissiveIntensity:.08});lens.rotation.x=Math.PI/2;lens.name='projector-lens';
+    const pilot=sphere(g,.025,[.37,.44,.327],'#d6b981',[1,1,.4],{emissive:'#ffd394',emissiveIntensity:.08});pilot.name='projector-pilot';
+    for(let n=0;n<8;n++)cube(g,[.028,.22,.014],[-.38+n*.045,.3,.328],'#454d46');
+    for(const x of [-1.15,1.15]){cube(g,[.52,.7,.45],[x,.35,-.08],'#766e60');for(const [r,y]of [[.15,.25],[.075,.52]]){const cone=cyl(g,r,r*.7,.025,[x,y,.16],'#343b35');cone.rotation.x=Math.PI/2;ring(g,r,.014,[x,y,.177],'#9b9684');}for(let n=0;n<7;n++)cube(g,[.46,.01,.012],[x,.08+n*.087,.197],'#8c8778');}
+    g.userData.playbackHardware=true;
+  }else if(kind==='moon'){
     cyl(g,.24,.28,.1,[0,.05,0],'#bba275',{metalness:.7});const moon=emblem('moon','#efd490');moon.scale.setScalar(1.65);moon.position.set(-.06,.65,0);g.add(moon);
     cyl(g,.025,.025,.32,[0,.25,0],'#a28f6d');
   }else if(kind==='rabbit'||kind==='wornDoll'){
@@ -93,8 +104,9 @@ export function createModel(kind, textures={}) {
     const m=photoMaps(part(g,new T.PlaneGeometry(.53,.53),'#fff',[0,.024,0]),textures,n);m.rotation.x=-Math.PI/2;
   }else if(kind==='drawing'){
     cube(g,[.66,.012,.77],[0,.006,0],'#e7dfc0');const art=new T.Group();art.rotation.x=-Math.PI/2;art.position.set(0,.015,0);g.add(art);
-    const house=emblem('house','#bf8f84');house.scale.setScalar(.52);house.position.set(-.08,-.07,0);art.add(house);sphere(art,.055,[.21,.25,.015],'#d8b56c',[1,1,.08]);
-    const family=emblem('family','#8ea9b4');family.scale.setScalar(.4);family.position.set(.12,-.17,.015);art.add(family);
+    const tree=new T.Group();art.add(tree);cube(tree,[.025,.2,.008],[-.22,-.08,.015],'#99765a');sphere(tree,.105,[-.22,.09,.015],'#82967b',[1,1,.08]);
+    const house=emblem('house','#bf8f84');house.scale.setScalar(.36);house.position.set(0,-.03,.02);art.add(house);
+    const moon=emblem('moon','#b89b69');moon.scale.setScalar(.26);moon.position.set(.23,.09,.025);art.add(moon);
   }else if(kind==='photo'){
     cube(g,[1.55,1.4,.1],[0,.7,0],'#7d604e');cube(g,[1.4,1.25,.025],[0,.7,.061],'#d9c6a1',{metalness:.55});
     photoMaps(part(g,new T.PlaneGeometry(1.3,1.14),'#fff',[0,.7,.078],{roughness:.65}),textures);cube(g,[1.35,1.2,.018],[0,.7,-.059],'#8f7866');
@@ -128,7 +140,9 @@ export function createModel(kind, textures={}) {
   }else if(kind==='clock'){
     cube(g,[.72,.55,.28],[0,.28,0],'#a69277');const face=cyl(g,.23,.23,.028,[0,.29,.155],'#d5ceb5');face.rotation.x=Math.PI/2;
     for(let i=0;i<12;i++){const tick=cube(g,[.012,.035,.01],[Math.sin(i*Math.PI/6)*.185,.29+Math.cos(i*Math.PI/6)*.185,.177],'#6b7164');tick.rotation.z=-i*Math.PI/6;}
-    cube(g,[.012,.16,.012],[0,.36,.184],'#514f46');const lid=new T.Group();lid.position.set(0,.56,-.15);g.add(lid);cube(lid,[.74,.035,.32],[0,0,.15],'#b29e7f');lid.name='lid';
+    const minute=new T.Group();minute.position.set(0,.29,.184);g.add(minute);cube(minute,[.012,.16,.012],[0,.08,0],'#514f46');minute.name='minute-hand';
+    const hour=new T.Group();hour.position.set(0,.29,.194);g.add(hour);cube(hour,[.022,.11,.012],[0,.055,0],'#514f46');hour.name='hour-hand';
+    const lid=new T.Group();lid.position.set(0,.56,-.15);g.add(lid);cube(lid,[.74,.035,.32],[0,0,.15],'#b29e7f');lid.name='lid';
   }else if(kind==='cushion'){
     cube(g,[.83,.18,.7],[0,.09,0],'#9d8d7a');const lid=new T.Group();lid.position.set(0,.19,-.34);g.add(lid);sphere(lid,.44,[0,.04,.34],'#c5aebf',[1,.28,.79]);lid.name='lid';
     for(const x of [-.3,.3])sphere(lid,.015,[x,.15,.34],'#a78da3');
@@ -141,5 +155,7 @@ export function createModel(kind, textures={}) {
     sphere(g,.042,[-.09,.86,.255],'#5d5549',[1,1,.3]);
     const patch=cube(g,[.16,.13,.035],[.08,.36,.22],'#806b69');patch.rotation.z=-.2;g.userData.wornDoll=true;
   }
+  const finish=['rabbit','wornDoll','cushion'].includes(kind)?'fabric':['clock','cabinet','musicbox','radio','book'].includes(kind)?'wood':null;
+  if(finish)g.traverse(o=>{if(o.material?.map===SURFACE_TEXTURES['plaster-color']){o.material.map=SURFACE_TEXTURES[`${finish}-color`];o.material.bumpMap=SURFACE_TEXTURES[`${finish}-height`];o.material.roughnessMap=SURFACE_TEXTURES[`${finish}-height`];o.material.bumpScale=finish==='fabric'?.004:.006;o.material.roughness=finish==='fabric'?.95:.64;}});
   return g;
 }

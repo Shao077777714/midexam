@@ -7,9 +7,9 @@ import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const readJson=async relative=>JSON.parse(await readFile(path.join(root,relative),'utf8'));
 
-test('content pack has five ordered levels with narrative, clues, three non-answer hints, and answers',async()=>{
-  const levels=await Promise.all(Array.from({length:5},(_,i)=>readJson(`content/level-${i+1}.json`)));
-  assert.deepEqual(levels.map(level=>level.id),['level-1','level-2','level-3','level-4','level-5']);
+test('content pack has six ordered levels with narrative, clues, three non-answer hints, and answers',async()=>{
+  const levels=await Promise.all(Array.from({length:6},(_,i)=>readJson(`content/level-${i+1}.json`)));
+  assert.deepEqual(levels.map(level=>level.id),['level-1','level-2','level-3','level-4','level-5','level-6']);
   for(const level of levels){
     assert.ok(level.title&&level.story?.dreamcore&&level.story?.afterPuzzle,'each level needs story text');
     assert.ok(level.clues.length>0,'each level needs clues');
@@ -24,15 +24,12 @@ test('content pack has five ordered levels with narrative, clues, three non-answ
   }
 });
 
-test('level four follows this branch brief and verify cause-and-effect puzzle',async()=>{
-  const level=await readJson('content/level-4.json');
-  assert.ok(level.sources.some(source=>source.startsWith('brief.md')));
-  assert.ok(level.sources.some(source=>source.startsWith('verify.md')));
-  assert.ok(!level.sources.some(source=>source.startsWith('agent.md')));
-  assert.match(level.answer.summary,/依賴加深 → 工作缺勤 → 錯過孩子的重要活動 → 家人帶孩子離開/);
-  for(const item of ['因果齒輪','三個轉盤','四張事件紀錄牌','啟動桿']){
-    assert.ok(JSON.stringify(level).includes(item),`level four is missing brief/verify puzzle detail: ${item}`);
-  }
+test('content reflects the latest search chain, cassette cabinet, drag circuit and sixth mailbox ending',async()=>{
+ const [second,fourth,fifth,sixth]=await Promise.all([2,4,5,6].map(n=>readJson(`content/level-${n}.json`)));
+ assert.match(second.answer.summary,/08:10/);assert.match(second.answer.summary,/樹→房子→月亮/);
+ for(const word of ['工作檔案匣','答錄機','木櫃','錄音','接通'])assert.ok(JSON.stringify(fourth).includes(word));
+ assert.match(fifth.clues.join(''),/拖放交換/);assert.match(fifth.story.afterPuzzle,/第六關/);assert.equal(sixth.memory,null);assert.match(sixth.answer.summary,/投入.*結局/);
+ for(const level of [second,fourth,fifth,sixth])assert.ok(level.sources.some(s=>s.includes('2026-11-03')));
 });
 
 test('asset manifest points to existing deployed files and separates planned assets',async()=>{
