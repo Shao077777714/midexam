@@ -32,6 +32,7 @@ body.weird #world { filter: saturate(.8) contrast(1.04); }
 .title-top { top: 6vh; }
 .title-top > span:first-child { font-weight: 700; letter-spacing: .4em; }
 .title-bottom { bottom: 6vh; font-size: 12px; line-height: 2; letter-spacing: .08em; }
+.title-bottom a { color: inherit; text-underline-offset: .2em; }
 .title-bottom > span:last-child { text-align: right; }
 .title-copy { position: absolute; left: 10vw; top: 21vh; max-width: 520px; }
 .title-copy .eyebrow { color: #5c685b; }

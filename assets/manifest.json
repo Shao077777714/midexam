@@ -64,13 +64,27 @@
     ],
     "audio": [
       {
+        "path": "public/assets/audio/ambience/gone-beyond.mp3",
+        "purpose": "夢核循環配樂：Gone Beyond — Kevin MacLeod（CC BY 4.0）",
+        "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100752",
+        "sha256": "e9f0cea52dc716639ad3a744459e618fd880b26a0f00f3cf60852e5738b5248e",
+        "status": "available"
+      },
+      {
+        "path": "public/assets/audio/ambience/this-house.mp3",
+        "purpose": "怪核循環配樂：This House — Kevin MacLeod（CC BY 4.0）",
+        "source": "https://www.incompetech.com/music/royalty-free/index.html?isrc=USUAN1500055",
+        "sha256": "5d6070abd7fe89e13fd641406e6093c1eee8473ae0999b82e5e7334f28f36fd5",
+        "status": "available"
+      },
+      {
         "path": "public/assets/audio/ambience/dreamcore_loop.wav",
         "purpose": "夢核循環氛圍音。",
         "status": "available"
       },
       {
         "path": "public/assets/audio/ambience/weirdcore_loop.wav",
-        "purpose": "怪核循環氛圍音。",
+        "purpose": "怪核曲目載入失敗時的備用循環氛圍音。",
         "status": "available"
       },
       {
