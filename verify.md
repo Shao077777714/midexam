@@ -292,6 +292,8 @@
 
 2026-11-05 新增 13 張使用者提供的參考 JPEG：TDD 測試先因缺少 manifest `references` 清單而 FAIL；加入 `assets/reference-images/`、13 筆 metadata、README 用途說明後，`node --test tests/assets.test.mjs` 1／1 PASS，逐張檢查來源檔名、路徑、JPEG 標記、實際尺寸、位元組數及 SHA-256；完整 `node --test tests/*.test.mjs` 110／110 PASS，`git diff --check` PASS。環境沒有 `npm` 命令，直接使用 Node 執行測試。素材限定美術參考，不複製至 public／dist，未修改遊戲程式。重複來源檔依原檔名保留；原作者與公開再散布授權未知，遊戲素材實際使用及授權仍 NOT TESTED。
 
+2026-11-05 Pinterest 來源及致謝文件：先擴充資產 TDD，確認缺少 `credit.md` 時測試 FAIL；新增 `credit.md` 列出 13 張 `assets/reference-images/` 圖片及既有 9 張風格參考圖，兩份 manifest 均登錄來源平台 Pinterest，並分開標示 Image Gen 貼圖及程式合成 WAV。13 張本次附件與分支現有檔案逐張 SHA-256 比對相同，未重複複製圖片。`node --test tests/assets.test.mjs` 2／2 PASS，完整 `node --test` 111／111 PASS，`git diff --check` PASS。個別 Pin 網址、原作者與授權條款未提供，未將來源平台等同授權；遊戲內實際顯示未測試。
+
 | 日期 | 範圍 | 方法 | 結果 |
 | --- | --- | --- | --- |
 | 2026-11-02 | PLAY-01～05：低頭、Alt 游標、持續窗外眼睛、牆眼分布與第四關簡化 | 106／106 自動化（含五關流程、±85°、模式／拒絕回退、固定眼睛、避線索與路徑、三錄音及 v4 相容）、16模組建置與文件檢查；IAB 第四關正常搜尋三錄音、錯序重排與重載後通關，進第五關並檢視跨關信；兩尺寸總機無捲動，合成 Alt／低頭及持續眼睛抽驗，最終無 error／warn | PASS（記錄範圍，詳見 test.md）；正式矩陣、真正鎖定、全部窗位與25分鐘新玩家時長仍 NOT TESTED |

@@ -532,10 +532,17 @@
 | CONTENT-02 | 核對第四關內容來源與分支 `brief.md`／`verify.md`，不得以其他規範覆蓋；確認因果順序、面向分類、齒輪與啟動桿完整 | PASS：新增來源回歸測試；初稿不符時 FAIL，依分支文件改正後通過 |
 | ASSET-INDEX-01 | 讀取 `assets/manifest.json`，確認現有圖片／音效路徑可讀且附用途，待製作素材清楚標示 planned | PASS：全套測試涵蓋素材檔路徑存在 |
 | ASSET-INDEX-02 | 確認本次提供的 13 張參考 JPEG 均保存在 `assets/reference-images/`，manifest 記錄原始檔名、用途、尺寸、位元組數、SHA-256 與 reference-only 狀態；原圖不可被誤認為遊戲成品 | PASS：`node --test tests/assets.test.mjs`；完整性、JPEG 尺寸及 manifest 欄位測試通過 |
+| CREDIT-01 | `credit.md` 列出 Pinterest 來源的 13 張本批參考圖及既有 9 張風格參考圖；兩份 manifest 標記 Pinterest；生成貼圖與程式合成音效須分別註明來源 | PASS：`node --test tests/assets.test.mjs`；22 張參考圖逐項比對檔案路徑及原始檔名 |
 
 內容包是企劃資料，尚未接入遊戲程式。遊戲素材二進位檔保留在 `public/assets/`；使用者提供的美術參考圖另存於 `assets/reference-images/`，與可部署素材分開。第四關已更正為本分支 brief／verify 的因果齒輪；第五關配電箱固定格位仍待機關圖樣確定。此次未做遊戲內實機試玩。
 
 第四關來源更正（2026-11-02）：使用者指定本分支 `brief.md`／`verify.md` 為準。先加入來源與謎題回歸測試，初稿因引用 `agent.md` 而 FAIL；將內容改為四件事件牌、三個生活轉盤、因果齒輪及啟動桿後，新增測試通過。
+
+### Pinterest 素材致謝與來源登錄（TDD，2026-11-05）
+
+- 先將資產測試擴充為檢查 `credit.md`、兩份 Pinterest 圖片 manifest、22 張參考圖的路徑與原始檔名，以及 Image Gen／程式合成音效的來源區分。初次執行因 `credit.md` 尚不存在而 FAIL。
+- 新增根目錄 `credit.md`，列出既有 9 張及 `assets/reference-images/` 內 13 張 Pinterest 參考圖；在兩份 manifest 登錄 `sourcePlatform: Pinterest`，更新圖片索引說明。13 張附件和既有素材雜湊逐張比對完全相同，故保留現有參考圖檔，不另複製重複內容。
+- `node --test tests/assets.test.mjs` 2／2 PASS；完整 `node --test` 111／111 PASS。`npm test` 因此環境沒有 npm 命令而無法執行，改以 Node 直接跑完整測試。只驗證來源登錄、檔案索引與測試，不代表個別 Pinterest Pin、原作者或授權已確認，也未測試遊戲畫面。
 
 
 ### 寫實環境文件標準（2026-11-04）

@@ -95,7 +95,8 @@
       "height": 1104,
       "bytes": 190789,
       "sha256": "38327abcdf38a7681210467600305234974c07fca4870f3f5600545f365b5f6c",
-      "source": "user-supplied; original creator and license not provided",
+      "source": "Pinterest (source platform reported by user); original pin URL, creator, and license not provided",
+      "sourcePlatform": "Pinterest",
       "generated": false,
       "status": "reference-only"
     },
@@ -108,7 +109,8 @@
       "height": 2048,
       "bytes": 843283,
       "sha256": "3fb074c904c4c85a4ed560132f1b7ff62875198c9471e631436a3655661faab7",
-      "source": "user-supplied; original creator and license not provided",
+      "source": "Pinterest (source platform reported by user); original pin URL, creator, and license not provided",
+      "sourcePlatform": "Pinterest",
       "generated": false,
       "status": "reference-only"
     },
@@ -121,7 +123,8 @@
       "height": 1077,
       "bytes": 51605,
       "sha256": "9c906956d0863fd6f77134afcb8a923ce60f05c140cb372398120c0ef9a27769",
-      "source": "user-supplied; original creator and license not provided",
+      "source": "Pinterest (source platform reported by user); original pin URL, creator, and license not provided",
+      "sourcePlatform": "Pinterest",
       "generated": false,
       "status": "reference-only"
     },
@@ -134,7 +137,8 @@
       "height": 420,
       "bytes": 67312,
       "sha256": "a953ada7ce7a503ed4923aa83afaae33501d157e09571ad0b4a6142dd94861ef",
-      "source": "user-supplied; original creator and license not provided",
+      "source": "Pinterest (source platform reported by user); original pin URL, creator, and license not provided",
+      "sourcePlatform": "Pinterest",
       "generated": false,
       "status": "reference-only"
     },
@@ -147,7 +151,8 @@
       "height": 413,
       "bytes": 28540,
       "sha256": "fa4142d16940a2db82d9bc906c0556de5c3ad07d1bbe455d6ecb5d7060bb45cb",
-      "source": "user-supplied; original creator and license not provided",
+      "source": "Pinterest (source platform reported by user); original pin URL, creator, and license not provided",
+      "sourcePlatform": "Pinterest",
       "generated": false,
       "status": "reference-only"
     },
@@ -160,7 +165,8 @@
       "height": 1138,
       "bytes": 79153,
       "sha256": "6d97c6c439cb5ce281c8287446659c678005f157e8e537e0c1335b8fa11f4ee3",
-      "source": "user-supplied; original creator and license not provided",
+      "source": "Pinterest (source platform reported by user); original pin URL, creator, and license not provided",
+      "sourcePlatform": "Pinterest",
       "generated": false,
       "status": "reference-only"
     },
@@ -173,7 +179,8 @@
       "height": 1200,
       "bytes": 395986,
       "sha256": "86f436e43e9babdd6301107573231e9aba2f86b7bd7c901746fcb8f1720ae111",
-      "source": "user-supplied; original creator and license not provided",
+      "source": "Pinterest (source platform reported by user); original pin URL, creator, and license not provided",
+      "sourcePlatform": "Pinterest",
       "generated": false,
       "status": "reference-only"
     },
@@ -186,7 +193,8 @@
       "height": 1200,
       "bytes": 409630,
       "sha256": "828baafe1a0fe48c1928ad40e8aa6312ced46482404305da6147a5437c2d2af4",
-      "source": "user-supplied; original creator and license not provided",
+      "source": "Pinterest (source platform reported by user); original pin URL, creator, and license not provided",
+      "sourcePlatform": "Pinterest",
       "generated": false,
       "status": "reference-only"
     },
@@ -199,7 +207,8 @@
       "height": 1248,
       "bytes": 249725,
       "sha256": "f7066f5a6306f1d4cbf790208f8af6973c908e81b541bc55c67555753fa3e85c",
-      "source": "user-supplied; original creator and license not provided",
+      "source": "Pinterest (source platform reported by user); original pin URL, creator, and license not provided",
+      "sourcePlatform": "Pinterest",
       "generated": false,
       "status": "reference-only"
     },
@@ -212,7 +221,8 @@
       "height": 1138,
       "bytes": 79153,
       "sha256": "6d97c6c439cb5ce281c8287446659c678005f157e8e537e0c1335b8fa11f4ee3",
-      "source": "user-supplied; original creator and license not provided",
+      "source": "Pinterest (source platform reported by user); original pin URL, creator, and license not provided",
+      "sourcePlatform": "Pinterest",
       "generated": false,
       "status": "reference-only"
     },
@@ -225,7 +235,8 @@
       "height": 1313,
       "bytes": 325085,
       "sha256": "3e514be23c4eb031c641439c6fe864954ebd41244cd79f73cc4383bcd0de450c",
-      "source": "user-supplied; original creator and license not provided",
+      "source": "Pinterest (source platform reported by user); original pin URL, creator, and license not provided",
+      "sourcePlatform": "Pinterest",
       "generated": false,
       "status": "reference-only"
     },
@@ -238,7 +249,8 @@
       "height": 1308,
       "bytes": 239084,
       "sha256": "a6548dab83a932898de8c06355ff5ebc305532617285e5d018b4d577966e7058",
-      "source": "user-supplied; original creator and license not provided",
+      "source": "Pinterest (source platform reported by user); original pin URL, creator, and license not provided",
+      "sourcePlatform": "Pinterest",
       "generated": false,
       "status": "reference-only"
     },
@@ -251,7 +263,8 @@
       "height": 1440,
       "bytes": 363694,
       "sha256": "c7f1f78775853f3c6e9e594a09858d53559f20673627fc73e60a7d7265c7e1fc",
-      "source": "user-supplied; original creator and license not provided",
+      "source": "Pinterest (source platform reported by user); original pin URL, creator, and license not provided",
+      "sourcePlatform": "Pinterest",
       "generated": false,
       "status": "reference-only"
     }
