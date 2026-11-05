@@ -1,4 +1,5 @@
 import {createAudioDirector} from './audio-director.mjs';
+import {createSceneMusic} from './scene-music.mjs';
 import {currentGoal} from './guidance.mjs';
 import {FAMILY_PHOTOS,FINAL_HALL,FINAL_ECHOES,createFinalePlayback} from './finale.mjs';
 import {createPuzzleUI} from './puzzle-ui.mjs';
@@ -41,7 +42,8 @@ const text=(tag,value,cls)=>{const e=document.createElement(tag);e.textContent=v
 const btn=(label,fn,cls='secondary')=>{const b=text('button',label,cls);b.type='button';b.addEventListener('click',fn);return b;};
 const add=(parent,...children)=>children.forEach(c=>parent.append(c));
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const audio=createAudioDirector({snapshot:()=>({level:state.level,triggered:state.levels[state.level].triggered,muted,active:!['title','render-error','recovering'].includes(mode),paused:mode==='paused'||narrationPaused||!pageFocused||document.hidden,overlay:['modal','panel','projection','outro'].includes(mode)}),onStatus(status){const button=$('sound-button');button.dataset.voice=status.voice;button.dataset.loaded=String(status.ready);button.dataset.paused=String(status.paused);if(status.error)button.title=status.error;}});
+const sceneMusic=createSceneMusic({dock:$('scene-music'),slot:$('scene-music-video'),status:$('scene-music-status'),toggle:$('scene-music-toggle'),onPlaybackChange:()=>audio.update()});
+const audio=createAudioDirector({sceneMusic,snapshot:()=>({level:state.level,triggered:state.levels[state.level].triggered,muted,active:!['title','render-error','recovering'].includes(mode),paused:mode==='paused'||narrationPaused||!pageFocused||document.hidden,overlay:['modal','panel','projection','outro'].includes(mode),youtubeAllowed:mode==='explore'}),onStatus(status){const button=$('sound-button');button.dataset.voice=status.voice;button.dataset.loaded=String(status.ready);button.dataset.paused=String(status.paused);if(status.error)button.title=status.error;}});
 function toast(copy){if(!copy)return;$('toast').textContent=copy;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),4200);}
 function setMode(next){mode=next;if(next!=='explore')finaleOverlay.hidden=true;keys.clear();document.body.classList.toggle('exploring',next==='explore');document.body.classList.toggle('interface-open',next==='panel');$('inventory-button').setAttribute('aria-expanded','false');inputMode?.setMode(next);$('crosshair').hidden=next!=='explore';$('interact').hidden=next!=='explore';audio.update();}
 function syncInput({active,cursor}){controlHover=!active;document.body.classList.toggle('cursor-mode',mode==='explore'&&cursor);$('quick-controls').inert=mode==='explore'&&!cursor||mode!=='explore'&&mode!=='panel';keys.clear();cursorAim=null;if(!active){navigation=[];navTarget=null;}}
@@ -225,7 +227,8 @@ try{
     if(mode!=='explore')return;keys.add(e.code);if(e.code==='KeyE')activate(nearby);if(e.code==='KeyH')showHints();if(e.code==='KeyN')showNavigation();if(e.code==='KeyG'){held=null;selected=null;updateInventoryHUD();toast('你放下了手持物件。已收集的任務物品仍保存在物品欄。');}
   });
   $('world').addEventListener('dblclick',event=>{if(inputMode.active&&mouseLook.canDoubleClick(event)&&doubleClickPickup(event,{mode,canvas:$('world'),aim:'reticle',world})){event.preventDefault();navigation=[];navTarget=null;focusEntity=null;}});
-  addEventListener('keyup',e=>keys.delete(e.code));addEventListener('focus',()=>{pageFocused=true;audio.update();});addEventListener('blur',()=>{pageFocused=false;inputMode.blur();keys.clear();navigation=[];if(mode==='explore')pause();else audio.update();});
+  addEventListener('keyup',e=>keys.delete(e.code));addEventListener('focus',()=>{pageFocused=true;audio.update();});addEventListener('blur',()=>{keys.clear();navigation=[];setTimeout(()=>{if(document.hasFocus()&&$('scene-music').contains(document.activeElement))return;pageFocused=false;inputMode.blur();if(mode==='explore')pause();else audio.update();},0);});
+  addEventListener('resize',()=>audio.update());
   document.addEventListener('visibilitychange',()=>audio.update());
   $('world').addEventListener('pointerdown',event=>mouseLook.down(event));
   addEventListener('pointerup',event=>mouseLook.up(event));addEventListener('pointercancel',event=>mouseLook.up(event));$('world').addEventListener('lostpointercapture',event=>mouseLook.up(event));

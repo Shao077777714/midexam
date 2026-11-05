@@ -97,3 +97,5 @@ npm run build
 遊戲持續播放本專案原創的夢核／怪核／黑暗走道懸疑音景；配音時背景降為24%，暫停與背景頁停止播放時鐘，靜音關閉全部聲音。旁白改為外部edge-tts產出的中文爸爸神經語音MP3；六關結尾必須完整播完才能返回開門。第五關投影分四段同文音檔，字幕依每段自然播放結束換頁，不再使用瀏覽器Web Speech。這是AI合成，不是真人錄音或ChatGPT聲音複製。來源、完整腳本與SHA-256見public/assets/audio/README.md及voice-v2/manifest.json；玩家不需安裝生成工具或提供金鑰，靜音不跳過播放時序，音訊失敗可等長閱讀字幕。第四關只在通關播放結尾，五帶逐字稿與排序保留。右上角燈泡開啟任務提示、喇叭切換全部聲音、星芒切換眼睛動態，另有雙肩背包與暫停圖示，滑入可看說明。背包平常收起，點背包或 Tab 開啟右側方形物品欄，直接選物後高亮；叉叉、背包、Tab／Esc 收起，關閉後 R 檢視選取物品。探索導覽保留 N 快捷鍵；系統減少動態偏好另有靜態回退。原始參考圖只供開發風格參照，遊戲實際場景使用程式建立的模型及生成素材。
 
 探索滑鼠直接環視，保留 ±85°；按一下 Alt 顯示游標操作右上角，再按一下恢復。面板直接有游標；Esc 暫停。怪核窗外眼睛持續可見，降低動態時維持靜態。
+
+夢核配樂採 Kevin MacLeod 的 [〈Gone Beyond〉](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100752)（[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)）。怪核探索會在右下角播放指定的 [YouTube 3D 音效影片](https://www.youtube.com/watch?v=5fdJlEru1mw)；若自動播放被阻擋，可按 Alt 顯示游標後按播放器的播放鍵。可切回遊戲音景，離線時也能繼續玩。詳細來源見 [音訊素材說明](public/assets/audio/README.md)。

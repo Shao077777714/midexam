@@ -64,6 +64,13 @@
     ],
     "audio": [
       {
+        "path": "public/assets/audio/ambience/gone-beyond.mp3",
+        "purpose": "夢核循環配樂：Gone Beyond — Kevin MacLeod（CC BY 4.0）",
+        "source": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100752",
+        "sha256": "e9f0cea52dc716639ad3a744459e618fd880b26a0f00f3cf60852e5738b5248e",
+        "status": "available"
+      },
+      {
         "path": "public/assets/audio/ambience/dreamcore_loop.wav",
         "purpose": "夢核循環氛圍音。",
         "status": "available"

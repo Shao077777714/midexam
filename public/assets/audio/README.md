@@ -2,6 +2,12 @@
 
 原有 WAV 由本專案程式合成，16kHz單聲道16-bit PCM，保留原檔供回溯。本輪新增22.05kHz懸疑音景及外部生成的中文神經語音MP3，遊戲直接讀取本地音檔，不需玩家的語音服務帳號或金鑰。
 
+## 場景配樂與來源（2026-11-05）
+
+- **夢核：** [Gone Beyond](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100752) by Kevin MacLeod (incompetech.com), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)。使用[作者提供的 MP3](https://incompetech.com/music/royalty-free/mp3-royaltyfree/Gone%20Beyond.mp3)，檔案未修改，遊戲調整播放音量並循環。對應使用者的 [YouTube 參考](https://www.youtube.com/watch?v=TRpU4bnzIdA)。
+- **怪核：** Gregi and Kurczak 的 [Amazing SCARY 3D Holophonic Sound](https://www.youtube.com/watch?v=5fdJlEru1mw)，探索時使用可見的 YouTube 播放器。網路、播放器限制或較小視窗會使用原有怪核音景；暫停、靜音、離開分頁及開啟介面時停止影片播放。影片未收入素材檔。
+- 第五關依觸發前後選曲；第六關保留黑暗長廊音景。必聽旁白及機關音效沿用本地檔案。
+
 ## 2026-11-03 新版聲音
 
 - `ambience/suspense-dream-v2.wav`、`suspense-weird-v2.wav`、`suspense-void-v2.wav`：各24秒原創合成音景，包含低頻拍動、金屬泛音與過濾雜訊；開頭與結尾淡至零避免爆音。由`../../../scripts/generate-soundscapes.py`產製，雜湊見`ambience/manifest-v2.json`。夢核低聲不安、怪核壓迫、黑暗走道亦有背景。

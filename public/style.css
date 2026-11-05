@@ -77,6 +77,13 @@ kbd { font-family: inherit; display: inline-block; font-size: 11px; border: 1px 
 #lock-button { background: transparent; color: #f2ddad; border: 0; border-bottom: 1px solid #c3b897; min-height: 40px; font-size: 12px; padding: 3px 6px; }
 #toast { position: fixed; left: 50%; bottom: 95px; transform: translateX(-50%) translateY(8px); background: #f6f0e7; border: 1px solid #c7baa4; color: var(--ink); max-width: min(580px,85vw); padding: 16px 24px; border-radius: 10px; font-size: 16px; line-height: 1.8; z-index: 25; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; box-shadow: 0 8px 35px #192f3233; }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#scene-music { position: fixed; right: 20px; bottom: 72px; z-index: 10; width: 360px; background: #1b1119f5; border: 1px solid #986b72; color: #f1d4cb; font-size: 13px; box-sizing: content-box; }
+#scene-music-video iframe { display: block; width: 360px; height: 203px; border: 0; }
+.scene-music-bar { display: flex; align-items: center; gap: 8px; justify-content: space-between; padding: 4px 10px; }
+#scene-music button, #scene-music a { color: inherit; }
+#scene-music button { background: #30202b; border: 1px solid #986b72; border-radius: 4px; min-height: 44px; padding: 6px 10px; white-space: nowrap; }
+#scene-music > a { display: block; padding: 0 10px 8px; }
+body:has(#scene-music:not([hidden])) #toast { max-width: min(580px, calc(100vw - 790px)); }
 .panel { position: fixed; right: 24px; top: 24px; bottom: 76px; width: min(490px,calc(100vw - 48px)); background: var(--cream); color: var(--ink); z-index: 12; border: 1px solid #d8cbb8; box-shadow: 0 18px 80px #172c275e; overflow-y: auto; overscroll-behavior: contain; border-radius: 20px 6px 20px 6px; padding: 30px; scrollbar-color: #9da990 #eae3d7; animation: panel-in .25s ease-out; }
 .panel > header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #c8c4b5; padding-bottom: 20px; margin-bottom: 22px; gap: 12px; }
 .panel h2 { font: 400 27px/1.5 var(--serif); letter-spacing: .1em; margin: 0; }
