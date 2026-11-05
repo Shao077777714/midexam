@@ -1,5 +1,10 @@
 # TEST.md —《夢隙：醒來之前》測試計畫與執行紀錄
 
+## 合併 PR #36 與顯智分支（2026-11-05）
+
+- 基於 main 的 `f5dbbbf`，整合 PR #36 的 `b8c9ccd` 與顯智分支的 `d0ebcf4`。保留兩邊在 test.md、verify.md 的驗收紀錄與 README 三列分工。
+- `npm test` 169／169，`npm run build` 25 模組，文件嚴格 UTF-8 與差異檢查通過。隔離 Chrome Web Audio 抽驗〈This House〉載入、切入怪核時的音軌輸出及暫停。未重跑六關人工通關。
+
 ## 怪核配樂音量（2026-11-05）
 
 - BGM-08 PASS。怪核音量係數由 0.25 調至 0.35（約 +2.9 dB）；既有自動化確認正常與備用音軌均套用新音量，旁白仍將配樂降至設定音量的 24%，暫停／靜音與其他場景的配樂行為保留。
@@ -62,6 +67,11 @@
 - PASS（自動化）：最終npm test 166／166，無失敗、取消或略過，包含新增12項語音／門檻／遷移回歸及既有六關、碰撞、背包、拼圖、電路、場景細化與白屏保護。建置檢查25模組；文件嚴格UTF-8、相對引用、衝突標記及git diff --check核對。五個新MP3的腳本／設定／時長／SHA-256已保存，原15個音檔與12個PNG及九參考原圖未改。
 - PASS（畫面抽驗）：1366×768與1920×1080投影文字／暫停鈕在視窗內，頁面無整頁溢出；最終IAB error／warn空白。證據：[第四關鎖定](docs/screenshots/required-outro-v8.png)、[投影1366](docs/screenshots/projection-sync-1366-v8.png)、[投影1920](docs/screenshots/projection-sync-1920-v8.png)、[第五關結尾](docs/screenshots/fifth-outro-locked-v8.png)、[第六關結尾](docs/screenshots/final-outro-locked-v8.png)。臨時QA發布複本移除，只保留tests來源；主4173啟動新版。提交及遠端版本以本次Git歷史追溯，只推送顯智的branch。
 - NOT TESTED：正式Chrome／Edge×兩尺寸連續六關、全部介面／極角、真正Pointer Lock及OS切換、實體裝置故障、主觀音色情緒、長時間GPU負載、展示設備及新玩家約25分鐘。上述PASS僅代表記錄的自動化與抽驗範圍。
+
+## README 分工表文件檢查（2026-11-05）
+
+- README.md 新增三列分工：劇情與謎底—葉芷榕、網頁與機關—蘇佳忻、整合與測試—邵顯智。
+- PASS（文件）：逐項核對使用者提供的人名與職責、Markdown 表格結構、UTF-8 與 git diff --check；本次僅改文件，未重跑遊戲功能測試。
 
 ## 腳本場景細化與玩法前後對照（2026-11-04）
 
