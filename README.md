@@ -98,4 +98,4 @@ npm run build
 
 探索滑鼠直接環視，保留 ±85°；按一下 Alt 顯示游標操作右上角，再按一下恢復。面板直接有游標；Esc 暫停。怪核窗外眼睛持續可見，降低動態時維持靜態。
 
-場景配樂由遊戲在背景播放。夢核使用 Kevin MacLeod 的〈Gone Beyond〉，怪核使用專案的本地懸疑音景。曲目與授權資訊見 [音訊素材說明](public/assets/audio/README.md)。
+場景配樂由遊戲在背景播放。夢核使用 Kevin MacLeod 的〈Gone Beyond〉，怪核使用同作者的〈This House〉。曲目與授權資訊見 [音訊素材說明](public/assets/audio/README.md)。

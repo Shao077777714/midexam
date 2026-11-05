@@ -1,20 +1,48 @@
 import {VOICE_CLIPS} from './voice-clips.mjs';
-export const AUDIO_FILES={dream:'ambience/gone-beyond.mp3',weird:'ambience/weirdcore_loop.wav',void:'ambience/suspense-void-v2.wav',correct:'puzzle/correct.wav',retry:'puzzle/retry.wav',child:'corridor/child_laugh.wav',keys:'corridor/keys.wav',argument:'corridor/argument.wav',call:'corridor/unanswered_call.wav'};
+export const AUDIO_FILES={dream:'ambience/gone-beyond.mp3',weird:'ambience/this-house.mp3',void:'ambience/suspense-void-v2.wav',correct:'puzzle/correct.wav',retry:'puzzle/retry.wav',child:'corridor/child_laugh.wav',keys:'corridor/keys.wav',argument:'corridor/argument.wav',call:'corridor/unanswered_call.wav'};
+const AMBIENCE_FALLBACKS={dream:'ambience/suspense-dream-v2.wav',weird:'ambience/weirdcore_loop.wav'};
+// Skip the soft opening and the nearly silent tail of the original MP3.
+const THIS_HOUSE_CUE={start:.25,end:264};
 export function ambienceMix({level,triggered,active=true,paused=false,muted=false,overlay=false},speaking=false){
  const scale=(!active||paused||muted)?0:(speaking?.24:1)*(overlay?.68:1);
  return {dream:scale*(level!==5&&!triggered?.22:0),weird:scale*(level!==5&&triggered?.25:0),void:scale*(level===5?.26:0)};
 }
 export function createAudioDirector({snapshot,onStatus=()=>{},AudioContextClass=globalThis.AudioContext,fetchFn=globalThis.fetch}={}){
- const a={ctx:null,output:null,sfx:null,voiceGain:null,buffers:new Map(),tracks:{},effects:new Set(),voiceSource:null,voiceId:null,pending:null,ready:false,loading:null,lastError:null,muted:false,lastStatus:'',narration:null,deviceBlocked:false,contextSync:null,
+ const a={ctx:null,output:null,sfx:null,voiceGain:null,buffers:new Map(),tracks:{},weirdCue:null,effects:new Set(),voiceSource:null,voiceId:null,pending:null,ready:false,loading:null,lastError:null,muted:false,lastStatus:'',narration:null,deviceBlocked:false,contextSync:null,
   init(){if(this.loading)return this.loading;try{this.ctx=new AudioContextClass();this.output=this.ctx.createGain();this.sfx=this.ctx.createGain();this.voiceGain=this.ctx.createGain();this.output.connect(this.ctx.destination);this.sfx.connect(this.output);this.voiceGain.connect(this.output);this.sfx.gain.value=.62;this.voiceGain.gain.value=.9;this.syncContext();this.loading=this.load();return this.loading;}catch{this.ready=true;this.lastError='目前裝置無法播放音效，字幕仍可閱讀。';this.emit();return Promise.resolve();}},
   async load(){
    const files=[...Object.entries(AUDIO_FILES).map(([id,file])=>[id,'assets/audio/'+file]),...Object.entries(VOICE_CLIPS).map(([id,c])=>[id,c.url])];
    const decode=async url=>{const response=await fetchFn(new URL(url,import.meta.url),{signal:globalThis.AbortSignal?.timeout?.(12000)});if(!response.ok)throw Error('missing');return this.ctx.decodeAudioData(await response.arrayBuffer());};
-   await Promise.all(files.map(async([id,url])=>{try{const buffer=await decode(url).catch(error=>{if(id!=='dream')throw error;return decode('assets/audio/ambience/suspense-dream-v2.wav');});this.buffers.set(id,buffer);if(['dream','weird','void'].includes(id))this.startTrack(id);if(this.pending===id)this.playVoice(id);}catch{this.lastError='部分音效未能載入，字幕與解謎仍可使用。';}}));this.ready=true;this.update();
+   await Promise.all(files.map(async([id,url])=>{
+    try{
+     let buffer;
+     try{
+      buffer=await decode(url);
+      if(id==='weird'&&buffer.duration>=THIS_HOUSE_CUE.end)this.weirdCue=THIS_HOUSE_CUE;
+     }catch(error){
+      const fallback=AMBIENCE_FALLBACKS[id];
+      if(!fallback)throw error;
+      buffer=await decode('assets/audio/'+fallback);
+     }
+     this.buffers.set(id,buffer);
+     if(id==='dream'||id==='void')this.startTrack(id);
+     if(this.pending===id)this.playVoice(id);
+     if(id==='dream'||id==='weird'||id==='void')this.update();
+    }catch{this.lastError='部分音效未能載入，字幕與解謎仍可使用。';}
+   }));
+   this.ready=true;this.update();
   },
-  startTrack(id){if(this.tracks[id])return;const source=this.ctx.createBufferSource(),gain=this.ctx.createGain();source.buffer=this.buffers.get(id);source.loop=true;gain.gain.value=0;source.connect(gain);gain.connect(this.output);source.start();this.tracks[id]={source,gain};this.update();},
+  startTrack(id){
+   if(this.tracks[id])return;
+   const source=this.ctx.createBufferSource(),gain=this.ctx.createGain(),cue=id==='weird'?this.weirdCue:null;
+   source.buffer=this.buffers.get(id);source.loop=true;
+   if(cue){source.loopStart=cue.start;source.loopEnd=cue.end;}
+   gain.gain.value=0;source.connect(gain);gain.connect(this.output);
+   source.start(0,cue?.start??0);this.tracks[id]={source,gain};
+  },
   update(){if(!this.ctx)return;const state=snapshot(),now=this.ctx.currentTime;if(state.muted&&!this.muted){if(!this.narration||this.narration.done)this.stopVoice();for(const s of this.effects)try{s.stop();}catch{}this.effects.clear();}this.muted=state.muted;this.output.gain.setTargetAtTime(this.muted?0:1,now,.06);
    const mix=ambienceMix(state,!!this.voiceSource);
+   if(mix.weird>0&&this.buffers.has('weird'))this.startTrack('weird');
    const fadeTime = this.voiceSource || mix.weird > 0 ? .12 : .65;
    for(const [id,track]of Object.entries(this.tracks))track.gain.gain.setTargetAtTime(mix[id],now,fadeTime);
    this.syncContext();if(state.active&&!state.paused&&this.pending&&!this.voiceSource)this.playVoice(this.pending);this.emit();
