@@ -1,5 +1,11 @@
 # TEST.md —《夢隙：醒來之前》測試計畫與執行紀錄
 
+## README 分工表文件檢查（2026-11-05）
+
+- README.md 新增三列分工：劇情與謎底—葉芷榕、網頁與機關—蘇佳忻、整合與測試—邵顯智。
+- PASS（文件）：逐項核對使用者提供的人名與職責、Markdown 表格結構、UTF-8 與 git diff --check；本次僅改文件，未重跑遊戲功能測試。
+
+
 ## 腳本場景細化與玩法前後對照（2026-11-04）
 
 - 基準：最新 main 5704bcd，整合至加薪的branch；依 content/level-1.json～level-6.json、現行 brief／verify 與九張美術參考實作。Windows、Node.js 24.22.1、Three.js 0.186.1；IAB 版本未提供。
