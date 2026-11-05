@@ -5,7 +5,7 @@ const AMBIENCE_FALLBACKS={dream:'ambience/suspense-dream-v2.wav',weird:'ambience
 const THIS_HOUSE_CUE={start:.25,end:264};
 export function ambienceMix({level,triggered,active=true,paused=false,muted=false,overlay=false},speaking=false){
  const scale=(!active||paused||muted)?0:(speaking?.24:1)*(overlay?.68:1);
- return {dream:scale*(level!==5&&!triggered?.22:0),weird:scale*(level!==5&&triggered?.25:0),void:scale*(level===5?.26:0)};
+ return {dream:scale*(level!==5&&!triggered?.22:0),weird:scale*(level!==5&&triggered?.35:0),void:scale*(level===5?.26:0)};
 }
 export function createAudioDirector({snapshot,onStatus=()=>{},AudioContextClass=globalThis.AudioContext,fetchFn=globalThis.fetch}={}){
  const a={ctx:null,output:null,sfx:null,voiceGain:null,buffers:new Map(),tracks:{},weirdCue:null,effects:new Set(),voiceSource:null,voiceId:null,pending:null,ready:false,loading:null,lastError:null,muted:false,lastStatus:'',narration:null,deviceBlocked:false,contextSync:null,

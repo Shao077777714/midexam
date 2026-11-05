@@ -77,7 +77,7 @@ test('weirdcore starts at the audible cue on entry and uses the full local loop 
   assert.equal(source.offset,unavailable?0:.25);
   assert.equal(source.loopEnd,unavailable?undefined:264);
   assert.equal(fallback.length,unavailable?1:0);
-  assert.equal(gain.gain.value,.25);
+  assert.equal(gain.gain.value,.35);
   assert.equal(gain.gain.fade,.12);
   assert.equal(a.tracks.dream.gain.gain.value,0);
   assert.equal(a.lastError,null);
